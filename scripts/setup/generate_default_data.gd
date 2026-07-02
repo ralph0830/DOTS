@@ -61,6 +61,7 @@ func _build_symbols() -> Dictionary:
 		"dragon": [SymbolData.Kind.NORMAL, "Dragon", Color(0.62, 0.15, 0.78), SymbolData.Shape.STAR, [0, 0, 0, 12, 60, 400]],
 		"unicorn": [SymbolData.Kind.WILD, "Unicorn (Wild)", Color(0.95, 0.85, 1.0), SymbolData.Shape.STAR, [0, 0, 0, 12, 60, 400]],
 		"chest": [SymbolData.Kind.SCATTER, "Chest (Scatter)", Color(1.0, 0.80, 0.15), SymbolData.Shape.SQUARE, [0, 0, 0, 0, 0, 0]],
+		"rune": [SymbolData.Kind.BONUS, "Rune (Bonus)", Color(0.95, 0.6, 1.0), SymbolData.Shape.TRIANGLE, [0, 0, 0, 0, 0, 0]],
 	}
 	var out := {}
 	for id in defs:
@@ -79,10 +80,14 @@ func _build_symbols() -> Dictionary:
 
 func _build_reels(sym: Dictionary) -> Array:
 	var reels: Array = []
+	var bonus: SymbolData = sym.get("rune", null)
 	for i in range(REEL_STRIPS.size()):
 		var strip := ReelStrip.new()
 		for id in REEL_STRIPS[i]:
 			strip.symbols.append(sym[id])
+		# BONUS(잭팟 트리거) 심볼 1개 추가 — 매 릴에 1개씩(5매치 시 잭팟).
+		if bonus != null:
+			strip.symbols.append(bonus)
 		_save(strip, REEL_DIR + "reel_%d.tres" % i)
 		reels.append(strip)
 	return reels
@@ -107,7 +112,7 @@ func _build_paytable() -> Paytable:
 	p.free_spin_multiplier = 2.0
 	p.scatter_credit_mult_base = 2.0
 	p.scatter_credit_mult_per_extra = 1.0
-	p.bonus_line_jackpot = {}
+	p.bonus_line_jackpot = {5: 3}   # BONUS 심볼 5매치 시 GRAND(tier 3)
 	_save(p, PAYTABLE_PATH)
 	return p
 

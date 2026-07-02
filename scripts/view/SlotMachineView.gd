@@ -50,6 +50,9 @@ func _build_layout() -> void:
 	# 당첨 금액 플로팅 텍스트
 	var floating := FloatingText.new()
 	_reel_area.add_child(floating)
+	# 잭팟 전체화면 연출
+	var jackpot_fx := preload("res://scenes/slot/JackpotOverlay.tscn").instantiate()
+	add_child(jackpot_fx)
 	# HUD
 	var hud := preload("res://scenes/slot/HUD.tscn").instantiate()
 	add_child(hud)

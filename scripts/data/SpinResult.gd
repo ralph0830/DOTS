@@ -8,6 +8,7 @@ var scatter_win: int = 0                     # 스캐터 당첨 금액
 var scatter_count: int = 0                   # 등장한 스캐터 총 개수
 var free_spins_awarded: int = 0              # 이번 스핀으로 획득한 프리스핀 수
 var jackpot_tier: int = -1                   # 당첨된 잭팟 티어 (-1 = 없음; JackpotSystem.Tier 참조)
+var jackpot_amount: int = 0                  # 잭팟 당첨 금액(jackpot_tier >= 0 일 때)
 var winning_positions: Array[Vector2i] = []  # 모든 당첨 셀 (하이라이트/이펙트용)
 var grid: Array = []                         # 5x3 결과 그리드: grid[reel][row] = SymbolData
 

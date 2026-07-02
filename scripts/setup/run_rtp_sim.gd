@@ -34,6 +34,7 @@ func _ready() -> void:
 	var max_win := 0
 	var top_ups := 0
 
+	var match_dist := {3: 0, 4: 0, 5: 0}
 	for i in range(SPIN_COUNT):
 		if not sm.can_spin():
 			WalletManager.add_credit(1_000_000)   # 자금 부족 시 충전(측정에 영향 없음)
@@ -49,9 +50,13 @@ func _ready() -> void:
 				if _last_result.is_big_win(bet):
 					big_wins += 1
 				free_spins += _last_result.free_spins_awarded
+				for lw in _last_result.line_wins:
+					if match_dist.has(lw.match_count):
+						match_dist[lw.match_count] += 1
 			_last_result = null
 
 	_print_report(total_bet, total_win, wins, big_wins, free_spins, max_win, top_ups)
+	print("매치 분포: 3매치=%d / 4매치=%d / 5매치=%d" % [match_dist[3], match_dist[4], match_dist[5]])
 	get_tree().quit()
 
 

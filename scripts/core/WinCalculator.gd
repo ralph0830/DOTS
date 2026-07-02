@@ -7,7 +7,7 @@ extends RefCounted
 
 ## 기본 패스 시퀀스. 커스텀 패스를 evaluate() 의 passes 인자로 넘기면 대체/확장 가능.
 static func default_passes() -> Array:
-	return [LineEvaluationPass.new(), ScatterEvaluationPass.new()]
+	return [LineEvaluationPass.new(), ScatterEvaluationPass.new(), JackpotEvaluationPass.new()]
 
 
 ## 그리드를 평가해 SpinResult 반환.

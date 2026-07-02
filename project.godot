@@ -26,6 +26,7 @@ AudioManager="*res://autoload/AudioManager.gd"
 GameManager="*res://autoload/GameManager.gd"
 ParticleBudget="*res://scripts/effects/ParticleBudget.gd"
 SlowMotion="*res://scripts/effects/SlowMotion.gd"
+BonusManager="*res://scripts/systems/BonusManager.gd"
 
 [display]
 

@@ -61,3 +61,8 @@ func matches(target_symbol: SymbolData) -> bool:
 ## 스캐터 계열 심볼인지(ScatterMechanic 또는 그 서브클래스).
 func is_scatter() -> bool:
 	return effective_mechanic() is ScatterMechanic
+
+
+## 보너스 계열 심볼인지(BonusMechanic 또는 서브클래스 — 잭팟 트리거).
+func is_bonus() -> bool:
+	return effective_mechanic() is BonusMechanic
