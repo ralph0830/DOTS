@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SymbolData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/SymbolData.gd" id="1_p688x"]
+
+[resource]
+script = ExtResource("1_p688x")
+id = &"sapphire"
+display_name = "Sapphire"
+color = Color(0.15, 0.36, 0.95, 1)
+payout = PackedInt32Array(0, 0, 0, 4, 12, 30)

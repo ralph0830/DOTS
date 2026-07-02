@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- DOTS 프로젝트 임시 아이콘. 정식 아트 확정 후 교체 예정 -->
+  <rect x="4" y="4" width="120" height="120" rx="20" fill="#478cbf" stroke="#345070" stroke-width="4"/>
+  <circle cx="44" cy="64" r="12" fill="#ffffff"/>
+  <circle cx="84" cy="64" r="12" fill="#ffffff"/>
+  <line x1="56" y1="64" x2="72" y2="64" stroke="#ffffff" stroke-width="4"/>
+</svg>

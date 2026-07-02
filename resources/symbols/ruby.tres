@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SymbolData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/SymbolData.gd" id="1_52eeb"]
+
+[resource]
+script = ExtResource("1_52eeb")
+id = &"ruby"
+display_name = "Ruby"
+color = Color(0.86, 0.12, 0.2, 1)
+shape = 1
+payout = PackedInt32Array(0, 0, 0, 4, 12, 30)

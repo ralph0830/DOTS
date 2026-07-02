@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/view/ReelView.gd" id="1_reel"]
+
+[node name="Reel" type="Control"]
+custom_minimum_size = Vector2(140, 420)
+layout_mode = 3
+clip_contents = true
+script = ExtResource("1_reel")

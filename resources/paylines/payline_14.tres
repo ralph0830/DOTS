@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="Payline" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/Payline.gd" id="1_isjdm"]
+
+[resource]
+script = ExtResource("1_isjdm")
+id = 14
+row_per_reel = PackedInt32Array(2, 1, 2, 1, 2)
+debug_color = Color(0.39999986, 0.25, 1, 1)
