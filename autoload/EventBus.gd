@@ -14,6 +14,9 @@ signal celebration_finished()
 signal credit_changed(credit: int)
 signal bet_changed(bet: int)
 
+# --- 자동스핀 ---
+signal auto_spin_changed(enabled: bool)
+
 # --- 당첨 시각화 ---
 signal highlight_wins(result: SpinResult)      # 당첨 라인/셀 하이라이트 요청
 signal clear_highlights()

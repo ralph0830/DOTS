@@ -15,13 +15,19 @@ const PAYTABLE_PATH := PAYTABLE_DIR + "default_paytable.tres"
 const CONFIG_PATH := CONFIG_DIR + "default_slot.tres"
 
 # 5개 릴 스트립(각 30 심볼). 빈도 = 출현 확률 → RTP/변동성 결정.
-# 저배당(ruby/sapphire) 자주, emerald 보통, dragon 드물게, unicorn(Wild) 1개, chest(Scatter) 1개.
+# 밸런싱(Phase 5): 각 릴의 지배 심볼을 다르게 배치해 동일 심볼의 5릴 연속 매치 확률을 낮춤
+# (히트율 30~50% 달성). unicorn(Wild)/chest(Scatter) 1개씩, rune(Bonus)는 코드에서 별도 1개追加.
 const REEL_STRIPS: Array = [
-	["ruby", "sapphire", "emerald", "ruby", "sapphire", "emerald", "dragon", "ruby", "sapphire", "emerald", "ruby", "sapphire", "unicorn", "ruby", "sapphire", "emerald", "ruby", "sapphire", "dragon", "emerald", "ruby", "sapphire", "chest", "ruby", "emerald", "sapphire", "ruby", "emerald", "sapphire", "ruby"],
-	["sapphire", "ruby", "emerald", "sapphire", "emerald", "ruby", "sapphire", "dragon", "ruby", "emerald", "sapphire", "ruby", "emerald", "sapphire", "unicorn", "ruby", "sapphire", "emerald", "ruby", "dragon", "sapphire", "emerald", "ruby", "sapphire", "emerald", "ruby", "sapphire", "chest", "emerald", "ruby"],
-	["emerald", "ruby", "sapphire", "emerald", "ruby", "sapphire", "emerald", "ruby", "dragon", "sapphire", "emerald", "ruby", "sapphire", "emerald", "unicorn", "ruby", "sapphire", "emerald", "ruby", "dragon", "sapphire", "emerald", "ruby", "chest", "sapphire", "emerald", "ruby", "sapphire", "emerald", "ruby"],
-	["ruby", "emerald", "sapphire", "ruby", "emerald", "dragon", "sapphire", "ruby", "emerald", "sapphire", "ruby", "emerald", "unicorn", "sapphire", "ruby", "emerald", "sapphire", "ruby", "dragon", "emerald", "sapphire", "ruby", "emerald", "chest", "sapphire", "ruby", "emerald", "sapphire", "ruby", "emerald"],
-	["sapphire", "emerald", "ruby", "sapphire", "emerald", "ruby", "dragon", "sapphire", "emerald", "ruby", "sapphire", "emerald", "unicorn", "ruby", "sapphire", "emerald", "ruby", "sapphire", "dragon", "emerald", "ruby", "sapphire", "chest", "emerald", "ruby", "sapphire", "emerald", "ruby", "sapphire", "emerald"],
+	# 릴0: ruby 지배 + dragon 3개 균등
+	["ruby", "ruby", "ruby", "ruby", "dragon", "ruby", "ruby", "sapphire", "ruby", "ruby", "dragon", "emerald", "unicorn", "ruby", "ruby", "ruby", "sapphire", "ruby", "ruby", "dragon", "ruby", "ruby", "chest", "ruby", "ruby", "emerald", "ruby", "sapphire", "ruby", "ruby"],
+	# 릴1: sapphire 지배 + dragon 3개 균등
+	["sapphire", "sapphire", "sapphire", "ruby", "sapphire", "dragon", "sapphire", "sapphire", "emerald", "sapphire", "dragon", "sapphire", "sapphire", "unicorn", "sapphire", "ruby", "sapphire", "sapphire", "dragon", "sapphire", "sapphire", "emerald", "sapphire", "chest", "sapphire", "sapphire", "ruby", "sapphire", "sapphire", "dragon"],
+	# 릴2: emerald 지배 + dragon 3개
+	["emerald", "emerald", "emerald", "ruby", "emerald", "dragon", "sapphire", "emerald", "emerald", "emerald", "emerald", "dragon", "emerald", "emerald", "unicorn", "emerald", "emerald", "ruby", "emerald", "sapphire", "emerald", "dragon", "chest", "emerald", "emerald", "ruby", "emerald", "emerald", "sapphire", "emerald"],
+	# 릴3: ruby+sapphire 혼합 + dragon 3개
+	["ruby", "sapphire", "ruby", "dragon", "sapphire", "ruby", "sapphire", "ruby", "dragon", "sapphire", "ruby", "sapphire", "unicorn", "ruby", "dragon", "sapphire", "ruby", "sapphire", "ruby", "emerald", "sapphire", "ruby", "chest", "dragon", "sapphire", "ruby", "emerald", "sapphire", "ruby", "dragon"],
+	# 릴4: emerald+dragon 비중 (고배당 5매치 기회)
+	["emerald", "sapphire", "emerald", "dragon", "emerald", "sapphire", "emerald", "ruby", "dragon", "emerald", "emerald", "sapphire", "unicorn", "emerald", "dragon", "emerald", "ruby", "sapphire", "dragon", "emerald", "emerald", "sapphire", "chest", "dragon", "emerald", "ruby", "emerald", "dragon", "sapphire", "emerald"],
 ]
 
 # 20 페이라인 패턴 (각 값 = 행 인덱스 0/1/2, 길이 5)
@@ -55,11 +61,11 @@ func _ensure_dirs() -> void:
 func _build_symbols() -> Dictionary:
 	# id -> [kind, display_name, color, shape, payout 배열]
 	var defs := {
-		"ruby": [SymbolData.Kind.NORMAL, "Ruby", Color(0.86, 0.12, 0.20), SymbolData.Shape.DIAMOND, [0, 0, 0, 4, 12, 30]],
-		"sapphire": [SymbolData.Kind.NORMAL, "Sapphire", Color(0.15, 0.36, 0.95), SymbolData.Shape.CIRCLE, [0, 0, 0, 4, 12, 30]],
-		"emerald": [SymbolData.Kind.NORMAL, "Emerald", Color(0.10, 0.78, 0.42), SymbolData.Shape.HEX, [0, 0, 0, 5, 15, 40]],
-		"dragon": [SymbolData.Kind.NORMAL, "Dragon", Color(0.62, 0.15, 0.78), SymbolData.Shape.STAR, [0, 0, 0, 12, 60, 400]],
-		"unicorn": [SymbolData.Kind.WILD, "Unicorn (Wild)", Color(0.95, 0.85, 1.0), SymbolData.Shape.STAR, [0, 0, 0, 12, 60, 400]],
+		"ruby": [SymbolData.Kind.NORMAL, "Ruby", Color(0.86, 0.12, 0.20), SymbolData.Shape.DIAMOND, [0, 0, 0, 6, 20, 60]],
+		"sapphire": [SymbolData.Kind.NORMAL, "Sapphire", Color(0.15, 0.36, 0.95), SymbolData.Shape.CIRCLE, [0, 0, 0, 6, 20, 60]],
+		"emerald": [SymbolData.Kind.NORMAL, "Emerald", Color(0.10, 0.78, 0.42), SymbolData.Shape.HEX, [0, 0, 0, 9, 30, 100]],
+		"dragon": [SymbolData.Kind.NORMAL, "Dragon", Color(0.62, 0.15, 0.78), SymbolData.Shape.STAR, [0, 0, 0, 30, 345, 2350]],
+		"unicorn": [SymbolData.Kind.WILD, "Unicorn (Wild)", Color(0.95, 0.85, 1.0), SymbolData.Shape.STAR, [0, 0, 0, 30, 345, 2350]],
 		"chest": [SymbolData.Kind.SCATTER, "Chest (Scatter)", Color(1.0, 0.80, 0.15), SymbolData.Shape.SQUARE, [0, 0, 0, 0, 0, 0]],
 		"rune": [SymbolData.Kind.BONUS, "Rune (Bonus)", Color(0.95, 0.6, 1.0), SymbolData.Shape.TRIANGLE, [0, 0, 0, 0, 0, 0]],
 	}

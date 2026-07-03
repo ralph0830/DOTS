@@ -8,4 +8,4 @@ id = &"dragon"
 display_name = "Dragon"
 color = Color(0.62, 0.15, 0.78, 1)
 shape = 4
-payout = PackedInt32Array(0, 0, 0, 12, 60, 400)
+payout = PackedInt32Array(0, 0, 0, 30, 345, 2350)

@@ -9,4 +9,4 @@ kind = 1
 display_name = "Unicorn (Wild)"
 color = Color(0.95, 0.85, 1, 1)
 shape = 4
-payout = PackedInt32Array(0, 0, 0, 12, 60, 400)
+payout = PackedInt32Array(0, 0, 0, 30, 345, 2350)

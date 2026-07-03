@@ -17,6 +17,7 @@ var _reel_area_origin: Vector2 = Vector2.ZERO   # 진동 후 복원용
 var _grid: Array = []
 var _next_stop: int = -1
 var _stop_timer: float = 0.0
+var _auto_spin := false
 
 
 func _ready() -> void:
@@ -28,6 +29,8 @@ func _ready() -> void:
 	EventBus.spin_requested.connect(_on_spin_requested)
 	EventBus.highlight_wins.connect(_on_highlight)
 	EventBus.big_win.connect(_on_big_win)
+	EventBus.auto_spin_changed.connect(_on_auto_changed)
+	EventBus.evaluation_completed.connect(_on_eval_auto)
 
 
 func _build_layout() -> void:
@@ -146,3 +149,40 @@ func _on_big_win(amount: int) -> void:
 		var off := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * amplitude
 		tween.tween_property(_reel_area, "position", _reel_area_origin + off, 0.04)
 	tween.tween_property(_reel_area, "position", _reel_area_origin, 0.1).set_trans(Tween.TRANS_QUAD)
+
+
+# --- 자동스핀 / 프리스핀 연쇄 ---
+
+## 자동스핀 토글 수신. 켜질 때 즉시 다음 스핀 시도(IDLE 상태면).
+func _on_auto_changed(enabled: bool) -> void:
+	_auto_spin = enabled
+	if enabled:
+		_maybe_auto_spin()
+
+
+## 평가 완료 후 자동스핀 또는 프리스핀 잔여 시 다음 스핀 예약.
+func _on_eval_auto(_r: SpinResult) -> void:
+	if not (_auto_spin or _free_spins_active()):
+		return
+	await get_tree().create_timer(0.9).timeout   # 당첨 연출 관찰 시간
+	_maybe_auto_spin()
+
+
+## 조건(IDLE + 자금 또는 프리스핀)이 맞으면 다음 스핀 요청.
+func _maybe_auto_spin() -> void:
+	if _core == null or _core.state != SlotMachine.State.IDLE:
+		return
+	if _free_spins_active():
+		EventBus.spin_requested.emit()
+	elif _auto_spin and WalletManager.can_bet():
+		EventBus.spin_requested.emit()
+	elif _auto_spin and not WalletManager.can_bet():
+		# 자금 부족 → 자동스핀 정지(HUD 버튼도 해제 동기화).
+		_auto_spin = false
+		EventBus.auto_spin_changed.emit(false)
+
+
+## 프리스핀이 진행 중(잔여 횟수 > 0)인지.
+func _free_spins_active() -> bool:
+	var bm := get_node_or_null("/root/BonusManager")
+	return bm != null and bm.has_method("is_free_spin") and bm.is_free_spin()
