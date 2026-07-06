@@ -24,6 +24,8 @@ var _stop_timer: float = 0.0
 var _auto_remaining := 0
 var _auto_start_credit := 0   # 자동스핀 시작 시점 크레딧 (손실 한도 계산용)
 const AUTO_LOSS_RATIO := 0.5   # 시작 크레딧의 50% 손실 시 자동 정지
+# Phase 7: 전투 필드 (상단 전투 영역에 배치)
+var _battle_field: BattleField
 
 
 func _ready() -> void:
@@ -51,6 +53,10 @@ func _build_layout() -> void:
 	# Phase 7: 상단 전투 영역 (1080×1056px) — 배경 위, 릴 아래.
 	var battle := BattleFieldView.new()
 	add_child(battle)
+	# Phase 7: 전투 필드 (Node2D) — 유닛/적이 실제로 배치되는 전투 좌표계.
+	_battle_field = BattleField.new()
+	_battle_field.name = "BattleField"
+	add_child(_battle_field)
 	# 릴 영역 (하단 슬롯 영역 내 배치)
 	_reel_area = Control.new()
 	_reel_area.name = "ReelArea"
