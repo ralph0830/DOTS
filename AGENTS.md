@@ -1,0 +1,122 @@
+# AGENTS.md — DOTS
+
+Project-specific guidance for ZCode agents working in this repository.
+
+## What this is
+
+DOTS is a **Godot 4.7 (GDScript) 2D slot-machine game**. Mobile-first portrait layout
+(design 1080×1920, test 540×960), `gl_compatibility` renderer (desktop **and** mobile).
+Main scene: `res://scenes/slot/SlotMachine.tscn`. 5 reels × 3 rows, 20 paylines, left-to-right matching, min 3 to win.
+
+## Running
+
+- **Editor:** `run_godot.bat` (expects Godot installed via `winget install GodotEngine.GodotEngine`).
+  Opens the project at `%LOCALAPPDATA%\...\GodotEngine.GodotEngine_...`.
+- **No Godot CLI/build pipeline is wired into package.json or CI** — run via the editor or `godot.exe` directly.
+- Headless scripts are invoked as:
+  `godot --headless --path <project> res://scenes/setup/<Scene>.tscn` (RTP sim) or
+  `godot --headless --script res://scripts/setup/<script>.gd --path <project>` (data gen).
+
+### Verification (there is no formal test framework — these are the test tools)
+
+| Tool | Scene / Script | Purpose |
+|------|----------------|---------|
+| Generate data | `scripts/setup/generate_default_data.gd` (SceneTree script) | Regenerates **all** `.tres` under `resources/`. Re-run after balance changes. |
+| RTP sim | `scenes/setup/SimScene.tscn` (`scripts/setup/run_rtp_sim.gd`) | 100k headless spins; prints RTP/hit-rate. Acceptable band **85–105%**, tune target **92–96%**. |
+| Capture | `scenes/setup/CaptureTest.tscn` (`scripts/setup/run_capture_test.gd`) | GUI run, saves `captures/spin_N.png` (gitignored). |
+| View flow | `scenes/setup/ViewTest.tscn` (`scripts/setup/run_view_test.gd`) | Editor (F5) run; headless frame-limit can drop evaluations. |
+
+`generate_default_data.gd` deliberately does **not** depend on autoloads — on first run
+`GameConfig` will print a "default_slot.tres not found" error that is safe to ignore.
+
+## Directory layout & layer rules
+
+```
+autoload/        Singletons (registered in project.godot [autoload])
+scripts/
+  core/          Pure game logic. NO scene tree / view coupling.
+                 SlotMachine.gd       – spin state machine (IDLE/SPINNING/STOPPING/EVALUATING)
+                 WinCalculator.gd     – runs EvaluationPass chain
+                 SpinEvaluator.gd     – single-payline evaluation
+                 passes/              – EvaluationPass subclasses (Line/Scatter/Jackpot)
+  data/          Resource data classes (SlotConfig, SymbolData, ReelStrip, Payline, Paytable,
+                 SpinResult, LineWin) + mechanics/ (SymbolMechanic subclasses per Kind)
+  data/mechanics/ SymbolMechanic plugins — Normal/Wild/Scatter/Bonus
+  view/          UI: SlotMachineView (orchestrator), ReelView, SymbolView, PaylineOverlay, HUD
+  effects/       BackgroundFX, WinEffects, FloatingText, JackpotFX, CameraShake,
+                 ParticleBudget, SlowMotion (last two are also autoloads)
+  systems/       BonusManager (free-spin state machine; also an autoload)
+  setup/         Data-gen + test harness scripts (above)
+resources/       Generated .tres: config/, symbols/, reels/, paylines/, paytables/
+scenes/          slot/ (game), setup/ (test harnesses), Main.tscn
+assets/          audio/, fonts/, shaders/, sprites/ (currently placeholder only)
+```
+
+**Coupling rule:** Core talks to the outside world **only via `EventBus` signals** and autoload
+singletons. View/Effects/Audio **connect** to `EventBus`; they never reach into core objects
+directly except `SlotMachineView` owning its `SlotMachine`. When adding features, emit/consume
+signals rather than passing references.
+
+### Critical evaluation ordering
+
+In `SlotMachine._evaluate()`, `evaluation_completed` is emitted **before** `WalletManager.add_win`.
+This lets `BonusManager` (an autoload listener) apply the free-spin multiplier to `SpinResult.total_win`
+*in place* before the win is credited. Do not reorder these without updating `BonusManager._on_eval`.
+
+### Singleton autoloads (project.godot)
+
+`GameConfig`, `EventBus`, `WalletManager`, `JackpotSystem`, `AudioManager`, `GameManager`,
+`ParticleBudget`, `SlowMotion`, `BonusManager`.
+
+> **Naming gotcha:** Autoload scripts that would collide with a `class_name` (e.g. `SlotConfig`)
+> intentionally omit `class_name` and are referenced by their **autoload node name** (e.g.
+> `GameConfig`, `BonusManager`). `BonusManager` is registered from `scripts/systems/`, not `autoload/`.
+
+## Extension points (prefer these over of editing core)
+
+- **New eval rule** (Ways-to-win, Cascade, Cluster…): subclass `EvaluationPass`, implement
+  `process(result, ctx)`, add to `WinCalculator.default_passes()`. `ctx` keys:
+  `grid, paylines, paytable, bet, line_bet, free_multiplier, payline_count`.
+- **New symbol behavior** (ExpandingWild, Multiplier, Sticky…): subclass `SymbolMechanic`,
+  override the 4 query methods, assign an instance to `SymbolData.mechanic`. `SpinEvaluator`
+  stays untouched — it never switches on `SymbolData.Kind` directly.
+- **Result post-processing**: register a `Callable` via `SlotMachine.add_result_modifier(cb)`
+  (called on the `SpinResult` in place, after passes, before `evaluation_completed`).
+
+## Persistence
+
+- `user://wallet.save` — credit + total_won (`WalletManager`, ConfigFile).
+- `user://jackpot.save` — 4-tier (Mini/Minor/Major/Grand) progressive pools (`JackpotSystem`).
+Both load on `_ready()`, save on every mutation **only after** `initialize()` has run.
+
+## Conventions
+
+- **Comments and docstrings are written in Korean** (GDScript `##` headers). Match this when editing.
+- Typed code: use `class_name`, typed arrays (`Array[ReelStrip]`), `PackedInt32Array`/`PackedFloat32Array`.
+  Note typed arrays cannot be assigned a plain `Array` directly — convert explicitly (see `generate_default_data.gd`).
+- Symbols: `ruby/sapphire/emerald` (normal), `dragon` (high-pay normal), `unicorn` (Wild),
+  `chest` (Scatter → free spins), `rune` (Bonus → jackpot trigger, appended 1 per reel by the data-gen).
+- `.tres` resources are **generated**, not hand-edited for balance — change constants in
+  `generate_default_data.gd` (`REEL_STRIPS`, `PAYLINES`, payout arrays, paytable) and regenerate.
+- Renderer **must stay `gl_compatibility`** for both desktop and mobile — keep shaders/assets compatible.
+- Godot `.uid` files and `.godot/` (the latter is gitignored) are engine-managed; don't hand-edit.
+
+## Mobile testing (Android)
+
+- APK debug build: `export_presets.cfg` (preset "Android Debug", Gradle disabled for speed).
+- Full setup + install guide: see **`docs/MOBILE_TEST_GUIDE.md`**.
+- Build via `DOTS_test.bat` [6], install to phone via [7] (requires USB debugging + USB connection).
+- Package name: `com.ralph.dots`. Output: `build/DOTS-debug.apk` (~58MB).
+
+## Asset generation (ComfyUI)
+
+- Pixel-art symbols are generated via a ComfyUI pipeline on `ralph@ralphpark.com:2202` (user-owned server).
+- Scripts: `tools/comfyui/` (`comfy_gem.py` = single symbol, `comfy_dots_symbols.py` = batch 7).
+- Full workflow (SSH access, API control, prompts, troubleshooting): see **`docs/COMFYUI_GUIDE.md`**.
+- Generated PNGs go in `assets/sprites/{id}_transparent_180.png`; `generate_default_data.gd` auto-loads
+  them into `SymbolData.texture` (null → procedural shape fallback).
+
+## Git
+
+- `.godot/`, `captures/`, `*.translation`, IDE dirs are gitignored.
+- Recent work is in Korean commit messages (`feat: Phase N …`). Branch: `main`.
