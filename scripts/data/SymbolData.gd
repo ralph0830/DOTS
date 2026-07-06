@@ -15,8 +15,11 @@ enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX, KNIGHT, ARCHER, MAGE,
 @export var display_name: String = ""                  # UI 표시명
 @export var color: Color = Color.WHITE                 # 플레이스홀더 도형 색상
 @export var shape: Shape = Shape.CIRCLE                # 플레이스홀더 도형 모양
-## 지불표: 인덱스 = 매치 수. payout[3]/payout[4]/payout[5] 사용 (배수 = 베팅 대비).
-@export var payout: PackedInt32Array = [0, 0, 0, 0, 0, 0]
+## 지불표: 3/4/5매치 당첨 배수. PackedInt32Array 대신 개별 int로 분해
+## (Godot 4.7 바이너리 export 시 PackedInt32Array 직렬화 손실 버그 회피).
+@export var payout_3: int = 0
+@export var payout_4: int = 0
+@export var payout_5: int = 0
 ## ★에셋 교체 포인트: null이면 프로시저럴 도형, 텍스처 할당 시 자동 적용.
 @export var texture: Texture2D
 ## Phase 7: 매칭 시 소환할 유닛 ID (빈 값 = 유닛 미매핑/순수 크레딧 심볼).
@@ -27,11 +30,18 @@ enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX, KNIGHT, ARCHER, MAGE,
 @export var mechanic: SymbolMechanic
 
 
+## 호환용 payout 배열 반환 (기존 코드 호환). payout_3/4/5를 합쳐서 반환.
+func get_payout_array() -> PackedInt32Array:
+	return PackedInt32Array([0, 0, 0, payout_3, payout_4, payout_5])
+
+
 ## 주어진 매치 수(3/4/5)에 대한 배수를 반환. 범위 밖이면 0.
 func get_payout(match_count: int) -> int:
-	if match_count < 0 or match_count >= payout.size():
-		return 0
-	return payout[match_count]
+	match match_count:
+		3: return payout_3
+		4: return payout_4
+		5: return payout_5
+	return 0
 
 
 ## 이 심볼이 라인 지불 대상인지 (일반 심볼만). 메카닉 기반.

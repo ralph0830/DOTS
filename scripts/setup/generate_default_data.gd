@@ -68,16 +68,15 @@ func _ensure_dirs() -> void:
 
 
 func _build_symbols() -> Dictionary:
-	# Phase 8: 유닛 4종. id -> [kind, display_name, color, shape, payout 배열, unit_id]
+	# Phase 8: 유닛 4종. id -> [kind, display_name, color, shape, payout_3, payout_4, payout_5, unit_id]
 	# knight=기사(탱커,파랑), archer=궁수(딜러,초록), mage=마법사(딜러,보라), skull=해골(꽝,회색).
-	# payout: [0,0,0, 3매치, 4매치, 5매치]. skull은 꽝이라 payout 0 (매칭은 됨).
-	# unit_id: 매칭 시 소환할 유닛. skull은 소환 없음(빈 문자열) → UnitSpawner가 꽝 보정 미니언.
-	# Phase 8 밸런스: 4종 축소로 히트율 ~47%. payout 배수 조정으로 RTP 92~96% 목표.
+	# payout_3/4/5: 3/4/5매치 당첨 배수. skull은 꽝이라 payout 최소 (매칭은 됨).
+	# PackedInt32Array 대신 개별 int (Godot 4.7 모바일 export 직렬화 버그 회피).
 	var defs := {
-		"knight": [SymbolData.Kind.NORMAL, "Knight", Color(0.25, 0.55, 0.95), SymbolData.Shape.KNIGHT, [0, 0, 0, 6, 20, 60], &"knight"],
-		"archer": [SymbolData.Kind.NORMAL, "Archer", Color(0.30, 0.85, 0.45), SymbolData.Shape.ARCHER, [0, 0, 0, 5, 15, 45], &"archer"],
-		"mage":   [SymbolData.Kind.NORMAL, "Mage",   Color(0.70, 0.35, 0.95), SymbolData.Shape.MAGE,   [0, 0, 0, 8, 25, 80], &"mage"],
-		"skull":  [SymbolData.Kind.NORMAL, "Skull",  Color(0.65, 0.65, 0.70), SymbolData.Shape.SKULL,  [0, 0, 0, 1, 2, 3], &"skull"],
+		"knight": [SymbolData.Kind.NORMAL, "Knight", Color(0.25, 0.55, 0.95), SymbolData.Shape.KNIGHT, 6, 20, 60, &"knight"],
+		"archer": [SymbolData.Kind.NORMAL, "Archer", Color(0.30, 0.85, 0.45), SymbolData.Shape.ARCHER, 5, 15, 45, &"archer"],
+		"mage":   [SymbolData.Kind.NORMAL, "Mage",   Color(0.70, 0.35, 0.95), SymbolData.Shape.MAGE, 8, 25, 80, &"mage"],
+		"skull":  [SymbolData.Kind.NORMAL, "Skull",  Color(0.65, 0.65, 0.70), SymbolData.Shape.SKULL, 1, 2, 3, &"skull"],
 	}
 	var out := {}
 	for id in defs:
@@ -88,8 +87,10 @@ func _build_symbols() -> Dictionary:
 		s.display_name = d[1]
 		s.color = d[2]
 		s.shape = d[3]
-		s.payout = PackedInt32Array(d[4])
-		s.unit_id = d[5]
+		s.payout_3 = d[4]
+		s.payout_4 = d[5]
+		s.payout_5 = d[6]
+		s.unit_id = d[7]
 		# 에셋 교체: assets/sprites/{id}_transparent_180.png 가 있으면 texture 로드.
 		# null이면 프로시저럴 도형(SymbolView._draw) 폴백. 텍스처 할당 시 자동으로 실제 아트 적용.
 		var tex_path := "res://assets/sprites/%s_transparent_180.png" % id
