@@ -8,5 +8,5 @@ id = &"mage"
 display_name = "Mage"
 color = Color(0.7, 0.35, 0.95, 1)
 shape = 8
-payout = PackedInt32Array(0, 0, 0, 30, 100, 350)
+payout = PackedInt32Array(0, 0, 0, 8, 25, 80)
 unit_id = &"mage"

@@ -14,21 +14,29 @@ const CONFIG_DIR := "res://resources/config/"
 const PAYTABLE_PATH := PAYTABLE_DIR + "default_paytable.tres"
 const CONFIG_PATH := CONFIG_DIR + "default_slot.tres"
 
-# 5개 릴 스트립(각 30 심볼). 빈도 = 출현 확률 → RTP/변동성 결정.
+# 5개 릴 스트립(각 20 심볼). 빈도 = 출현 확률 → RTP/변동성 결정.
 # Phase 8: 유닛 4종(knight/archer/mage/skull)만 배치. Wild/Scatter/Bonus 제거.
-# 4종끼리만 매칭 → 3매치 확률 ~40% (기존 7종 대비 4배 상승). skull=꽝(매칭은 되나 payout 0).
-# 각 릴마다 지배 심볼을 다르게 배치해 5릴 연속 동일 매치(과도한 빅윈)를 억제.
+# 핵심: 모든 릴이 4종을 "동일 비율"로 배치 → 어떤 심볼이든 5개 릴에서
+# 같은 행에 나올 확률이 균등 → 왼쪽부터 연속 매칭(3/4/5)이 자주 발생.
+# skull(꽝)은 비율을 약간 낮게 (15%) — 매칭은 되지만 payout 최소.
 const REEL_STRIPS: Array = [
-	# 릴0: knight 지배 + skull 꽝 다수 (탱커 라인)
-	["knight", "knight", "skull", "knight", "archer", "knight", "skull", "knight", "mage", "knight", "knight", "skull", "knight", "archer", "knight", "skull", "knight", "knight", "mage", "knight", "skull", "knight", "archer", "knight", "skull", "knight", "knight", "mage", "knight", "skull"],
-	# 릴1: archer 지배
-	["archer", "skull", "archer", "archer", "knight", "archer", "skull", "archer", "mage", "archer", "skull", "archer", "archer", "knight", "archer", "skull", "archer", "archer", "mage", "archer", "skull", "archer", "knight", "archer", "skull", "archer", "mage", "archer", "skull", "archer"],
-	# 릴2: mage 지배 (마법사 라인 — 중앙 릴)
-	["mage", "archer", "mage", "skull", "mage", "knight", "mage", "skull", "mage", "mage", "archer", "mage", "skull", "mage", "knight", "mage", "skull", "mage", "archer", "mage", "skull", "mage", "mage", "knight", "mage", "skull", "mage", "archer", "mage", "skull"],
-	# 릴3: archer+knight 혼합
-	["archer", "knight", "archer", "skull", "knight", "archer", "mage", "skull", "archer", "knight", "archer", "skull", "mage", "knight", "archer", "skull", "knight", "archer", "skull", "mage", "archer", "knight", "skull", "archer", "knight", "mage", "skull", "archer", "knight", "skull"],
-	# 릴4: knight+mage 비중 (고배당 5매치 기회)
-	["knight", "mage", "knight", "skull", "knight", "archer", "mage", "knight", "skull", "knight", "mage", "archer", "knight", "skull", "mage", "knight", "archer", "skull", "knight", "mage", "knight", "skull", "mage", "archer", "knight", "skull", "knight", "mage", "archer", "skull"],
+	# 릴0~4 모두 동일 패턴: knight/archer/mage 균등 + skull 약간 적게.
+	# 20칸 = knight 6, archer 6, mage 5, skull 3.
+	["knight", "archer", "mage", "knight", "archer", "skull", "mage", "knight",
+	 "archer", "mage", "knight", "archer", "mage", "knight", "archer", "mage",
+	 "knight", "skull", "mage", "skull"],
+	["archer", "mage", "knight", "archer", "mage", "knight", "skull", "archer",
+	 "mage", "knight", "archer", "mage", "knight", "archer", "skull", "mage",
+	 "knight", "archer", "mage", "skull"],
+	["mage", "knight", "archer", "mage", "knight", "archer", "mage", "skull",
+	 "knight", "archer", "mage", "knight", "archer", "mage", "knight", "skull",
+	 "archer", "mage", "knight", "skull"],
+	["knight", "archer", "mage", "knight", "skull", "archer", "mage", "knight",
+	 "archer", "mage", "knight", "archer", "skull", "mage", "knight", "archer",
+	 "mage", "knight", "skull", "mage"],
+	["archer", "mage", "knight", "archer", "mage", "knight", "archer", "mage",
+	 "skull", "knight", "archer", "mage", "knight", "archer", "mage", "knight",
+	 "skull", "archer", "mage", "skull"],
 ]
 
 # 20 페이라인 패턴 (각 값 = 행 인덱스 0/1/2, 길이 5)
@@ -66,9 +74,9 @@ func _build_symbols() -> Dictionary:
 	# unit_id: 매칭 시 소환할 유닛. skull은 소환 없음(빈 문자열) → UnitSpawner가 꽝 보정 미니언.
 	# Phase 8 밸런스: 4종 축소로 히트율 ~47%. payout 배수 조정으로 RTP 92~96% 목표.
 	var defs := {
-		"knight": [SymbolData.Kind.NORMAL, "Knight", Color(0.25, 0.55, 0.95), SymbolData.Shape.KNIGHT, [0, 0, 0, 25, 80, 250], &"knight"],
-		"archer": [SymbolData.Kind.NORMAL, "Archer", Color(0.30, 0.85, 0.45), SymbolData.Shape.ARCHER, [0, 0, 0, 20, 60, 180], &"archer"],
-		"mage":   [SymbolData.Kind.NORMAL, "Mage",   Color(0.70, 0.35, 0.95), SymbolData.Shape.MAGE,   [0, 0, 0, 30, 100, 350], &"mage"],
+		"knight": [SymbolData.Kind.NORMAL, "Knight", Color(0.25, 0.55, 0.95), SymbolData.Shape.KNIGHT, [0, 0, 0, 6, 20, 60], &"knight"],
+		"archer": [SymbolData.Kind.NORMAL, "Archer", Color(0.30, 0.85, 0.45), SymbolData.Shape.ARCHER, [0, 0, 0, 5, 15, 45], &"archer"],
+		"mage":   [SymbolData.Kind.NORMAL, "Mage",   Color(0.70, 0.35, 0.95), SymbolData.Shape.MAGE,   [0, 0, 0, 8, 25, 80], &"mage"],
 		"skull":  [SymbolData.Kind.NORMAL, "Skull",  Color(0.65, 0.65, 0.70), SymbolData.Shape.SKULL,  [0, 0, 0, 1, 2, 3], &"skull"],
 	}
 	var out := {}

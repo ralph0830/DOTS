@@ -139,10 +139,28 @@ id = &"knight"
 display_name = "Knight"
 color = Color(0.25, 0.55, 0.95, 1)
 shape = 6
-payout = PackedInt32Array(0, 0, 0, 25, 80, 250)
+payout = PackedInt32Array(0, 0, 0, 6, 20, 60)
 unit_id = &"knight"
 
 [sub_resource type="Resource" id="Resource_vcues"]
+script = ExtResource("4_ue4t6")
+id = &"archer"
+display_name = "Archer"
+color = Color(0.3, 0.85, 0.45, 1)
+shape = 7
+payout = PackedInt32Array(0, 0, 0, 5, 15, 45)
+unit_id = &"archer"
+
+[sub_resource type="Resource" id="Resource_ml1g4"]
+script = ExtResource("4_ue4t6")
+id = &"mage"
+display_name = "Mage"
+color = Color(0.7, 0.35, 0.95, 1)
+shape = 8
+payout = PackedInt32Array(0, 0, 0, 8, 25, 80)
+unit_id = &"mage"
+
+[sub_resource type="Resource" id="Resource_j0nq8"]
 script = ExtResource("4_ue4t6")
 id = &"skull"
 display_name = "Skull"
@@ -151,48 +169,30 @@ shape = 9
 payout = PackedInt32Array(0, 0, 0, 1, 2, 3)
 unit_id = &"skull"
 
-[sub_resource type="Resource" id="Resource_ml1g4"]
-script = ExtResource("4_ue4t6")
-id = &"archer"
-display_name = "Archer"
-color = Color(0.3, 0.85, 0.45, 1)
-shape = 7
-payout = PackedInt32Array(0, 0, 0, 20, 60, 180)
-unit_id = &"archer"
-
-[sub_resource type="Resource" id="Resource_j0nq8"]
-script = ExtResource("4_ue4t6")
-id = &"mage"
-display_name = "Mage"
-color = Color(0.7, 0.35, 0.95, 1)
-shape = 8
-payout = PackedInt32Array(0, 0, 0, 30, 100, 350)
-unit_id = &"mage"
-
 [sub_resource type="Resource" id="Resource_vm7t8"]
 script = ExtResource("3_p6sp4")
-symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues")])
+symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 
 [sub_resource type="Resource" id="Resource_dmpss"]
 script = ExtResource("3_p6sp4")
-symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4")])
+symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 
 [sub_resource type="Resource" id="Resource_ugmm7"]
 script = ExtResource("3_p6sp4")
-symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues")])
+symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8")])
 
 [sub_resource type="Resource" id="Resource_a3ce8"]
 script = ExtResource("3_p6sp4")
-symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues")])
+symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4")])
 
 [sub_resource type="Resource" id="Resource_ahlhg"]
 script = ExtResource("3_p6sp4")
-symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues")])
+symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 
 [resource]
 script = ExtResource("5_58c5j")
 base_bet_steps = PackedFloat32Array(10, 25, 50, 100, 250, 500)
 reels = Array[ExtResource("3_p6sp4")]([SubResource("Resource_vm7t8"), SubResource("Resource_dmpss"), SubResource("Resource_ugmm7"), SubResource("Resource_a3ce8"), SubResource("Resource_ahlhg")])
-symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues")])
+symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 paytable = SubResource("Resource_ctg16")
 paylines = Array[ExtResource("1_qlbk2")]([SubResource("Resource_vvnye"), SubResource("Resource_vplpe"), SubResource("Resource_63mc7"), SubResource("Resource_or823"), SubResource("Resource_m1r14"), SubResource("Resource_8secf"), SubResource("Resource_ewiff"), SubResource("Resource_qd1wa"), SubResource("Resource_iod01"), SubResource("Resource_qktj7"), SubResource("Resource_12suu"), SubResource("Resource_w28li"), SubResource("Resource_jfwdd"), SubResource("Resource_u774b"), SubResource("Resource_s6uy7"), SubResource("Resource_5bvnk"), SubResource("Resource_pjk1h"), SubResource("Resource_y7a5v"), SubResource("Resource_qih66"), SubResource("Resource_l2f7h")])

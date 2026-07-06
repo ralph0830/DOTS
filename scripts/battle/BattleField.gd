@@ -12,11 +12,30 @@ const BASE_MAX_HP := 100
 
 var base_hp: int = BASE_MAX_HP        # 아군 기지(좌단) 체력
 var enemy_base_hp: int = BASE_MAX_HP  # 적 기지(우단) 체력 — 아군이 우단 도달 시 타격
+var _game_over: bool = false          # 게임 종료 플래그 (중복 game_over emit 방지)
 
 
 func _ready() -> void:
 	# 초기 HP 동기화 (UI가 리스너 붙기 전일 수 있으니 call_deferred).
 	call_deferred("_emit_hp")
+	EventBus.game_over.connect(_on_game_over)
+
+
+## 게임 종료 수신 — 중복 emit 방지용 플래그. 리스타트는 reset_run() 으로.
+func _on_game_over(_victory: bool) -> void:
+	_game_over = true
+
+
+## 런 리스타트 (새 게임). HP/플래그 리셋 + 필드 정리.
+func reset_run() -> void:
+	_game_over = false
+	base_hp = BASE_MAX_HP
+	enemy_base_hp = BASE_MAX_HP
+	for child in get_children():
+		if child is Unit:
+			child.queue_free()
+	_emit_hp()
+	EventBus.base_hp_changed.emit(base_hp, BASE_MAX_HP, enemy_base_hp, BASE_MAX_HP)
 
 
 ## 아군 유닛 소환 (좌단에서).
@@ -41,6 +60,8 @@ func spawn_enemy(unit_data: UnitData) -> Unit:
 
 ## 아군 기지 피해 (적이 좌단 도달 시).
 func damage_base(amount: int) -> void:
+	if _game_over:
+		return
 	base_hp = maxi(0, base_hp - amount)
 	EventBus.base_damaged.emit(amount)
 	_emit_hp()
@@ -50,6 +71,8 @@ func damage_base(amount: int) -> void:
 
 ## 적 기지 피해 (아군이 우단 도달 시). 적 기지 0 이면 승리.
 func damage_enemy_base(amount: int) -> void:
+	if _game_over:
+		return
 	enemy_base_hp = maxi(0, enemy_base_hp - amount)
 	_emit_hp()
 	if enemy_base_hp <= 0:
@@ -62,6 +85,8 @@ func _emit_hp() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if _game_over:
+		return
 	# 적이 아군 기지(x < 20)에 도달하면 기지 피해
 	for child in get_children():
 		if not (child is Unit) or not child._alive:

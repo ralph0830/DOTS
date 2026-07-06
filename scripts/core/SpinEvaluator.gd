@@ -37,15 +37,15 @@ static func evaluate_line(grid: Array, payline: Payline) -> LineWin:
 
 	if match_count < MIN_MATCH:
 		return null
-	var amount := target.get_payout(match_count)
-	if amount <= 0:
+	var amount2 := target.get_payout(match_count)
+	if amount2 <= 0:
 		return null
 
 	var lw := LineWin.new()
 	lw.payline_id = payline.id
 	lw.symbol_id = target.id
 	lw.match_count = match_count
-	lw.amount = amount
+	lw.amount = amount2
 	lw.positions = positions
 	return lw
 

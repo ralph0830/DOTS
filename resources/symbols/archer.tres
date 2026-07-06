@@ -8,5 +8,5 @@ id = &"archer"
 display_name = "Archer"
 color = Color(0.3, 0.85, 0.45, 1)
 shape = 7
-payout = PackedInt32Array(0, 0, 0, 20, 60, 180)
+payout = PackedInt32Array(0, 0, 0, 5, 15, 45)
 unit_id = &"archer"

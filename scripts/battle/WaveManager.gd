@@ -104,6 +104,16 @@ func _on_game_over(_victory: bool) -> void:
 	set_physics_process(false)   # 게임 종료 시 WAVE 정지
 
 
+## 런 리스타트 (GameOverOverlay 에서 호출). WAVE 1부터 재개.
+func restart() -> void:
+	_wave_num = 0
+	_wave_timer = -3.0   # 첫 WAVE 전 3초 대기
+	_spawn_timer = 0.0
+	_enemies_to_spawn = 0
+	_enemy_killed_in_wave = 0
+	set_physics_process(true)
+
+
 func _get_battle_field() -> BattleField:
 	var smv := get_tree().get_first_node_in_group(&"slot_machine_view") if get_tree().has_group(&"slot_machine_view") else null
 	if smv != null and smv.has_node("BattleField"):

@@ -80,6 +80,9 @@ func _build_layout() -> void:
 	# HUD
 	var hud := preload("res://scenes/slot/HUD.tscn").instantiate()
 	add_child(hud)
+	# Phase 8: 게임오버/승리 오버레이 (탭 시 리스타트)
+	var game_over_overlay := GameOverOverlay.new()
+	add_child(game_over_overlay)
 
 
 func _setup_core() -> void:

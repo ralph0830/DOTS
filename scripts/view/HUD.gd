@@ -7,6 +7,8 @@ extends CanvasLayer
 const BTN_MIN := Vector2(120.0, 120.0)   # 모바일 터치 최소 권장(88px)보다 큼
 const SPIN_SIZE := Vector2(300.0, 160.0)
 const MARGIN := 40.0
+# DEBUG: CREDIT 탭 시 증가량 (디버그 머니 — 출시 전 제거).
+const DEBUG_CREDIT_ADD := 1000
 
 var _credit_label: Label
 var _bet_label: Label
@@ -85,11 +87,12 @@ func _build_info_bar() -> HBoxContainer:
 	bar.add_theme_constant_override("separation", 12)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# CREDIT (좌) — 노란색
+	# CREDIT (좌) — 노란색. DEBUG: 탭 시 +1000 (디버그 머니).
 	var credit_box := VBoxContainer.new()
 	credit_box.alignment = BoxContainer.ALIGNMENT_BEGIN
 	credit_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	credit_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credit_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	credit_box.gui_input.connect(_on_credit_clicked)
 	credit_box.add_child(_make_label("CREDIT", 24, Color(0.7, 0.65, 0.4, 0.9)))
 	_credit_label = _make_label("0", 40, Color(1.0, 0.9, 0.3))
 	credit_box.add_child(_credit_label)
@@ -221,6 +224,16 @@ func _on_auto_pressed() -> void:
 		EventBus.auto_spin_changed.emit(false, 0)
 	else:
 		EventBus.auto_spin_changed.emit(true, count)
+
+
+## DEBUG: CREDIT 영역 탭/클릭 시 디버그 머니 증가 (+1000). 출시 전 제거.
+func _on_credit_clicked(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed:
+		WalletManager.add_credit(DEBUG_CREDIT_ADD)
+		print("[DEBUG] +CREDIT %d → %d" % [DEBUG_CREDIT_ADD, WalletManager.credit])
+	elif event is InputEventMouseButton and event.pressed:
+		WalletManager.add_credit(DEBUG_CREDIT_ADD)
+		print("[DEBUG] +CREDIT %d → %d" % [DEBUG_CREDIT_ADD, WalletManager.credit])
 
 
 ## 하단 행2: (spacer) … SPIN (우측, 큼).
