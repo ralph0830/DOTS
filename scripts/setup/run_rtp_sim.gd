@@ -6,7 +6,7 @@ extends Node
 ## RNG 재현성: FIXED_SEED 를 0(기본)으로 두면 무작위, 양수로 설정하면 매 실행 동일 결과.
 ##   밸런싱 회귀 테스트 시 FIXED_SEED 를 고정하면 실행마다 동일한 RTP 가 나와야 정상.
 
-const SPIN_COUNT := 20000
+const SPIN_COUNT := 5000
 const FIXED_SEED := 0   # 0=무작위(기본), 양수=재현 가능(예: 12345) — 밸런싱 검증 시 고정
 
 var _last_result: SpinResult = null

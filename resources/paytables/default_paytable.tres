@@ -4,6 +4,8 @@
 
 [resource]
 script = ExtResource("1_aumjc")
-bonus_line_jackpot = {
-5: 3
-}
+scatter_free_spins_base = 0
+scatter_free_spins_per_extra = 0
+free_spin_multiplier = 1.0
+scatter_credit_mult_base = 0.0
+scatter_credit_mult_per_extra = 0.0

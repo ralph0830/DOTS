@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SymbolData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/SymbolData.gd" id="1_3t611"]
+
+[resource]
+script = ExtResource("1_3t611")
+id = &"skull"
+display_name = "Skull"
+color = Color(0.65, 0.65, 0.7, 1)
+shape = 9
+payout = PackedInt32Array(0, 0, 0, 1, 2, 3)
+unit_id = &"skull"

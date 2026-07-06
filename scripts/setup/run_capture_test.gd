@@ -4,7 +4,7 @@ extends Node
 ## 실행: godot --path <project> res://scenes/setup/CaptureTest.tscn
 
 const CAPTURE_PATH := "C:/Project/DOTS/captures/"
-const SPINS := 2
+const SPINS := 8   # 매칭/라인/하이라이트 검증용 — 여러 스핀 캡처
 
 var _smv: Node
 var _spin := 0

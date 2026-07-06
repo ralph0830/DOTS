@@ -73,11 +73,112 @@ func _draw_shape() -> void:
 			draw_colored_polygon(_star_points(center, radius, radius * 0.45, 5), col)
 		SymbolData.Shape.HEX:
 			draw_colored_polygon(_polygon_points(center, radius, 6, 0.0), col)
+		# Phase 8: 유닛 4종 식별 도형 (색상 + 직관적 모양으로 구분).
+		SymbolData.Shape.KNIGHT:
+			_draw_knight(center, radius, col)
+		SymbolData.Shape.ARCHER:
+			_draw_archer(center, radius, col)
+		SymbolData.Shape.MAGE:
+			_draw_mage(center, radius, col)
+		SymbolData.Shape.SKULL:
+			_draw_skull(center, radius, col)
 
 
 ## 텍스처 모드: 전체 영역에 텍스처를 그린다.
 func _draw_texture() -> void:
 	draw_texture_rect(symbol_data.texture, Rect2(Vector2.ZERO, size), false)
+
+
+# --- Phase 8: 유닛 4종 프로시저럴 도형 ---
+# 기사=방패(파랑), 궁수=활+화살(초록), 마법사=마법진(보라), 해골=해골(회색).
+# 색상은 SymbolData.color 로 받아 도형 자체는 색+모양으로 구분.
+
+## 기사: 방패 모양 (위 뾰족, 아래 둥근 전형적인 방패 실루엣).
+func _draw_knight(center: Vector2, r: float, col: Color) -> void:
+	var top := center + Vector2(0.0, -r)
+	var bot_l := center + Vector2(-r * 0.75, r * 0.3)
+	var bot_r := center + Vector2(r * 0.75, r * 0.3)
+	var bot_c := center + Vector2(0.0, r)
+	var mid_l := center + Vector2(-r * 0.75, -r * 0.2)
+	var mid_r := center + Vector2(r * 0.75, -r * 0.2)
+	var pts := PackedVector2Array([top, mid_r, bot_r, bot_c, bot_l, mid_l])
+	draw_colored_polygon(pts, col)
+	# 방패 내부 십자 문양 (은색 테두리 느낌)
+	var inner := col.lightened(0.4)
+	draw_line(top, bot_c, inner, r * 0.12)
+	draw_line(center + Vector2(-r * 0.4, -r * 0.1), center + Vector2(r * 0.4, -r * 0.1), inner, r * 0.1)
+
+
+## 궁수: 활 + 화살 (원호 + 수직 화살).
+func _draw_archer(center: Vector2, r: float, col: Color) -> void:
+	# 활 (오른쪽 원호)
+	var arc_pts := PackedVector2Array()
+	for i in range(13):
+		var a := -PI * 0.45 + PI * 0.9 * float(i) / 12.0
+		arc_pts.append(center + Vector2(cos(a) * r * 0.55, sin(a) * r) - Vector2(r * 0.15, 0.0))
+	# 활은 선으로 (두껍게)
+	for i in range(arc_pts.size() - 1):
+		draw_line(arc_pts[i], arc_pts[i + 1], col, r * 0.15)
+	# 활시위 (수직선)
+	draw_line(center + Vector2(-r * 0.45, -r * 0.7), center + Vector2(-r * 0.45, r * 0.7), col.lightened(0.3), r * 0.08)
+	# 화살 (수직, 위→아래)
+	var arrow_col := col.lightened(0.5)
+	draw_line(center + Vector2(r * 0.1, -r * 0.7), center + Vector2(r * 0.1, r * 0.7), arrow_col, r * 0.12)
+	# 화살촉 (아래 삼각)
+	var tip := center + Vector2(r * 0.1, r * 0.85)
+	draw_colored_polygon(PackedVector2Array([
+		tip, tip + Vector2(-r * 0.2, -r * 0.15), tip + Vector2(r * 0.2, -r * 0.15)
+	]), arrow_col)
+	# 화살 깃털 (위)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(r * 0.1, -r * 0.7),
+		center + Vector2(r * 0.1, -r * 0.5),
+		center + Vector2(-r * 0.05, -r * 0.6)
+	]), arrow_col)
+
+
+## 마법사: 마법진 (이중 원 + 별 + 룬).
+func _draw_mage(center: Vector2, r: float, col: Color) -> void:
+	# 외곽 원 (두께감)
+	draw_arc(center, r * 0.9, 0.0, TAU, 48, col, r * 0.12)
+	# 내곽 원 (얇게)
+	draw_arc(center, r * 0.65, 0.0, TAU, 32, col.lightened(0.3), r * 0.06)
+	# 중앙 별 (5점)
+	draw_colored_polygon(_star_points(center, r * 0.45, r * 0.2, 5), col.lightened(0.4))
+	# 4방향 룬 점
+	for i in range(4):
+		var a := PI * 0.25 + PI * 0.5 * float(i)
+		var p := center + Vector2(cos(a), sin(a)) * r * 0.78
+		draw_circle(p, r * 0.07, col.lightened(0.5))
+
+
+## 해골: 둥근 머리 + 눈구멍 + 십자 아래턱.
+func _draw_skull(center: Vector2, r: float, col: Color) -> void:
+	# 머리 (둥근 윗부분)
+	var head_pts := PackedVector2Array()
+	for i in range(16):
+		var a := -PI + PI * float(i) / 15.0   # 위쪽 반원
+		head_pts.append(center + Vector2(cos(a) * r * 0.8, sin(a) * r * 0.8) + Vector2(0.0, -r * 0.05))
+	# 아래쪽은 평평하게
+	head_pts.append(center + Vector2(r * 0.8, r * 0.2))
+	head_pts.append(center + Vector2(-r * 0.8, r * 0.2))
+	draw_colored_polygon(head_pts, col)
+	# 눈구멍 (검은 원 2개)
+	var eye_offset := r * 0.3
+	var eye_y := center.y - r * 0.15
+	draw_circle(center + Vector2(-eye_offset, eye_y), r * 0.18, Color(0.05, 0.05, 0.05))
+	draw_circle(center + Vector2(eye_offset, eye_y), r * 0.18, Color(0.05, 0.05, 0.05))
+	# 코 (작은 검은 삼각)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(0.0, r * 0.05),
+		center + Vector2(-r * 0.08, r * 0.2),
+		center + Vector2(r * 0.08, r * 0.2),
+	]), Color(0.05, 0.05, 0.05))
+	# 아래턱 이빨 (3개 검은 선)
+	var teeth_y := r * 0.2
+	for i in range(-1, 2):
+		var tx := center.x + float(i) * r * 0.25
+		draw_line(Vector2(tx, teeth_y), Vector2(tx, r * 0.55), Color(0.05, 0.05, 0.05), r * 0.06)
 
 
 ## 도우미: n각형 정점(시작 각도 offset).

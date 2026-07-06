@@ -18,23 +18,26 @@ func _ready() -> void:
 	EventBus.evaluation_completed.connect(_on_evaluation_completed)
 
 
-## 임시 유닛 데이터 레지스트리 구축 (Phase 7: 코드 생성, Phase 9에서 .tres 파일로 전환).
+## Phase 8 유닛 레지스트리: 기사/궁수/마법사 3종 + 꽝 보정 미니언.
+## 슬롯 심볼(knight/archer/mage)과 동일 id로 매핑. skull 매칭은 unit_id="" 이므로 소환 없음.
 func _build_unit_registry() -> void:
-	# 아군 유닛 (심볼 매칭으로 소환될 유닛들)
-	_register(&"ruby", _make_unit("ruby", "Warrior", UnitData.Role.DEALER, 30, 10, 70.0, 60.0, UnitData.Shape.CIRCLE, Color(0.9, 0.2, 0.3)))
-	_register(&"sapphire", _make_unit("sapphire", "Archer", UnitData.Role.DEALER, 20, 8, 90.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.2, 0.4, 0.9)))
-	_register(&"emerald", _make_unit("emerald", "Guardian", UnitData.Role.TANK, 60, 6, 50.0, 50.0, UnitData.Shape.SQUARE, Color(0.2, 0.8, 0.4)))
-	_register(&"dragon", _make_unit("dragon", "Dragon", UnitData.Role.DEALER, 80, 20, 80.0, 100.0, UnitData.Shape.DIAMOND, Color(0.6, 0.2, 0.8)))
-	# 꽝 보정 미니언
-	_register(MISS_MINION_ID, _make_unit(MISS_MINION_ID, "Minion", UnitData.Role.MINION, 15, 4, 55.0, 40.0, UnitData.Shape.CIRCLE, Color(0.6, 0.6, 0.6)))
-	# unicorn(chest/rune)은 유닛이 아닌 특수 효과 → Phase 8에서 처리, 여기선 미매핑
+	# 기사(탱커): 높은 HP, 낮은 공격, 짧은 사거리, 방패 모양(파랑).
+	_register(&"knight", _make_unit(&"knight", "Knight", UnitData.Role.TANK, 80, 8, 45.0, 55.0, UnitData.Shape.SQUARE, Color(0.25, 0.55, 0.95), 64.0))
+	# 궁수(원거리 딜러): 낮은 HP, 중공격, 긴 사거리(120px), 삼각(초록).
+	_register(&"archer", _make_unit(&"archer", "Archer", UnitData.Role.DEALER, 30, 12, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0))
+	# 마법사(강력 딜러): 중간 HP, 고공격, 중사거리, 다이아(보라).
+	_register(&"mage", _make_unit(&"mage", "Mage", UnitData.Role.DEALER, 40, 18, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0))
+	# 꽝 보정 미니언 (skull 매칭 없을 때/꽝일 때 1기 소환).
+	_register(MISS_MINION_ID, _make_unit(MISS_MINION_ID, "Minion", UnitData.Role.MINION, 20, 5, 55.0, 50.0, UnitData.Shape.CIRCLE, Color(0.6, 0.6, 0.6), 50.0))
+	# skull 심볼 매칭 → 미니언과 동일한 약한 유닛 소환 (꽝이지만 무의미하진 않게).
+	_register(&"skull", _unit_registry[MISS_MINION_ID])
 
 
 func _register(id: StringName, data: UnitData) -> void:
 	_unit_registry[id] = data
 
 
-func _make_unit(id: StringName, name: String, role: UnitData.Role, hp: int, atk: int, spd: float, rng: float, shape: UnitData.Shape, col: Color) -> UnitData:
+func _make_unit(id: StringName, name: String, role: UnitData.Role, hp: int, atk: int, spd: float, rng: float, shape: UnitData.Shape, col: Color, sz: float = 60.0) -> UnitData:
 	var u := UnitData.new()
 	u.unit_id = id
 	u.display_name = name
@@ -45,7 +48,7 @@ func _make_unit(id: StringName, name: String, role: UnitData.Role, hp: int, atk:
 	u.attack_range = rng
 	u.shape = shape
 	u.color = col
-	u.size = 60.0
+	u.size = sz
 	return u
 
 
@@ -63,7 +66,13 @@ func _on_evaluation_completed(result: SpinResult) -> void:
 	for lw in result.line_wins:
 		var sym := _lookup_symbol(lw.symbol_id)
 		if sym == null or sym.unit_id == &"":
-			continue   # 유닛 미매핑 심볼 (chest/rune 등)
+			continue   # 유닛 미매핑 심볼
+		# skull(꽝)은 항상 미니언 1기만 — 3/4/5매치 관계없이 동일.
+		if sym.unit_id == &"skull":
+			if spawned.has(MISS_MINION_ID):
+				continue   # skull 중복 매칭해도 미니언은 1기만
+			spawned[MISS_MINION_ID] = 1
+			continue
 		var count := lw.match_count - 2   # 3매치=1기, 4매치=2기, 5매치=3기
 		if count <= 0:
 			count = 1

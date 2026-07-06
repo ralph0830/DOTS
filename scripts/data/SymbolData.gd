@@ -7,7 +7,8 @@ extends Resource
 enum Kind { NORMAL, WILD, SCATTER, BONUS }
 
 # 프로시저럴 렌더링용 도형 모양 (SymbolView._draw에서 분기)
-enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX }
+# Phase 8: 유닛 4종(기사/궁수/마법사/해골) 식별용 도형 추가. 기존 보석 도형은 호환 유지.
+enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX, KNIGHT, ARCHER, MAGE, SKULL }
 
 @export var id: StringName = &""                       # 고유 식별자 ("ruby", "unicorn" ...)
 @export var kind: Kind = Kind.NORMAL                   # 심볼 종류

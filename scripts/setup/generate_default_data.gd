@@ -15,19 +15,20 @@ const PAYTABLE_PATH := PAYTABLE_DIR + "default_paytable.tres"
 const CONFIG_PATH := CONFIG_DIR + "default_slot.tres"
 
 # 5개 릴 스트립(각 30 심볼). 빈도 = 출현 확률 → RTP/변동성 결정.
-# 밸런싱(Phase 5): 각 릴의 지배 심볼을 다르게 배치해 동일 심볼의 5릴 연속 매치 확률을 낮춤
-# (히트율 30~50% 달성). unicorn(Wild)/chest(Scatter) 1개씩, rune(Bonus)는 코드에서 별도 1개追加.
+# Phase 8: 유닛 4종(knight/archer/mage/skull)만 배치. Wild/Scatter/Bonus 제거.
+# 4종끼리만 매칭 → 3매치 확률 ~40% (기존 7종 대비 4배 상승). skull=꽝(매칭은 되나 payout 0).
+# 각 릴마다 지배 심볼을 다르게 배치해 5릴 연속 동일 매치(과도한 빅윈)를 억제.
 const REEL_STRIPS: Array = [
-	# 릴0: ruby 지배 + dragon 3개 균등
-	["ruby", "ruby", "ruby", "ruby", "dragon", "ruby", "ruby", "sapphire", "ruby", "ruby", "dragon", "emerald", "unicorn", "ruby", "ruby", "ruby", "sapphire", "ruby", "ruby", "dragon", "ruby", "ruby", "chest", "ruby", "ruby", "emerald", "ruby", "sapphire", "ruby", "ruby"],
-	# 릴1: sapphire 지배 + dragon 3개 균등
-	["sapphire", "sapphire", "sapphire", "ruby", "sapphire", "dragon", "sapphire", "sapphire", "emerald", "sapphire", "dragon", "sapphire", "sapphire", "unicorn", "sapphire", "ruby", "sapphire", "sapphire", "dragon", "sapphire", "sapphire", "emerald", "sapphire", "chest", "sapphire", "sapphire", "ruby", "sapphire", "sapphire", "dragon"],
-	# 릴2: emerald 지배 + dragon 3개
-	["emerald", "emerald", "emerald", "ruby", "emerald", "dragon", "sapphire", "emerald", "emerald", "emerald", "emerald", "dragon", "emerald", "emerald", "unicorn", "emerald", "emerald", "ruby", "emerald", "sapphire", "emerald", "dragon", "chest", "emerald", "emerald", "ruby", "emerald", "emerald", "sapphire", "emerald"],
-	# 릴3: ruby+sapphire 혼합 + dragon 3개
-	["ruby", "sapphire", "ruby", "dragon", "sapphire", "ruby", "sapphire", "ruby", "dragon", "sapphire", "ruby", "sapphire", "unicorn", "ruby", "dragon", "sapphire", "ruby", "sapphire", "ruby", "emerald", "sapphire", "ruby", "chest", "dragon", "sapphire", "ruby", "emerald", "sapphire", "ruby", "dragon"],
-	# 릴4: emerald+dragon 비중 (고배당 5매치 기회)
-	["emerald", "sapphire", "emerald", "dragon", "emerald", "sapphire", "emerald", "ruby", "dragon", "emerald", "emerald", "sapphire", "unicorn", "emerald", "dragon", "emerald", "ruby", "sapphire", "dragon", "emerald", "emerald", "sapphire", "chest", "dragon", "emerald", "ruby", "emerald", "dragon", "sapphire", "emerald"],
+	# 릴0: knight 지배 + skull 꽝 다수 (탱커 라인)
+	["knight", "knight", "skull", "knight", "archer", "knight", "skull", "knight", "mage", "knight", "knight", "skull", "knight", "archer", "knight", "skull", "knight", "knight", "mage", "knight", "skull", "knight", "archer", "knight", "skull", "knight", "knight", "mage", "knight", "skull"],
+	# 릴1: archer 지배
+	["archer", "skull", "archer", "archer", "knight", "archer", "skull", "archer", "mage", "archer", "skull", "archer", "archer", "knight", "archer", "skull", "archer", "archer", "mage", "archer", "skull", "archer", "knight", "archer", "skull", "archer", "mage", "archer", "skull", "archer"],
+	# 릴2: mage 지배 (마법사 라인 — 중앙 릴)
+	["mage", "archer", "mage", "skull", "mage", "knight", "mage", "skull", "mage", "mage", "archer", "mage", "skull", "mage", "knight", "mage", "skull", "mage", "archer", "mage", "skull", "mage", "mage", "knight", "mage", "skull", "mage", "archer", "mage", "skull"],
+	# 릴3: archer+knight 혼합
+	["archer", "knight", "archer", "skull", "knight", "archer", "mage", "skull", "archer", "knight", "archer", "skull", "mage", "knight", "archer", "skull", "knight", "archer", "skull", "mage", "archer", "knight", "skull", "archer", "knight", "mage", "skull", "archer", "knight", "skull"],
+	# 릴4: knight+mage 비중 (고배당 5매치 기회)
+	["knight", "mage", "knight", "skull", "knight", "archer", "mage", "knight", "skull", "knight", "mage", "archer", "knight", "skull", "mage", "knight", "archer", "skull", "knight", "mage", "knight", "skull", "mage", "archer", "knight", "skull", "knight", "mage", "archer", "skull"],
 ]
 
 # 20 페이라인 패턴 (각 값 = 행 인덱스 0/1/2, 길이 5)
@@ -59,15 +60,16 @@ func _ensure_dirs() -> void:
 
 
 func _build_symbols() -> Dictionary:
-	# id -> [kind, display_name, color, shape, payout 배열]
+	# Phase 8: 유닛 4종. id -> [kind, display_name, color, shape, payout 배열, unit_id]
+	# knight=기사(탱커,파랑), archer=궁수(딜러,초록), mage=마법사(딜러,보라), skull=해골(꽝,회색).
+	# payout: [0,0,0, 3매치, 4매치, 5매치]. skull은 꽝이라 payout 0 (매칭은 됨).
+	# unit_id: 매칭 시 소환할 유닛. skull은 소환 없음(빈 문자열) → UnitSpawner가 꽝 보정 미니언.
+	# Phase 8 밸런스: 4종 축소로 히트율 ~47%. payout 배수 조정으로 RTP 92~96% 목표.
 	var defs := {
-		"ruby": [SymbolData.Kind.NORMAL, "Ruby", Color(0.86, 0.12, 0.20), SymbolData.Shape.DIAMOND, [0, 0, 0, 6, 20, 60]],
-		"sapphire": [SymbolData.Kind.NORMAL, "Sapphire", Color(0.15, 0.36, 0.95), SymbolData.Shape.CIRCLE, [0, 0, 0, 6, 20, 60]],
-		"emerald": [SymbolData.Kind.NORMAL, "Emerald", Color(0.10, 0.78, 0.42), SymbolData.Shape.HEX, [0, 0, 0, 9, 30, 100]],
-		"dragon": [SymbolData.Kind.NORMAL, "Dragon", Color(0.62, 0.15, 0.78), SymbolData.Shape.STAR, [0, 0, 0, 30, 345, 2350]],
-		"unicorn": [SymbolData.Kind.WILD, "Unicorn (Wild)", Color(0.95, 0.85, 1.0), SymbolData.Shape.STAR, [0, 0, 0, 30, 345, 2350]],
-		"chest": [SymbolData.Kind.SCATTER, "Chest (Scatter)", Color(1.0, 0.80, 0.15), SymbolData.Shape.SQUARE, [0, 0, 0, 0, 0, 0]],
-		"rune": [SymbolData.Kind.BONUS, "Rune (Bonus)", Color(0.95, 0.6, 1.0), SymbolData.Shape.TRIANGLE, [0, 0, 0, 0, 0, 0]],
+		"knight": [SymbolData.Kind.NORMAL, "Knight", Color(0.25, 0.55, 0.95), SymbolData.Shape.KNIGHT, [0, 0, 0, 25, 80, 250], &"knight"],
+		"archer": [SymbolData.Kind.NORMAL, "Archer", Color(0.30, 0.85, 0.45), SymbolData.Shape.ARCHER, [0, 0, 0, 20, 60, 180], &"archer"],
+		"mage":   [SymbolData.Kind.NORMAL, "Mage",   Color(0.70, 0.35, 0.95), SymbolData.Shape.MAGE,   [0, 0, 0, 30, 100, 350], &"mage"],
+		"skull":  [SymbolData.Kind.NORMAL, "Skull",  Color(0.65, 0.65, 0.70), SymbolData.Shape.SKULL,  [0, 0, 0, 1, 2, 3], &"skull"],
 	}
 	var out := {}
 	for id in defs:
@@ -79,6 +81,7 @@ func _build_symbols() -> Dictionary:
 		s.color = d[2]
 		s.shape = d[3]
 		s.payout = PackedInt32Array(d[4])
+		s.unit_id = d[5]
 		# 에셋 교체: assets/sprites/{id}_transparent_180.png 가 있으면 texture 로드.
 		# null이면 프로시저럴 도형(SymbolView._draw) 폴백. 텍스처 할당 시 자동으로 실제 아트 적용.
 		var tex_path := "res://assets/sprites/%s_transparent_180.png" % id
@@ -90,15 +93,12 @@ func _build_symbols() -> Dictionary:
 
 
 func _build_reels(sym: Dictionary) -> Array:
+	# Phase 8: 4종 유닛만. Bonus/Wild 추가 없음.
 	var reels: Array = []
-	var bonus: SymbolData = sym.get("rune", null)
 	for i in range(REEL_STRIPS.size()):
 		var strip := ReelStrip.new()
 		for id in REEL_STRIPS[i]:
 			strip.symbols.append(sym[id])
-		# BONUS(잭팟 트리거) 심볼 1개 추가 — 매 릴에 1개씩(5매치 시 잭팟).
-		if bonus != null:
-			strip.symbols.append(bonus)
 		_save(strip, REEL_DIR + "reel_%d.tres" % i)
 		reels.append(strip)
 	return reels
@@ -117,13 +117,15 @@ func _build_paylines() -> Array:
 
 
 func _build_paytable() -> Paytable:
+	# Phase 8: Scatter/Bonus 심볼 제거됨 → 관련 필드는 0/빈 값.
+	# 라인 매칭(기사/궁수/마법사)만으로 RTP 형성.
 	var p := Paytable.new()
-	p.scatter_free_spins_base = 8
-	p.scatter_free_spins_per_extra = 4
-	p.free_spin_multiplier = 2.0
-	p.scatter_credit_mult_base = 2.0
-	p.scatter_credit_mult_per_extra = 1.0
-	p.bonus_line_jackpot = {5: 3}   # BONUS 심볼 5매치 시 GRAND(tier 3)
+	p.scatter_free_spins_base = 0
+	p.scatter_free_spins_per_extra = 0
+	p.free_spin_multiplier = 1.0
+	p.scatter_credit_mult_base = 0.0
+	p.scatter_credit_mult_per_extra = 0.0
+	p.bonus_line_jackpot = {}
 	_save(p, PAYTABLE_PATH)
 	return p
 
