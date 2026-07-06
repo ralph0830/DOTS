@@ -198,7 +198,7 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
   - SFX 5종: spin_start(스윕), win(상승스윕), big_win(C5+E5+G5 화음), jackpot(4음 팡파레), free_spins(스윕).
   - EventBus 구독: spin_started / evaluation_completed(has_win 분기) / big_win / jackpot_won / free_spins_started.
   - 헤드리스 가드(`DisplayServer.get_name()=="headless"`) → 시뮬 성능 보호 + WASAPI 에러 방지.
-- [ ] **RNG 재현성 확보** — `SlotMachine.gd:30`이 `rng_seed=0`일 때 `randi()` 무작위 시드 사용. 밸런싱/디버그 시 0이 아닌 시드 고정 또는 시드 입력 옵션.
+- [x] **RNG 재현성 확보** ✅ (2026-07-06) — `run_rtp_sim.gd`에 `FIXED_SEED` 상수 추가 (0=무작위, 양수=재현 가능). 밸런싱 회귀 테스트 시 시드 고정하면 매 실행 동일 RTP 도출.
 - [x] **CameraShake 검증 후 제거** ✅ (2026-07-03) — Phase 6에서 Camera2D 기반 CameraShake를 활성화했으나 **Control 기반 UI 씬에서 Camera2D 활성화 시 2D 좌표계가 변해 모든 UI가 화면 밖으로 밀려 보이지 않는 치명 버그 발생**. 원래 인라인 릴 영역 tween 방식이 Control UI에 맞는 정답이므로 CameraShake.gd 파일 제거 + 인라인 tween으로 원복.
 - [x] **🚨 잭팟 save 시뮬 왜곡 수정** ✅ (Phase 6 완료) — `JackpotSystem.reset_to_seeds()` 공개 메서드 추가 + `run_rtp_sim.gd`에서 `initialize()` 직후 호출. 검증: GRAND=500000 누적 조건에서도 RTP 90~98%(정상) — 이전 같은 조건 시 110%+ 왜곡 방지 확인.
 - [x] **EventBus 시그널 정리** ✅ (Phase 6 완료):
@@ -210,7 +210,7 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
   - 생성 파이프라인: `tools/comfyui/comfy_gem.py`(SDXL+pixel-art LoRA→flood-fill 투명변환), `comfy_dots_symbols.py`(7종 일괄), `seed_explore.py`(시드 탐색). 가이드: `docs/COMFYUI_GUIDE.md`.
   - **투명도 번짐 해결** (2026-07-03): 이전 darkness 기반 알고리즘이 심볼 내부 하이라이트까지 반투명화(13%) → **flood-fill 기반 배경 검출**로 교체. 모서리에서 순백 픽셀만 BFS 탐색하여 외부 배경만 투명화, 심볼 내부는 불투명 유지 (번짐 1.8%).
   - **시드 최적화** (2026-07-03): unicorn(0.8%→43.3%), rune(0.5%→33.8%) — 각 8개 시드 탐색 후 최적 선택 (unicorn=500, rune=300).
-- [ ] **배경 아트** — BackgroundFX 셰이더 위에 테마 배경 이미지 레이어.
+- [x] **배경 아트** ✅ (2026-07-06) — ComfyUI로 판타지 배경 3종 생성 (mystic/treasure/enchanted, 1080×1920). BackgroundFX에 TextureRect 오버레이 지원 추가, 기본 bg_mystic 적용.
 - [ ] **모바일 성능 최적화**
   - ParticleBudget 자동 티어 분류(OS.get_name()/메모리 기반) 검증.
   - 드로우콜 프로파일링, 파티클 캡 조정.

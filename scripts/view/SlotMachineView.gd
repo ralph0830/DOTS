@@ -17,7 +17,10 @@ var _reel_area_origin: Vector2 = Vector2.ZERO   # 진동 후 복원용
 var _grid: Array = []
 var _next_stop: int = -1
 var _stop_timer: float = 0.0
-var _auto_spin := false
+# 자동스핀 상태: _auto_remaining = -1 무한, 0 끔, N 남은 횟수.
+var _auto_remaining := 0
+var _auto_start_credit := 0   # 자동스핀 시작 시점 크레딧 (손실 한도 계산용)
+const AUTO_LOSS_RATIO := 0.5   # 시작 크레딧의 50% 손실 시 자동 정지
 
 
 func _ready() -> void:
@@ -159,33 +162,54 @@ func _on_big_win(amount: int) -> void:
 
 # --- 자동스핀 / 프리스핀 연쇄 ---
 
-## 자동스핀 토글 수신. 켜질 때 즉시 다음 스핀 시도(IDLE 상태면).
-func _on_auto_changed(enabled: bool) -> void:
-	_auto_spin = enabled
-	if enabled:
+## 자동스핀 토글 수신. remaining: -1=무한, 0=끔, N=남은 횟수.
+## HUD 의 AUTO 버튼 순환 클릭으로 호출됨.
+func _on_auto_changed(enabled: bool, remaining: int) -> void:
+	_auto_remaining = remaining if enabled else 0
+	if enabled and remaining != 0:
+		_auto_start_credit = WalletManager.credit   # 손실 한도 기준점
 		_maybe_auto_spin()
 
 
 ## 평가 완료 후 자동스핀 또는 프리스핀 잔여 시 다음 스핀 예약.
 func _on_eval_auto(_r: SpinResult) -> void:
-	if not (_auto_spin or _free_spins_active()):
+	var active := _auto_remaining != 0 or _free_spins_active()
+	if not active:
 		return
 	await get_tree().create_timer(0.9).timeout   # 당첨 연출 관찰 시간
+	# 자동스핀 횟수 차감 (프리스핀이 아닐 때만)
+	if _auto_remaining > 0:
+		_auto_remaining -= 1
+		if _auto_remaining == 0:
+			# 횟수 모두 소진 → 정지 (HUD 동기화)
+			EventBus.auto_spin_changed.emit(false, 0)
+			return
 	_maybe_auto_spin()
 
 
-## 조건(IDLE + 자금 또는 프리스핀)이 맞으면 다음 스핀 요청.
+## 조건(IDLE + 자금/손실한도/프리스핀)이 맞으면 다음 스핀 요청.
 func _maybe_auto_spin() -> void:
 	if _core == null or _core.state != SlotMachine.State.IDLE:
 		return
+	# 프리스핀 중이면 횟수/자금 제약 없이 스핀.
 	if _free_spins_active():
 		EventBus.spin_requested.emit()
-	elif _auto_spin and WalletManager.can_bet():
-		EventBus.spin_requested.emit()
-	elif _auto_spin and not WalletManager.can_bet():
-		# 자금 부족 → 자동스핀 정지(HUD 버튼도 해제 동기화).
-		_auto_spin = false
-		EventBus.auto_spin_changed.emit(false)
+		return
+	# 자동스핀 비활성 → 종료.
+	if _auto_remaining == 0:
+		return
+	# 손실 한도 도달 여부 (시작 크레딧의 AUTO_LOSS_RATIO 이하로 하락).
+	var loss_limit := int(float(_auto_start_credit) * (1.0 - AUTO_LOSS_RATIO))
+	if WalletManager.credit <= loss_limit and _auto_start_credit > 0:
+		_auto_remaining = 0
+		EventBus.auto_spin_changed.emit(false, 0)
+		return
+	# 자금 부족 → 정지.
+	if not WalletManager.can_bet():
+		_auto_remaining = 0
+		EventBus.auto_spin_changed.emit(false, 0)
+		return
+	EventBus.spin_requested.emit()
 
 
 ## 프리스핀이 진행 중(잔여 횟수 > 0)인지.

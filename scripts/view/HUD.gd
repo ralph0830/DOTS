@@ -14,6 +14,10 @@ var _win_label: Label
 var _status_label: Label
 var _auto_btn: Button
 var _safe_root: Control
+# 자동스핀 순환 모드 인덱스: 0=끔(AUTO), 1=10회, 2=25회, 3=50회, 4=무한(∞).
+var _auto_cycle := 0
+const AUTO_LABELS := ["AUTO", "×10", "×25", "×50", "∞"]
+const AUTO_COUNTS := [0, 10, 25, 50, -1]   # -1=무한
 
 
 func _ready() -> void:
@@ -118,13 +122,25 @@ func _build_bet_bar() -> HBoxContainer:
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(spacer)
 
-	# 자동스핀 토글
+	# 자동스핀 순환 버튼: AUTO → ×10 → ×25 → ×50 → ∞ → AUTO 반복.
 	_auto_btn = _make_button("AUTO", BTN_MIN)
-	_auto_btn.toggle_mode = true
-	_auto_btn.add_theme_font_size_override("font_size", 36)
-	_auto_btn.toggled.connect(func(on: bool) -> void: EventBus.auto_spin_changed.emit(on))
+	_auto_btn.add_theme_font_size_override("font_size", 32)
+	_auto_btn.pressed.connect(_on_auto_pressed)
 	bar.add_child(_auto_btn)
 	return bar
+
+
+## AUTO 버튼 클릭 시 순환. AUTO(끔) → ×10 → ×25 → ×50 → ∞ → AUTO(끔).
+func _on_auto_pressed() -> void:
+	_auto_cycle = (_auto_cycle + 1) % AUTO_LABELS.size()
+	var label := AUTO_LABELS[_auto_cycle]
+	var count := AUTO_COUNTS[_auto_cycle]
+	_auto_btn.text = label
+	if count == 0:
+		# 끔
+		EventBus.auto_spin_changed.emit(false, 0)
+	else:
+		EventBus.auto_spin_changed.emit(true, count)
 
 
 ## 하단 행2: (spacer) … SPIN (우측, 큼).
@@ -219,7 +235,8 @@ func _on_jackpot(_tier: int, _amount: int) -> void:
 	_status_label.text = "★ JACKPOT ★"
 
 
-## 자동스핀 상태 동기화(자금 부족 등으로 코어가 강제 해제할 수 있음 → 버튼 반영).
-func _on_auto_changed(enabled: bool) -> void:
-	if _auto_btn.button_pressed != enabled:
-		_auto_btn.set_pressed_no_signal(enabled)   # toggled 재발행 방지
+## 자동스핀 상태 동기화(자금 부족/손실한도/횟수 소진으로 코어가 강제 해제 → 버튼 반영).
+func _on_auto_changed(enabled: bool, _remaining: int) -> void:
+	if not enabled:
+		_auto_cycle = 0
+		_auto_btn.text = AUTO_LABELS[0]   # "AUTO" 로 복귀
