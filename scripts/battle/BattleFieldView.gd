@@ -12,6 +12,10 @@ var _ally_hp: int = 100
 var _ally_max: int = 100
 var _enemy_hp: int = 100
 var _enemy_max: int = 100
+# DEBUG: 초기화 상태 화면 표시용. game_initialized 시그널로 갱신.
+var _dbg_init_text: String = "WAITING INIT..."
+var _dbg_init_color: Color = Color(1.0, 0.5, 0.2)
+var _dbg_init_t: float = 0.0
 
 
 func _ready() -> void:
@@ -20,6 +24,28 @@ func _ready() -> void:
 	offset_bottom = -864.0   # 하단 864px(슬롯 영역)만큼 위로 당김 → 상단 1056px만 차지
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	EventBus.base_hp_changed.connect(_on_base_hp_changed)
+	EventBus.game_initialized.connect(_on_game_initialized)
+
+
+func _process(delta: float) -> void:
+	# DEBUG: 초기화 전에는 펄스하며 대기 표시. 초기화 후엔 정지.
+	if not _dbg_init_text.begins_with("INIT OK"):
+		_dbg_init_t += delta
+		queue_redraw()
+
+
+## DEBUG: 초기화 완료 수신 — 상태를 화면에 녹색으로 표시.
+func _on_game_initialized(state: Dictionary) -> void:
+	var credit: int = int(state.get("credit", -1))
+	var bet: int = int(state.get("bet", -1))
+	var ally: int = int(state.get("ally_hp", -1))
+	var enemy: int = int(state.get("enemy_hp", -1))
+	var wave: int = int(state.get("wave", -1))
+	var running: bool = bool(state.get("running", false))
+	_dbg_init_text = "INIT OK | credit=%d bet=%d ally=%d enemy=%d wave=%d run=%s" \
+		% [credit, bet, ally, enemy, wave, running]
+	_dbg_init_color = Color(0.3, 1.0, 0.4)
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -46,6 +72,12 @@ func _draw() -> void:
 	# HP 숫자 라벨 (기지 위)
 	_draw_label("HP %d/%d" % [_ally_hp, _ally_max], Vector2(120.0, LINE_Y - 110.0), 26, Color(0.3, 0.9, 0.4, 1.0))
 	_draw_label("HP %d/%d" % [_enemy_hp, _enemy_max], Vector2(760.0, LINE_Y - 110.0), 26, Color(0.9, 0.4, 0.4, 1.0))
+	# DEBUG: 초기화 상태 크게 표시 (전투 영역 하단, 분할선 바로 위).
+	# 초기화 전: 주황 펄스 "WAITING INIT...", 초기화 후: 녹색 "INIT OK | ..."
+	var col := _dbg_init_color
+	if not _dbg_init_text.begins_with("INIT OK"):
+		col = _dbg_init_color.lerp(Color.WHITE, 0.5 + 0.5 * sin(_dbg_init_t * 6.0))
+	_draw_label(_dbg_init_text, Vector2(60.0, BATTLE_H - 70.0), 30, col)
 
 
 ## HP 바 그리기 (배경 + 비율 채우기).

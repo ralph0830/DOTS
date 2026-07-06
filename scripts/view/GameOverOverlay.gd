@@ -69,14 +69,18 @@ func _gui_input(event: InputEvent) -> void:
 
 func _restart() -> void:
 	visible = false
+	# 부모 SlotMachineView 의 통합 초기화 재사용 — 모든 상태를 시작값으로.
+	var smv := get_tree().get_first_node_in_group(&"slot_machine_view") if get_tree().has_group(&"slot_machine_view") else null
+	if smv != null and smv.has_method("_initialize_all"):
+		smv._initialize_all()
+		return
+	# 폴백: 직접 리셋 (SlotMachineView 가 없을 때)
 	var battle := _get_battle_field()
 	if battle != null:
 		battle.reset_run()
-	# WaveManager 재개
 	var wave_mgr := _get_wave_manager()
 	if wave_mgr != null and wave_mgr.has_method("restart"):
 		wave_mgr.restart()
-	# GameManager 상태 리셋
 	GameManager.score = 0
 	GameManager.current_wave = 0
 	GameManager.enemies_killed_total = 0

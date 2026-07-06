@@ -40,3 +40,5 @@ signal base_hp_changed(ally_hp: int, ally_max: int, enemy_hp: int, enemy_max: in
 signal wave_started(wave_num: int)                     # WAVE 시작
 signal wave_cleared(wave_num: int)                     # WAVE 클리어
 signal game_over(victory: bool)                        # 게임 종료 (승리/패배)
+# DEBUG: 게임 초기화 완료 (각 매니저 상태를 화면에 표시하기 위함).
+signal game_initialized(state: Dictionary)

@@ -33,14 +33,50 @@ func _ready() -> void:
 	_build_layout()
 	_setup_core()
 	_setup_reels()
-	_setup_battle()   # Phase 7: 전투 시스템 (UnitSpawner) 초기화
-	WalletManager.initialize(GameConfig.config)
-	JackpotSystem.initialize(GameConfig.config)
+	_setup_battle()   # Phase 7: 전투 시스템 (UnitSpawner/WaveManager) 초기화
+	# 모든 싱글턴/매니저를 결정론적으로 초기화 (게임 시작 시 항상 동일 상태).
+	_initialize_all()
+	# EventBus 구독
 	EventBus.spin_requested.connect(_on_spin_requested)
 	EventBus.highlight_wins.connect(_on_highlight)
 	EventBus.big_win.connect(_on_big_win)
 	EventBus.auto_spin_changed.connect(_on_auto_changed)
 	EventBus.evaluation_completed.connect(_on_eval_auto)
+
+
+## 게임 시작 시 모든 상태를 초기값으로 리셋.
+## 크레딧/잭팟/전투 필드/WAVE/자동스핀 — 저장값 무시, 항상 시작 상태에서 시작.
+func _initialize_all() -> void:
+	# 1. 지갑 — 시작 크레딧으로 리셋 (저장값 무시).
+	var cfg := GameConfig.config
+	WalletManager.initialize(cfg)
+	WalletManager.reset_credit(int(cfg.starting_credit))
+	# 2. 잭팟 — 시드값으로 리셋.
+	JackpotSystem.initialize(cfg)
+	JackpotSystem.reset_to_seeds()
+	# 3. 전투 필드 — HP/유닛 리셋.
+	if _battle_field != null:
+		_battle_field.reset_run()
+	# 4. WAVE — 1번부터 재개.
+	var wave_mgr := get_node_or_null("WaveManager")
+	if wave_mgr != null and wave_mgr.has_method("restart"):
+		wave_mgr.restart()
+	# 5. 자동스핀 — 끔.
+	_auto_remaining = 0
+	# 6. 게임 매니저 런 상태.
+	GameManager.start_game()
+	# DEBUG: 초기화 상태를 화면 표시용 딕셔너리로 emit.
+	var state := {
+		"credit": WalletManager.credit,
+		"bet": WalletManager.current_bet,
+		"ally_hp": _battle_field.base_hp if _battle_field != null else -1,
+		"enemy_hp": _battle_field.enemy_base_hp if _battle_field != null else -1,
+		"wave": GameManager.current_wave,
+		"running": GameManager.is_defense_active,
+	}
+	print("[init] 게임 초기화 완료: credit=%d bet=%d ally=%d enemy=%d wave=%d" \
+		% [state.credit, state.bet, state.ally_hp, state.enemy_hp, state.wave])
+	EventBus.game_initialized.emit(state)
 
 
 func _build_layout() -> void:
