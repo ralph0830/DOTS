@@ -8,6 +8,9 @@ const REEL_W := 180.0
 const ROW_H := 180.0
 const MIN_SPIN_TIME := 0.5      # 최소 스핀 시간(감속 전)
 const REEL_STOP_DELAY := 0.18   # 릴 간 정지 간격
+# Phase 7: 모바일 세로형 상하 분할 — 전투 55% / 슬롯 45%.
+const BATTLE_H := 1056.0        # 전투 영역 높이 (1920 × 0.55)
+const SLOT_H := 864.0           # 슬롯 영역 높이 (1920 × 0.45) = 1920 - 1056
 
 var _core: SlotMachine
 var _reel_area: Control
@@ -21,12 +24,16 @@ var _stop_timer: float = 0.0
 var _auto_remaining := 0
 var _auto_start_credit := 0   # 자동스핀 시작 시점 크레딧 (손실 한도 계산용)
 const AUTO_LOSS_RATIO := 0.5   # 시작 크레딧의 50% 손실 시 자동 정지
+# Phase 7: 전투 필드 (상단 전투 영역에 배치)
+var _battle_field: BattleField
 
 
 func _ready() -> void:
+	add_to_group("slot_machine_view")
 	_build_layout()
 	_setup_core()
 	_setup_reels()
+	_setup_battle()   # Phase 7: 전투 시스템 (UnitSpawner) 초기화
 	WalletManager.initialize(GameConfig.config)
 	JackpotSystem.initialize(GameConfig.config)
 	EventBus.spin_requested.connect(_on_spin_requested)
@@ -45,7 +52,14 @@ func _build_layout() -> void:
 	var bg_art: TextureRect = bg.get_bg_art()
 	if bg_art != null:
 		add_child(bg_art)
-	# 릴 영역
+	# Phase 7: 상단 전투 영역 (1080×1056px) — 배경 위, 릴 아래.
+	var battle := BattleFieldView.new()
+	add_child(battle)
+	# Phase 7: 전투 필드 (Node2D) — 유닛/적이 실제로 배치되는 전투 좌표계.
+	_battle_field = BattleField.new()
+	_battle_field.name = "BattleField"
+	add_child(_battle_field)
+	# 릴 영역 (하단 슬롯 영역 내 배치)
 	_reel_area = Control.new()
 	_reel_area.name = "ReelArea"
 	add_child(_reel_area)
@@ -87,14 +101,28 @@ func _setup_reels() -> void:
 	_layout_reels()
 
 
+## Phase 7: 전투 시스템(UnitSpawner + WaveManager) 초기화. 슬롯 결과 → 유닛 소환 연결.
+func _setup_battle() -> void:
+	var spawner := UnitSpawner.new()
+	spawner.name = "UnitSpawner"
+	add_child(spawner)
+	var wave_mgr := WaveManager.new()
+	wave_mgr.name = "WaveManager"
+	add_child(wave_mgr)
+
+
 func _layout_reels() -> void:
+	# Phase 7: 하단 슬롯 영역(y=BATTLE_H~1920) 내에 릴 중앙 배치.
 	var vp := get_viewport_rect().size
 	var total_w := REEL_W * float(_reels.size())
 	var start_x := (vp.x - total_w) * 0.5
-	var start_y := (vp.y - ROW_H * 3.0) * 0.5
+	# 릴 그리드를 슬롯 영역(SLOT_H=864px) 안에서 수직 중앙 정렬.
+	# 릴 위쪽에 HUD 정보(CREDIT/WIN 등), 아래쪽에 버튼(SPIN/BET)이 올 공간 확보.
+	var reel_grid_h := ROW_H * 3.0
+	var start_y := BATTLE_H + (SLOT_H - reel_grid_h) * 0.5
 	_reel_area.position = Vector2(start_x, start_y)
 	_reel_area_origin = _reel_area.position
-	_reel_area.size = Vector2(total_w, ROW_H * 3.0)
+	_reel_area.size = Vector2(total_w, reel_grid_h)
 	for i in range(_reels.size()):
 		_reels[i].position = Vector2(float(i) * REEL_W, 0.0)
 

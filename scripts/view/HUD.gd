@@ -227,9 +227,14 @@ func _build_spin_bar() -> HBoxContainer:
 ## 데스크톱(노치 없음)에서는 offset 0 — 모바일에서만 창 내부 기준으로 안전하게 계산.
 ## (이전 구현이 모니터 전체 safe area 를 창 크기로 환산해 작은 창에서 offset 이 폭주하여
 ##  HUD 전체가 화면 밖으로 밀려 보이지 않던 버그 수정 — 2026-07-03.)
+# Phase 7: 상하 분할 — 상단 전투(1056px) / 하단 슬롯(864px). HUD는 하단 슬롯 영역만 차지.
+const BATTLE_H := 1056.0
+
+
 func _apply_safe_area() -> void:
+	# Phase 7: HUD를 하단 슬롯 영역(y=1056~1920)으로 제한.
 	_safe_root.offset_left = 0.0
-	_safe_root.offset_top = 0.0
+	_safe_root.offset_top = BATTLE_H   # 상단 전투 영역만큼 아래로 밀기
 	_safe_root.offset_right = 0.0
 	_safe_root.offset_bottom = 0.0
 	# 데스크톱 플랫폼은 노치/홈 인디케이터가 없으므로 SafeArea 무시.
@@ -250,7 +255,7 @@ func _apply_safe_area() -> void:
 	var sx := float(design.x) / float(win.x)
 	var sy := float(design.y) / float(win.y)
 	_safe_root.offset_left = float(safe.position.x) * sx
-	_safe_root.offset_top = float(safe.position.y) * sy
+	_safe_root.offset_top = BATTLE_H + float(safe.position.y) * sy
 	_safe_root.offset_right = -float(win.x - safe.end.x) * sx
 	_safe_root.offset_bottom = -float(win.y - safe.end.y) * sy
 

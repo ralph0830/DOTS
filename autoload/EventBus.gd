@@ -29,3 +29,13 @@ signal free_spins_started(count: int, multiplier: float)
 signal free_spins_changed(remaining: int, multiplier: float)
 signal free_spins_ended()
 signal jackpot_won(tier: int, amount: int)
+
+# --- 전투 / 디펜스 (Phase 7: 토템 스핀 디펜스) ---
+signal unit_spawned(unit_id: StringName, count: int)   # 슬롯 매칭 → 유닛 소환
+signal enemy_spawned(enemy_id: StringName)             # WAVE → 적 스폰
+signal enemy_killed(enemy_id: StringName)              # 적 처치
+signal unit_died(unit_id: StringName)                  # 아군 유닛 사망
+signal base_damaged(amount: int)                       # 기지 피해
+signal wave_started(wave_num: int)                     # WAVE 시작
+signal wave_cleared(wave_num: int)                     # WAVE 클리어
+signal game_over(victory: bool)                        # 게임 종료 (승리/패배)
