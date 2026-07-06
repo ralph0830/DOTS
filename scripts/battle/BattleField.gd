@@ -10,7 +10,13 @@ const ALLY_BASE_X := 60.0    # 아군 소환 위치 (기지 바로 우측)
 const ENEMY_PORTAL_X := 1020.0  # 적 소환 위치 (포탈 바로 좌측)
 const BASE_MAX_HP := 100
 
-var base_hp: int = BASE_MAX_HP
+var base_hp: int = BASE_MAX_HP        # 아군 기지(좌단) 체력
+var enemy_base_hp: int = BASE_MAX_HP  # 적 기지(우단) 체력 — 아군이 우단 도달 시 타격
+
+
+func _ready() -> void:
+	# 초기 HP 동기화 (UI가 리스너 붙기 전일 수 있으니 call_deferred).
+	call_deferred("_emit_hp")
 
 
 ## 아군 유닛 소환 (좌단에서).
@@ -33,23 +39,40 @@ func spawn_enemy(unit_data: UnitData) -> Unit:
 	return u
 
 
-## 기지 피해 (적이 좌단 도달 시).
+## 아군 기지 피해 (적이 좌단 도달 시).
 func damage_base(amount: int) -> void:
 	base_hp = maxi(0, base_hp - amount)
 	EventBus.base_damaged.emit(amount)
+	_emit_hp()
 	if base_hp <= 0:
 		EventBus.game_over.emit(false)   # 패배
+
+
+## 적 기지 피해 (아군이 우단 도달 시). 적 기지 0 이면 승리.
+func damage_enemy_base(amount: int) -> void:
+	enemy_base_hp = maxi(0, enemy_base_hp - amount)
+	_emit_hp()
+	if enemy_base_hp <= 0:
+		EventBus.game_over.emit(true)   # 승리
+
+
+## 양 기지 HP 동기화 (UI 갱신용).
+func _emit_hp() -> void:
+	EventBus.base_hp_changed.emit(base_hp, BASE_MAX_HP, enemy_base_hp, BASE_MAX_HP)
 
 
 func _physics_process(_delta: float) -> void:
 	# 적이 아군 기지(x < 20)에 도달하면 기지 피해
 	for child in get_children():
-		if child is Unit and child.is_enemy and child._alive:
-			if child.global_position.x < 20.0:
-				damage_base(10)
-				child.queue_free()
-	# 아군이 적 포탈(x > 1060)에 도달하면 해당 아군은 제거 (또는 적 기지 공격)
-	# Phase 7: 단순히 제거 (Phase 8에서 적 기지 체력로 확장 가능)
+		if not (child is Unit) or not child._alive:
+			continue
+		if child.is_enemy and child.global_position.x < 20.0:
+			damage_base(10)
+			child.queue_free()
+		elif not child.is_enemy and child.global_position.x > 1060.0:
+			# 아군이 적 포탈 도달 → 적 기지 타격 후 제거
+			damage_enemy_base(15)
+			child.queue_free()
 
 
 func _on_unit_died(unit: Unit) -> void:

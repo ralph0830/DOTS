@@ -7,12 +7,19 @@ extends Control
 const BATTLE_H := 1056.0   # 전투 영역 높이 (1920 × 0.55)
 const LINE_Y := 528.0      # 전투 라인 중심 y (BATTLE_H / 2) — 유닛/적이 이 선 위에 배치됨
 
+# 기지 HP 표시용 (draw 라벨). EventBus.base_hp_changed 로 갱신.
+var _ally_hp: int = 100
+var _ally_max: int = 100
+var _enemy_hp: int = 100
+var _enemy_max: int = 100
+
 
 func _ready() -> void:
 	# 상단 전투 영역 전체 채우기
 	set_anchors_preset(Control.PRESET_TOP_WIDE)
 	offset_bottom = -864.0   # 하단 864px(슬롯 영역)만큼 위로 당김 → 상단 1056px만 차지
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	EventBus.base_hp_changed.connect(_on_base_hp_changed)
 
 
 func _draw() -> void:
@@ -33,6 +40,30 @@ func _draw() -> void:
 	# 아군/적 라벨
 	_draw_label("ALLY BASE", Vector2(15.0, LINE_Y + 80.0), 22, Color(0.3, 0.8, 0.4, 0.8))
 	_draw_label("ENEMY PORTAL", Vector2(920.0, LINE_Y + 80.0), 22, Color(0.9, 0.3, 0.3, 0.8))
+	# 기지 HP 바 — 아군(좌단 상단), 적(우단 상단). HP 비율에 따라 폭 변동.
+	_draw_hp_bar(120.0, LINE_Y - 70.0, 200.0, _ally_hp, _ally_max, Color(0.2, 0.8, 0.3))
+	_draw_hp_bar(760.0, LINE_Y - 70.0, 200.0, _enemy_hp, _enemy_max, Color(0.9, 0.3, 0.3))
+	# HP 숫자 라벨 (기지 위)
+	_draw_label("HP %d/%d" % [_ally_hp, _ally_max], Vector2(120.0, LINE_Y - 110.0), 26, Color(0.3, 0.9, 0.4, 1.0))
+	_draw_label("HP %d/%d" % [_enemy_hp, _enemy_max], Vector2(760.0, LINE_Y - 110.0), 26, Color(0.9, 0.4, 0.4, 1.0))
+
+
+## HP 바 그리기 (배경 + 비율 채우기).
+func _draw_hp_bar(x: float, y: float, w: float, hp: int, mx: int, col: Color) -> void:
+	var r := clampf(float(hp) / float(mx), 0.0, 1.0) if mx > 0 else 0.0
+	# 배경 (어두운 회색)
+	draw_rect(Rect2(x, y, w, 16.0), Color(0.1, 0.1, 0.15, 0.95), true)
+	# 채우기 (색상 + 테두리)
+	draw_rect(Rect2(x, y, w * r, 16.0), col, true)
+	draw_rect(Rect2(x, y, w, 16.0), Color(1.0, 1.0, 1.0, 0.4), false, 2.0)
+
+
+func _on_base_hp_changed(ally_hp: int, ally_max: int, enemy_hp: int, enemy_max: int) -> void:
+	_ally_hp = ally_hp
+	_ally_max = ally_max
+	_enemy_hp = enemy_hp
+	_enemy_max = enemy_max
+	queue_redraw()   # HP 바 갱신
 
 
 ## 임시 텍스트 그리기 (Godot 4 draw_string 헬퍼).

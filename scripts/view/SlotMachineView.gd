@@ -112,14 +112,14 @@ func _setup_battle() -> void:
 
 
 func _layout_reels() -> void:
-	# Phase 7: 하단 슬롯 영역(y=BATTLE_H~1920) 내에 릴 중앙 배치.
+	# Phase 7: 하단 슬롯 영역(y=BATTLE_H~1920 = 864px) 내 상단에 릴 배치.
+	# 구조: [릴 540px (y=1056~1596)] / [정보 바 + 버튼 324px (y=1596~1920)]
 	var vp := get_viewport_rect().size
 	var total_w := REEL_W * float(_reels.size())
 	var start_x := (vp.x - total_w) * 0.5
-	# 릴 그리드를 슬롯 영역(SLOT_H=864px) 안에서 수직 중앙 정렬.
-	# 릴 위쪽에 HUD 정보(CREDIT/WIN 등), 아래쪽에 버튼(SPIN/BET)이 올 공간 확보.
-	var reel_grid_h := ROW_H * 3.0
-	var start_y := BATTLE_H + (SLOT_H - reel_grid_h) * 0.5
+	var reel_grid_h := ROW_H * 3.0   # 540px
+	# 릴을 슬롯 영역 상단에 붙임 (상단 40px 여백 → 릴 → 정보 바 → 버튼).
+	var start_y := BATTLE_H + 30.0
 	_reel_area.position = Vector2(start_x, start_y)
 	_reel_area_origin = _reel_area.position
 	_reel_area.size = Vector2(total_w, reel_grid_h)

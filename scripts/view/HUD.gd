@@ -48,28 +48,30 @@ func _build_ui() -> void:
 	margin_c.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin_c.add_theme_constant_override("margin_left", int(MARGIN))
 	margin_c.add_theme_constant_override("margin_right", int(MARGIN))
-	margin_c.add_theme_constant_override("margin_top", 10)
-	margin_c.add_theme_constant_override("margin_bottom", 10)
+	margin_c.add_theme_constant_override("margin_top", 5)
+	margin_c.add_theme_constant_override("margin_bottom", 8)
 	margin_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_safe_root.add_child(margin_c)
 
-	# 수직 레이아웃: 상단 정보 / 중앙 빈 공간(릴 영역) / 하단 컨트롤(2행)
-	# Phase 7: 하단 슬롯 영역(864px)에 맞춰 compact 하게 배치.
+	# 수직 레이아웃: 상단 spacer(릴 영역) / 정보 바 / 버튼 2행.
+	# Phase 7: 릴은 SlotMachineView._layout_reels 가 직접 배치 (상단 540px 점유).
+	# HUD 는 그 아래 정보 바(CREDIT/BET/WIN) + 버튼(SPIN/BET/AUTO)만 담당.
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
+	vbox.add_theme_constant_override("separation", 6)
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin_c.add_child(vbox)
 
-	vbox.add_child(_build_top_bar())
-	_status_label = _make_label("", 32, Color(0.6, 0.85, 1.0))
-	vbox.add_child(_status_label)
+	# 상단 spacer — 릴 영역(540px)만큼 공간 확보. HUD는 릴 아래부터 시작.
+	var top_spacer := Control.new()
+	top_spacer.custom_minimum_size = Vector2(0, 556.0)   # 릴 540px + 여백 16px
+	top_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(top_spacer)
 
-	# 중앙 spacer (릴 영역 확보 — 하단 버튼이 화면 밖으로 밀리지 않도록 최소 높이 보장)
-	var mid := Control.new()
-	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	mid.custom_minimum_size = Vector2(0, 20)   # 최소 높이 (릴은 별도 Control 영역에 있음)
-	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(mid)
+	# 정보 바: CREDIT / BET / WIN 한 줄 표시 (릴과 버튼 사이).
+	vbox.add_child(_build_info_bar())
+	# 상태 라벨 (BIG WIN / FREE SPINS 등 일시적 메시지)
+	_status_label = _make_label("", 30, Color(0.6, 0.85, 1.0))
+	vbox.add_child(_status_label)
 
 	# 하단 행1: 베팅 ± (좌) / AUTO (우)
 	vbox.add_child(_build_bet_bar())
@@ -77,22 +79,45 @@ func _build_ui() -> void:
 	vbox.add_child(_build_spin_bar())
 
 
-## 상단 바: 크레딧(좌) / 당첨(우).
-func _build_top_bar() -> HBoxContainer:
+## 정보 바: CREDIT (좌) / BET (중앙) / WIN (우) — 릴 아래 한 줄 균등 배치.
+func _build_info_bar() -> HBoxContainer:
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 24)
+	bar.add_theme_constant_override("separation", 12)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_credit_label = _make_label("CREDIT  0", 46, Color(1.0, 0.9, 0.3))
-	bar.add_child(_credit_label)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.add_child(spacer)
-	_win_label = _make_label("", 54, Color(0.5, 1.0, 0.6))
-	bar.add_child(_win_label)
-	# 설정 버튼(⚙) — 상단 우측 끝.
-	var gear := _make_button("⚙", Vector2(80.0, 80.0))
-	gear.add_theme_font_size_override("font_size", 44)
+
+	# CREDIT (좌) — 노란색
+	var credit_box := VBoxContainer.new()
+	credit_box.alignment = BoxContainer.ALIGNMENT_BEGIN
+	credit_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	credit_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	credit_box.add_child(_make_label("CREDIT", 24, Color(0.7, 0.65, 0.4, 0.9)))
+	_credit_label = _make_label("0", 40, Color(1.0, 0.9, 0.3))
+	credit_box.add_child(_credit_label)
+	bar.add_child(credit_box)
+
+	# BET (중앙) — 흰색
+	var bet_box := VBoxContainer.new()
+	bet_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	bet_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bet_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bet_box.add_child(_make_label("BET", 24, Color(0.7, 0.7, 0.7, 0.9)))
+	_bet_label = _make_label("0", 40, Color.WHITE)
+	bet_box.add_child(_bet_label)
+	bar.add_child(bet_box)
+
+	# WIN (우) — 녹색
+	var win_box := VBoxContainer.new()
+	win_box.alignment = BoxContainer.ALIGNMENT_END
+	win_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	win_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	win_box.add_child(_make_label("WIN", 24, Color(0.4, 0.7, 0.5, 0.9)))
+	_win_label = _make_label("0", 40, Color(0.5, 1.0, 0.6))
+	win_box.add_child(_win_label)
+	bar.add_child(win_box)
+
+	# 설정 버튼(⚙) — 맨 우측 끝 (작게).
+	var gear := _make_button("⚙", Vector2(70.0, 70.0))
+	gear.add_theme_font_size_override("font_size", 36)
 	gear.pressed.connect(_toggle_settings)
 	bar.add_child(gear)
 	return bar
@@ -155,7 +180,8 @@ func _build_settings_panel() -> void:
 	vbox.add_child(close_btn)
 
 
-## 하단 행1: 베팅 감소 / BET 표시 / 베팅 증가 (좌) … (spacer) … AUTO (우).
+## 하단 행1: 베팅 감소(-) / 베팅 증가(+) (좌) … (spacer) … AUTO (우).
+## BET 금액 자체는 정보 바(_build_info_bar)에 표시됨 — 여기선 +/- 버튼만.
 func _build_bet_bar() -> HBoxContainer:
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 18)
@@ -164,17 +190,6 @@ func _build_bet_bar() -> HBoxContainer:
 	bet_down.add_theme_font_size_override("font_size", 56)
 	bet_down.pressed.connect(func() -> void: WalletManager.change_bet(-1))
 	bar.add_child(bet_down)
-
-	# BET 표시 박스(BET 캡션 + 금액)
-	var bet_box := VBoxContainer.new()
-	bet_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	bet_box.custom_minimum_size = Vector2(150.0, 0.0)
-	bet_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var cap := _make_label("BET", 28, Color(0.85, 0.85, 0.85))
-	bet_box.add_child(cap)
-	_bet_label = _make_label("0", 44, Color.WHITE)
-	bet_box.add_child(_bet_label)
-	bar.add_child(bet_box)
 
 	var bet_up := _make_button("+", BTN_MIN)
 	bet_up.add_theme_font_size_override("font_size", 56)

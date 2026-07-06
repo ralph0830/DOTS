@@ -22,12 +22,12 @@ func setup(unit_data: UnitData, enemy: bool) -> void:
 	is_enemy = enemy
 	hp = data.max_hp
 	_direction = -1.0 if enemy else 1.0
-	# 충돌 영역 설정 (도형 size 기반)
-	var s := data.size
-	# Area2D 콜리전: size 에 맞춘 사각형 shape
+	# 충돌/감지 영역: 공격 사거리 기반 (원거리 유닛은 더 일찍 교전).
+	# 시각 도형(size)보다 넓게 → 사거리 내 진입 시 즉시 타겟 판정.
+	var detect_w := maxf(data.attack_range, data.size * 0.7)
 	var col := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
-	rect.size = Vector2(s * 0.7, s * 0.7)   # 시각보다 약간 작게 (자연스러운 접촉)
+	rect.size = Vector2(detect_w, data.size * 1.5)
 	col.shape = rect
 	add_child(col)
 	# 레이어/마스크: 아군=2, 적=3 (project.godot 정의)
@@ -36,9 +36,12 @@ func setup(unit_data: UnitData, enemy: bool) -> void:
 
 
 func _ready() -> void:
-	# body_entered (적 접촉) → 타겟 설정
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
+	# Unit 은 Area2D 이므로 다른 Area2D(Unit) 감지를 위해 area_* 시그널 사용.
+	# body_entered 는 PhysicsBody2D 에만 반응 → Area2D 간 감지 불가(이전 전투 미동작 원인).
+	monitorable = true
+	monitoring = true
+	area_entered.connect(_on_area_entered)
+	area_exited.connect(_on_area_exited)
 
 
 func _physics_process(delta: float) -> void:
@@ -80,13 +83,14 @@ func take_damage(amount: int) -> void:
 		queue_free()
 
 
-func _on_body_entered(body: Node) -> void:
-	if body is Unit and body.is_enemy != is_enemy:
-		_target = body
+func _on_area_entered(other: Area2D) -> void:
+	# 적대 관계(아군↔적)인 경우에만 타겟 지정. 이미 타겟 있으면 유지.
+	if other is Unit and other.is_enemy != is_enemy and _target == null:
+		_target = other
 
 
-func _on_body_exited(body: Node) -> void:
-	if body == _target:
+func _on_area_exited(other: Area2D) -> void:
+	if other == _target:
 		_target = null
 
 
