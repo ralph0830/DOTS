@@ -17,8 +17,8 @@ var _safe_root: Control
 var _settings_panel: ColorRect   # 설정 오버레이 패널 (사운드 볼륨/리셋)
 # 자동스핀 순환 모드 인덱스: 0=끔(AUTO), 1=10회, 2=25회, 3=50회, 4=무한(∞).
 var _auto_cycle := 0
-const AUTO_LABELS := ["AUTO", "×10", "×25", "×50", "∞"]
-const AUTO_COUNTS := [0, 10, 25, 50, -1]   # -1=무한
+const AUTO_LABELS: Array[String] = ["AUTO", "×10", "×25", "×50", "∞"]
+const AUTO_COUNTS: Array[int] = [0, 10, 25, 50, -1]   # -1=무한
 
 
 func _ready() -> void:
@@ -48,24 +48,26 @@ func _build_ui() -> void:
 	margin_c.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin_c.add_theme_constant_override("margin_left", int(MARGIN))
 	margin_c.add_theme_constant_override("margin_right", int(MARGIN))
-	margin_c.add_theme_constant_override("margin_top", 24)
-	margin_c.add_theme_constant_override("margin_bottom", 24)
+	margin_c.add_theme_constant_override("margin_top", 10)
+	margin_c.add_theme_constant_override("margin_bottom", 10)
 	margin_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_safe_root.add_child(margin_c)
 
 	# 수직 레이아웃: 상단 정보 / 중앙 빈 공간(릴 영역) / 하단 컨트롤(2행)
+	# Phase 7: 하단 슬롯 영역(864px)에 맞춰 compact 하게 배치.
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 14)
+	vbox.add_theme_constant_override("separation", 8)
 	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin_c.add_child(vbox)
 
 	vbox.add_child(_build_top_bar())
-	_status_label = _make_label("", 40, Color(0.6, 0.85, 1.0))
+	_status_label = _make_label("", 32, Color(0.6, 0.85, 1.0))
 	vbox.add_child(_status_label)
 
-	# 중앙 spacer (릴 영역 확보)
+	# 중앙 spacer (릴 영역 확보 — 하단 버튼이 화면 밖으로 밀리지 않도록 최소 높이 보장)
 	var mid := Control.new()
 	mid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mid.custom_minimum_size = Vector2(0, 20)   # 최소 높이 (릴은 별도 Control 영역에 있음)
 	mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(mid)
 
@@ -196,8 +198,8 @@ func _build_bet_bar() -> HBoxContainer:
 ## AUTO 버튼 클릭 시 순환. AUTO(끔) → ×10 → ×25 → ×50 → ∞ → AUTO(끔).
 func _on_auto_pressed() -> void:
 	_auto_cycle = (_auto_cycle + 1) % AUTO_LABELS.size()
-	var label := AUTO_LABELS[_auto_cycle]
-	var count := AUTO_COUNTS[_auto_cycle]
+	var label: String = AUTO_LABELS[_auto_cycle]
+	var count: int = AUTO_COUNTS[_auto_cycle]
 	_auto_btn.text = label
 	if count == 0:
 		# 끔
@@ -233,29 +235,35 @@ const BATTLE_H := 1056.0
 
 func _apply_safe_area() -> void:
 	# Phase 7: HUD를 하단 슬롯 영역(y=1056~1920)으로 제한.
-	_safe_root.offset_left = 0.0
-	_safe_root.offset_top = BATTLE_H   # 상단 전투 영역만큼 아래로 밀기
-	_safe_root.offset_right = 0.0
-	_safe_root.offset_bottom = 0.0
-	# 데스크톱 플랫폼은 노치/홈 인디케이터가 없으므로 SafeArea 무시.
+	# _safe_root anchors 를 명시적으로 하단 영역으로 설정 (FULL_RECT 대신 커스텀).
+	# anchor_top=1056/1920=0.55, anchor_bottom=1.0 (하단 끝).
+	var design := get_window().content_scale_size
+	if design.y > 0.0:
+		var ratio := BATTLE_H / design.y
+		_safe_root.anchor_top = ratio
+		_safe_root.anchor_bottom = 1.0
+		_safe_root.anchor_left = 0.0
+		_safe_root.anchor_right = 1.0
+		_safe_root.offset_left = 0.0
+		_safe_root.offset_top = 0.0
+		_safe_root.offset_right = 0.0
+		_safe_root.offset_bottom = 0.0
+	# 모바일 SafeArea 추가 보정.
 	var platform := OS.get_name()
 	if platform != "Android" and platform != "iOS":
 		return
-	var safe := DisplayServer.get_display_safe_area()   # 윈도우 픽셀 좌표
+	var safe := DisplayServer.get_display_safe_area()
 	var win := get_window().get_size()
 	if win.x <= 0 or win.y <= 0:
 		return
-	# safe area 가 창 영역 밖이면(의미 없는 값) 무시.
 	if safe.end.x <= safe.position.x or safe.end.y <= safe.position.y:
 		return
 	if safe.end.x > win.x or safe.end.y > win.y:
 		return
-	# design 해상도(1080×1920) 기준 비율로 환산. stretch 모드에서도 일관 동작.
-	var design := get_window().content_scale_size
 	var sx := float(design.x) / float(win.x)
 	var sy := float(design.y) / float(win.y)
 	_safe_root.offset_left = float(safe.position.x) * sx
-	_safe_root.offset_top = BATTLE_H + float(safe.position.y) * sy
+	_safe_root.offset_top = float(safe.position.y) * sy
 	_safe_root.offset_right = -float(win.x - safe.end.x) * sx
 	_safe_root.offset_bottom = -float(win.y - safe.end.y) * sy
 

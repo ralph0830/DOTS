@@ -16,18 +16,23 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	# 전투 영역 배경 (어두운 배경 — 파타폰 톤)
-	draw_rect(Rect2(0.0, 0.0, 1080.0, BATTLE_H), Color(0.08, 0.06, 0.12, 1.0), true)
-	# 전투 라인 (중앙 가로선 — 유닛/적이 지나다니는 줄)
-	draw_line(Vector2(40.0, LINE_Y), Vector2(1040.0, LINE_Y), Color(0.3, 0.25, 0.4, 0.6), 2.0)
-	# 아군 기지 영역 표시 (좌단 — 초록 테두리 사각형 80×120)
-	draw_rect(Rect2(20.0, LINE_Y - 60.0, 80.0, 120.0), Color(0.2, 0.6, 0.3, 0.5), false, 3.0)
-	# 적 포탈 영역 표시 (우단 — 빨간 테두리 사각형 80×120)
-	draw_rect(Rect2(980.0, LINE_Y - 60.0, 80.0, 120.0), Color(0.7, 0.2, 0.2, 0.5), false, 3.0)
-	# 하단 분할선 (전투/슬롯 경계 — 밝은 선으로 명확히 표시)
-	draw_line(Vector2(0.0, BATTLE_H), Vector2(1080.0, BATTLE_H), Color(0.6, 0.5, 0.8, 0.8), 4.0)
-	# 임시 라벨 (좌상단)
-	_draw_label("BATTLE FIELD", Vector2(20.0, 20.0), 32, Color(0.7, 0.65, 0.85, 0.8))
+	# 전투 영역 배경 (밝게 조정 — 파타폰 톤이지만 가독성 우선)
+	draw_rect(Rect2(0.0, 0.0, 1080.0, BATTLE_H), Color(0.18, 0.15, 0.25, 1.0), true)
+	# 전투 라인 (중앙 가로선 — 유닛/적이 지나다니는 줄, 더 밝게)
+	draw_line(Vector2(40.0, LINE_Y), Vector2(1040.0, LINE_Y), Color(0.5, 0.45, 0.7, 0.8), 3.0)
+	# 아군 기지 영역 표시 (좌단 — 초록 채우기 사각형 80×120)
+	draw_rect(Rect2(20.0, LINE_Y - 60.0, 80.0, 120.0), Color(0.15, 0.5, 0.2, 0.9), false, 4.0)
+	draw_rect(Rect2(24.0, LINE_Y - 56.0, 72.0, 112.0), Color(0.2, 0.6, 0.3, 0.3), true)
+	# 적 포탈 영역 표시 (우단 — 빨간 채우기 사각형 80×120)
+	draw_rect(Rect2(980.0, LINE_Y - 60.0, 80.0, 120.0), Color(0.6, 0.15, 0.15, 0.9), false, 4.0)
+	draw_rect(Rect2(984.0, LINE_Y - 56.0, 72.0, 112.0), Color(0.7, 0.2, 0.2, 0.3), true)
+	# 하단 분할선 (전투/슬롯 경계 — 밝은 네온 선으로 명확히 표시)
+	draw_line(Vector2(0.0, BATTLE_H), Vector2(1080.0, BATTLE_H), Color(0.7, 0.6, 1.0, 1.0), 5.0)
+	# 임시 라벨 (좌상단 — 밝게)
+	_draw_label("⚔ BATTLE FIELD", Vector2(20.0, 30.0), 36, Color(0.85, 0.8, 1.0, 0.9))
+	# 아군/적 라벨
+	_draw_label("ALLY BASE", Vector2(15.0, LINE_Y + 80.0), 22, Color(0.3, 0.8, 0.4, 0.8))
+	_draw_label("ENEMY PORTAL", Vector2(920.0, LINE_Y + 80.0), 22, Color(0.9, 0.3, 0.3, 0.8))
 
 
 ## 임시 텍스트 그리기 (Godot 4 draw_string 헬퍼).
