@@ -54,8 +54,12 @@ func _make_enemy(id: StringName, name: String, hp: int, atk: int, spd: float, rn
 
 func _physics_process(delta: float) -> void:
 	_wave_timer += delta
-	# 다음 WAVE 시작 조건: WAVE 지속 시간 경과 또는 첫 대기 종료
-	if _wave_timer >= WAVE_DURATION:
+	# WAVE 시작 조건:
+	#   (a) 대기 중(_wave_num == 0, 타이머 >= 0) → 첫 WAVE 즉시 시작
+	#   (b) WAVE 진행 중(타이머 >= WAVE_DURATION) → 다음 WAVE
+	if _wave_num == 0 and _wave_timer >= 0.0:
+		_start_next_wave()
+	elif _wave_num > 0 and _wave_timer >= WAVE_DURATION:
 		_start_next_wave()
 	# 적 스폰 처리
 	if _enemies_to_spawn > 0:
@@ -76,6 +80,7 @@ func _start_next_wave() -> void:
 	# 보스 WAVE (5번째마다)
 	if _wave_num % 5 == 0:
 		_enemies_to_spawn += 1   # 보스 1기 추가
+	print("[wave] WAVE %d 시작 — 적 %d체 예정" % [_wave_num, _enemies_to_spawn])
 	EventBus.wave_started.emit(_wave_num)
 	wave_changed.emit(_wave_num)
 

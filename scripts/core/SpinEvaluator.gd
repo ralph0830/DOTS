@@ -20,36 +20,21 @@ static func evaluate_line(grid: Array, payline: Payline) -> LineWin:
 	if target == null:
 		return null
 
-	# DEBUG: 페이라인 0(가운데 행)만 상세 추적 — 매칭 실패 원인 파악.
-	var dbg := payline.id == 0
-	if dbg:
-		var ids := []
-		for s in line:
-			ids.append(String(s.id) if s != null else "null")
-		print("[DBG] pl0 line=%s target=%s" % [str(ids), String(target.id)])
-
 	# 왼쪽부터 연속 매치. 참여하지 않는 심볼(Scatter/Bonus)을 만나면 중단.
 	var match_count := 0
 	var positions: Array[Vector2i] = []
 	for r in range(5):
 		var sym: SymbolData = line[r]
 		if sym == null:
-			if dbg: print("[DBG]   r%d null → break" % r)
 			break
 		if not sym.participates_in_line():
-			if dbg: print("[DBG]   r%d %s not_participate → break" % [r, sym.id])
 			break
-		var matched := sym.matches(target)
-		if dbg:
-			print("[DBG]   r%d %s.matches(%s)=%s" % [r, String(sym.id), String(target.id), matched])
-		if matched:
+		if sym.matches(target):
 			match_count += 1
 			positions.append(Vector2i(r, payline.get_row(r)))
 		else:
 			break
 
-	if dbg:
-		print("[DBG]   match_count=%d" % match_count)
 	if match_count < MIN_MATCH:
 		return null
 	var amount2 := target.get_payout(match_count)
