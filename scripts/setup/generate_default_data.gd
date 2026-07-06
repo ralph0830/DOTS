@@ -79,6 +79,11 @@ func _build_symbols() -> Dictionary:
 		s.color = d[2]
 		s.shape = d[3]
 		s.payout = PackedInt32Array(d[4])
+		# 에셋 교체: assets/sprites/{id}_transparent_180.png 가 있으면 texture 로드.
+		# null이면 프로시저럴 도형(SymbolView._draw) 폴백. 텍스처 할당 시 자동으로 실제 아트 적용.
+		var tex_path := "res://assets/sprites/%s_transparent_180.png" % id
+		if ResourceLoader.exists(tex_path):
+			s.texture = load(tex_path)
 		_save(s, SYMBOL_DIR + id + ".tres")
 		out[id] = s
 	return out

@@ -1,66 +1,80 @@
 [gd_resource type="Resource" script_class="ReelStrip" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/ReelStrip.gd" id="1_xo6bi"]
-[ext_resource type="Script" path="res://scripts/data/SymbolData.gd" id="2_5g38k"]
+[ext_resource type="Script" path="res://scripts/data/ReelStrip.gd" id="1_qxvwu"]
+[ext_resource type="Script" path="res://scripts/data/SymbolData.gd" id="2_70jvh"]
+[ext_resource type="Texture2D" path="res://assets/sprites/emerald_transparent_180.png" id="3_jpcc4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/sapphire_transparent_180.png" id="4_m7hxu"]
+[ext_resource type="Texture2D" path="res://assets/sprites/dragon_transparent_180.png" id="5_pklk6"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ruby_transparent_180.png" id="6_samqr"]
+[ext_resource type="Texture2D" path="res://assets/sprites/unicorn_transparent_180.png" id="7_kw7jx"]
+[ext_resource type="Texture2D" path="res://assets/sprites/chest_transparent_180.png" id="8_0wfmb"]
+[ext_resource type="Texture2D" path="res://assets/sprites/rune_transparent_180.png" id="9_qma3t"]
 
-[sub_resource type="Resource" id="Resource_j0nq8"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_6jl5i"]
+script = ExtResource("2_70jvh")
 id = &"emerald"
 display_name = "Emerald"
 color = Color(0.1, 0.78, 0.42, 1)
 shape = 5
 payout = PackedInt32Array(0, 0, 0, 9, 30, 100)
+texture = ExtResource("3_jpcc4")
 
-[sub_resource type="Resource" id="Resource_ml1g4"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_rlw4m"]
+script = ExtResource("2_70jvh")
 id = &"sapphire"
 display_name = "Sapphire"
 color = Color(0.15, 0.36, 0.95, 1)
 payout = PackedInt32Array(0, 0, 0, 6, 20, 60)
+texture = ExtResource("4_m7hxu")
 
-[sub_resource type="Resource" id="Resource_vcues"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_3c3g8"]
+script = ExtResource("2_70jvh")
 id = &"dragon"
 display_name = "Dragon"
 color = Color(0.62, 0.15, 0.78, 1)
 shape = 4
 payout = PackedInt32Array(0, 0, 0, 30, 345, 2350)
+texture = ExtResource("5_pklk6")
 
-[sub_resource type="Resource" id="Resource_j383b"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_cq1h4"]
+script = ExtResource("2_70jvh")
 id = &"ruby"
 display_name = "Ruby"
 color = Color(0.86, 0.12, 0.2, 1)
 shape = 1
 payout = PackedInt32Array(0, 0, 0, 6, 20, 60)
+texture = ExtResource("6_samqr")
 
-[sub_resource type="Resource" id="Resource_tnn5v"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_tpe4m"]
+script = ExtResource("2_70jvh")
 id = &"unicorn"
 kind = 1
 display_name = "Unicorn (Wild)"
 color = Color(0.95, 0.85, 1, 1)
 shape = 4
 payout = PackedInt32Array(0, 0, 0, 30, 345, 2350)
+texture = ExtResource("7_kw7jx")
 
-[sub_resource type="Resource" id="Resource_ujpgf"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_ygs6s"]
+script = ExtResource("2_70jvh")
 id = &"chest"
 kind = 2
 display_name = "Chest (Scatter)"
 color = Color(1, 0.8, 0.15, 1)
 shape = 2
 payout = PackedInt32Array(0, 0, 0, 0, 0, 0)
+texture = ExtResource("8_0wfmb")
 
-[sub_resource type="Resource" id="Resource_buexr"]
-script = ExtResource("2_5g38k")
+[sub_resource type="Resource" id="Resource_6xf7y"]
+script = ExtResource("2_70jvh")
 id = &"rune"
 kind = 3
 display_name = "Rune (Bonus)"
 color = Color(0.95, 0.6, 1, 1)
 shape = 3
 payout = PackedInt32Array(0, 0, 0, 0, 0, 0)
+texture = ExtResource("9_qma3t")
 
 [resource]
-script = ExtResource("1_xo6bi")
-symbols = Array[ExtResource("2_5g38k")]([SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_tnn5v"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_ml1g4"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_ujpgf"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_buexr")])
+script = ExtResource("1_qxvwu")
+symbols = Array[ExtResource("2_70jvh")]([SubResource("Resource_6jl5i"), SubResource("Resource_rlw4m"), SubResource("Resource_6jl5i"), SubResource("Resource_3c3g8"), SubResource("Resource_6jl5i"), SubResource("Resource_rlw4m"), SubResource("Resource_6jl5i"), SubResource("Resource_cq1h4"), SubResource("Resource_3c3g8"), SubResource("Resource_6jl5i"), SubResource("Resource_6jl5i"), SubResource("Resource_rlw4m"), SubResource("Resource_tpe4m"), SubResource("Resource_6jl5i"), SubResource("Resource_3c3g8"), SubResource("Resource_6jl5i"), SubResource("Resource_cq1h4"), SubResource("Resource_rlw4m"), SubResource("Resource_3c3g8"), SubResource("Resource_6jl5i"), SubResource("Resource_6jl5i"), SubResource("Resource_rlw4m"), SubResource("Resource_ygs6s"), SubResource("Resource_3c3g8"), SubResource("Resource_6jl5i"), SubResource("Resource_cq1h4"), SubResource("Resource_6jl5i"), SubResource("Resource_3c3g8"), SubResource("Resource_rlw4m"), SubResource("Resource_6jl5i"), SubResource("Resource_6xf7y")])

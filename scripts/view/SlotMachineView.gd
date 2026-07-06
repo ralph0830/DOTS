@@ -141,6 +141,8 @@ func _on_highlight(result: SpinResult) -> void:
 
 
 ## 빅윈 시 릴 영역 진동(EventBus.big_win).
+## Control 기반 UI 씬에서는 Camera2D 활성화가 좌표계를 흐트러뜨리므로
+## 릴 영역 position 만 tween 으로 흔드는 인라인 방식을 사용한다.
 func _on_big_win(amount: int) -> void:
 	var amplitude := clampf(float(amount) / 50.0, 4.0, 18.0)
 	var tween := create_tween()

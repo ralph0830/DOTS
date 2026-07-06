@@ -42,3 +42,9 @@ $RECYCLE.BIN/
 
 # 테스트 캡처 스크린샷
 captures/
+
+# 빌드 산출물 (APK 등)
+/build/
+
+# Playwright MCP 임시
+/.playwright-mcp/

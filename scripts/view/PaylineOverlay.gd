@@ -11,7 +11,6 @@ var _lines: Array[Line2D] = []
 
 func _ready() -> void:
 	EventBus.highlight_wins.connect(_on_highlight)
-	EventBus.clear_highlights.connect(clear)
 	# 스핀이 시작되면 이전 당첨 라인을 즉시 지운다.
 	EventBus.spin_started.connect(_on_spin_started)
 
