@@ -30,8 +30,8 @@ func initialize(config: SlotConfig) -> void:
 	if credit <= 0:
 		credit = config.starting_credit
 	_initialized = true
-	bet_changed.emit(current_bet)
-	credit_changed.emit(credit)
+	_emit_bet(current_bet)
+	_emit_credit(credit)
 
 
 ## 현재 크레딧으로 베팅 가능한지.
@@ -44,7 +44,7 @@ func place_bet() -> bool:
 	if not can_bet():
 		return false
 	credit -= current_bet
-	credit_changed.emit(credit)
+	_emit_credit(credit)
 	_save()
 	return true
 
@@ -55,7 +55,7 @@ func add_win(amount: int) -> void:
 		return
 	credit += amount
 	total_won += amount
-	credit_changed.emit(credit)
+	_emit_credit(credit)
 	_save()
 
 
@@ -64,7 +64,7 @@ func add_credit(amount: int) -> void:
 	if amount == 0:
 		return
 	credit += amount
-	credit_changed.emit(credit)
+	_emit_credit(credit)
 	_save()
 
 
@@ -72,7 +72,7 @@ func add_credit(amount: int) -> void:
 func reset_credit(amount: int) -> void:
 	credit = amount
 	total_won = 0
-	credit_changed.emit(credit)
+	_emit_credit(credit)
 	_save()
 
 
@@ -85,7 +85,20 @@ func change_bet(direction: int) -> void:
 		return
 	bet_index = new_index
 	current_bet = bet_steps[bet_index]
-	bet_changed.emit(current_bet)
+	_emit_bet(current_bet)
+
+
+# --- 시그널 발행 헬퍼 ---
+# 자체 시그널 + EventBus forward 를 한 곳에서 처리(2026-07-03 결합도 일원화).
+# BonusManager 의 이중 emit 패턴과 동일 — HUD 가 autoload 직접 접근 없이 EventBus 만 구독 가능.
+func _emit_credit(value: int) -> void:
+	credit_changed.emit(value)
+	EventBus.credit_changed.emit(value)
+
+
+func _emit_bet(value: int) -> void:
+	bet_changed.emit(value)
+	EventBus.bet_changed.emit(value)
 
 
 func _save() -> void:

@@ -145,10 +145,26 @@ func _build_spin_bar() -> HBoxContainer:
 
 
 ## 디스플레이 안전 영역(노치/홈 인디케이터 제외)을 design 해상도 좌표로 변환해 루트 offset 적용.
+## 데스크톱(노치 없음)에서는 offset 0 — 모바일에서만 창 내부 기준으로 안전하게 계산.
+## (이전 구현이 모니터 전체 safe area 를 창 크기로 환산해 작은 창에서 offset 이 폭주하여
+##  HUD 전체가 화면 밖으로 밀려 보이지 않던 버그 수정 — 2026-07-03.)
 func _apply_safe_area() -> void:
+	_safe_root.offset_left = 0.0
+	_safe_root.offset_top = 0.0
+	_safe_root.offset_right = 0.0
+	_safe_root.offset_bottom = 0.0
+	# 데스크톱 플랫폼은 노치/홈 인디케이터가 없으므로 SafeArea 무시.
+	var platform := OS.get_name()
+	if platform != "Android" and platform != "iOS":
+		return
 	var safe := DisplayServer.get_display_safe_area()   # 윈도우 픽셀 좌표
 	var win := get_window().get_size()
 	if win.x <= 0 or win.y <= 0:
+		return
+	# safe area 가 창 영역 밖이면(의미 없는 값) 무시.
+	if safe.end.x <= safe.position.x or safe.end.y <= safe.position.y:
+		return
+	if safe.end.x > win.x or safe.end.y > win.y:
 		return
 	# design 해상도(1080×1920) 기준 비율로 환산. stretch 모드에서도 일관 동작.
 	var design := get_window().content_scale_size

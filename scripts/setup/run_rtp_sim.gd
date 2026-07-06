@@ -14,6 +14,9 @@ func _ready() -> void:
 	assert(config != null, "[sim] SlotConfig 로드 실패 — 데이터 생성 스크립트를 먼저 실행하세요.")
 	WalletManager.initialize(config)
 	JackpotSystem.initialize(config)
+	# 영속 잭팟 풀(이전 실행 누적분)을 시드로 강제 리셋 → 매 측정 동일 초기상태 보장.
+	# 게임 플레이용 영속 동작은 그대로 두고, 시뮬레이션만 결정론적으로 만듦(2026-07-03 RTP 왜곡 버그 수정).
+	JackpotSystem.reset_to_seeds()
 
 	var sm := SlotMachine.new()
 	add_child(sm)

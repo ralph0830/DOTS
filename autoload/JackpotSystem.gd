@@ -1,6 +1,8 @@
 extends Node
 ## JackpotSystem — Mini/Minor/Major/Grand 4티어 누적 잭팟 풀 autoload. 영속(user://jackpot.save).
 ## Phase 1: 풀 누적/영속/지급 구조만 구현. 트리거 평가는 Phase 4에서 연결.
+## 2026-07-03: reset_to_seeds() 추가 — 시뮬레이션/밸런싱 검증 시 영속 풀을 무시하고
+##             매 측정 동일 초기상태를 보장하기 위함(게임 플레이 동작은 변경 없음).
 
 enum Tier { MINI, MINOR, MAJOR, GRAND }
 
@@ -22,6 +24,7 @@ func _ready() -> void:
 
 
 ## SlotConfig 시드로 풀 초기화. 이미 저장된(누적 중인) 풀은 유지.
+## 일반 게임 플레이에서는 영속 풀(누적 잭팟)이 유지되어야 하므로 이 동작이 정상.
 func initialize(config: SlotConfig) -> void:
 	_seeds = PackedInt64Array([
 		config.jackpot_seed_mini,
@@ -34,6 +37,19 @@ func initialize(config: SlotConfig) -> void:
 			pools[i] = _seeds[i]
 			pool_changed.emit(i, pools[i])
 	_initialized = true
+	_save()
+
+
+## 4티어 풀을 모두 시드값으로 강제 리셋. 영속 save는 무시.
+## 시뮬레이션/밸런싱 검증에서 매 측정을 동일 초기상태로 만들어 재현성을 보장할 때 사용.
+## 게임 플레이에서는 호출 금지(누적 잭팟이 사라짐). initialize() 이후에만 유효.
+func reset_to_seeds() -> void:
+	if not _initialized:
+		push_warning("JackpotSystem.reset_to_seeds() — initialize() 전 호출. 무시.")
+		return
+	for i in range(4):
+		pools[i] = _seeds[i]
+		pool_changed.emit(i, pools[i])
 	_save()
 
 
