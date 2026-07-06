@@ -101,11 +101,14 @@ func _setup_reels() -> void:
 	_layout_reels()
 
 
-## Phase 7: 전투 시스템(UnitSpawner) 초기화. 슬롯 결과 → 유닛 소환 연결.
+## Phase 7: 전투 시스템(UnitSpawner + WaveManager) 초기화. 슬롯 결과 → 유닛 소환 연결.
 func _setup_battle() -> void:
 	var spawner := UnitSpawner.new()
 	spawner.name = "UnitSpawner"
 	add_child(spawner)
+	var wave_mgr := WaveManager.new()
+	wave_mgr.name = "WaveManager"
+	add_child(wave_mgr)
 
 
 func _layout_reels() -> void:
