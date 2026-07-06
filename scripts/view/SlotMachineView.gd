@@ -29,9 +29,11 @@ var _battle_field: BattleField
 
 
 func _ready() -> void:
+	add_to_group("slot_machine_view")
 	_build_layout()
 	_setup_core()
 	_setup_reels()
+	_setup_battle()   # Phase 7: 전투 시스템 (UnitSpawner) 초기화
 	WalletManager.initialize(GameConfig.config)
 	JackpotSystem.initialize(GameConfig.config)
 	EventBus.spin_requested.connect(_on_spin_requested)
@@ -97,6 +99,13 @@ func _setup_reels() -> void:
 		_reel_area.add_child(reel)
 		_reels.append(reel)
 	_layout_reels()
+
+
+## Phase 7: 전투 시스템(UnitSpawner) 초기화. 슬롯 결과 → 유닛 소환 연결.
+func _setup_battle() -> void:
+	var spawner := UnitSpawner.new()
+	spawner.name = "UnitSpawner"
+	add_child(spawner)
 
 
 func _layout_reels() -> void:

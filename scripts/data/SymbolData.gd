@@ -18,6 +18,8 @@ enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX }
 @export var payout: PackedInt32Array = [0, 0, 0, 0, 0, 0]
 ## ★에셋 교체 포인트: null이면 프로시저럴 도형, 텍스처 할당 시 자동 적용.
 @export var texture: Texture2D
+## Phase 7: 매칭 시 소환할 유닛 ID (빈 값 = 유닛 미매핑/순수 크레딧 심볼).
+@export var unit_id: StringName = &""
 
 ## 확장 축: 커스텀 메카닉(확장 Wild·Multiplier·Sticky 등). null이면 kind 기반 기본 동작.
 ## 새 메카닉은 SymbolMechanic 서브클래스 리소스를 만들어 여기에 할당하면 된다.
