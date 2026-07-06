@@ -14,6 +14,7 @@ var _win_label: Label
 var _status_label: Label
 var _auto_btn: Button
 var _safe_root: Control
+var _settings_panel: ColorRect   # 설정 오버레이 패널 (사운드 볼륨/리셋)
 # 자동스핀 순환 모드 인덱스: 0=끔(AUTO), 1=10회, 2=25회, 3=50회, 4=무한(∞).
 var _auto_cycle := 0
 const AUTO_LABELS := ["AUTO", "×10", "×25", "×50", "∞"]
@@ -87,7 +88,69 @@ func _build_top_bar() -> HBoxContainer:
 	bar.add_child(spacer)
 	_win_label = _make_label("", 54, Color(0.5, 1.0, 0.6))
 	bar.add_child(_win_label)
+	# 설정 버튼(⚙) — 상단 우측 끝.
+	var gear := _make_button("⚙", Vector2(80.0, 80.0))
+	gear.add_theme_font_size_override("font_size", 44)
+	gear.pressed.connect(_toggle_settings)
+	bar.add_child(gear)
 	return bar
+
+
+## 설정 패널 토글(열기/닫기). 세로 중앙에 모달처럼 표시.
+func _toggle_settings() -> void:
+	if _settings_panel != null:
+		_settings_panel.visible = not _settings_panel.visible
+		return
+	_build_settings_panel()
+
+
+## 설정 패널 구성: 사운드 볼륨 슬라이더 + 음소거 + 크레딧 리셋 + 닫기.
+func _build_settings_panel() -> void:
+	_settings_panel = ColorRect.new()
+	_settings_panel.color = Color(0.05, 0.05, 0.12, 0.85)
+	_settings_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_settings_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_safe_root.add_child(_settings_panel)
+	# 중앙 콘텐츠 컨테이너
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_settings_panel.add_child(center)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 20)
+	vbox.custom_minimum_size = Vector2(500, 0)
+	center.add_child(vbox)
+	# 제목
+	vbox.add_child(_make_label("⚙ SETTINGS", 48, Color(1.0, 0.9, 0.3)))
+	# 사운드 볼륨 슬라이더
+	var vol_label := _make_label("SOUND", 32, Color.WHITE)
+	vbox.add_child(vol_label)
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.05
+	slider.value = AudioManager.get_master_volume()
+	slider.custom_minimum_size = Vector2(500, 60)
+	slider.value_changed.connect(func(v: float) -> void: AudioManager.set_master_volume(v))
+	vbox.add_child(slider)
+	# 음소거 토글
+	var mute_btn := _make_button("MUTE", BTN_MIN)
+	mute_btn.toggle_mode = true
+	mute_btn.button_pressed = AudioManager.master_muted
+	mute_btn.toggled.connect(func(on: bool) -> void:
+		AudioManager.master_muted = on
+		AudioManager.toggle_mute() if on else null)
+	vbox.add_child(mute_btn)
+	# 크레딧 리셋
+	var reset_btn := _make_button("RESET CREDIT", BTN_MIN)
+	reset_btn.add_theme_font_size_override("font_size", 28)
+	reset_btn.pressed.connect(func() -> void:
+		WalletManager.reset_credit(GameConfig.config.starting_credit))
+	vbox.add_child(reset_btn)
+	# 닫기
+	var close_btn := _make_button("CLOSE", BTN_MIN)
+	close_btn.add_theme_font_size_override("font_size", 32)
+	close_btn.pressed.connect(_toggle_settings)
+	vbox.add_child(close_btn)
 
 
 ## 하단 행1: 베팅 감소 / BET 표시 / 베팅 증가 (좌) … (spacer) … AUTO (우).

@@ -172,6 +172,21 @@ func toggle_mute() -> void:
 		AudioServer.set_bus_mute(idx, master_muted)
 
 
+## 마스터 볼륨 설정 (0.0~1.0). 0이면 사실상 음소거.
+func set_master_volume(value: float) -> void:
+	var idx := AudioServer.get_bus_index(SFX_BUS)
+	if idx >= 0:
+		AudioServer.set_bus_volume_db(idx, linear_to_db(clamp(value, 0.0001, 1.0)))
+
+
+## 현재 마스터 볼륨 (0.0~1.0).
+func get_master_volume() -> float:
+	var idx := AudioServer.get_bus_index(SFX_BUS)
+	if idx >= 0:
+		return db_to_linear(AudioServer.get_bus_volume_db(idx))
+	return 1.0
+
+
 ## 오디오 스트림 등록.
 func register_stream(name: String, stream: AudioStream) -> void:
 	if stream != null:
