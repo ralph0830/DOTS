@@ -3,8 +3,11 @@ extends Node
 ## 실행: godot --headless --path <project> res://scenes/setup/SimScene.tscn
 ## 코어 로직(SlotMachine + SpinEvaluator + WinCalculator)이 뷰 없이 정상 동작하는지 확인.
 ## 주의: 결과는 멤버 변수 _last_result 에 보관(람다 쓰기 캡처 한계 회피).
+## RNG 재현성: FIXED_SEED 를 0(기본)으로 두면 무작위, 양수로 설정하면 매 실행 동일 결과.
+##   밸런싱 회귀 테스트 시 FIXED_SEED 를 고정하면 실행마다 동일한 RTP 가 나와야 정상.
 
 const SPIN_COUNT := 20000
+const FIXED_SEED := 0   # 0=무작위(기본), 양수=재현 가능(예: 12345) — 밸런싱 검증 시 고정
 
 var _last_result: SpinResult = null
 
@@ -12,6 +15,10 @@ var _last_result: SpinResult = null
 func _ready() -> void:
 	var config: SlotConfig = GameConfig.config
 	assert(config != null, "[sim] SlotConfig 로드 실패 — 데이터 생성 스크립트를 먼저 실행하세요.")
+	# RNG 재현성: FIXED_SEED 가 0이면 config.rng_seed(기본 0=무작위) 사용, 양수면 강제 고정.
+	if FIXED_SEED != 0:
+		config.rng_seed = FIXED_SEED
+		print("[sim] RNG 시드 고정: %d (재현 가능 모드)" % FIXED_SEED)
 	WalletManager.initialize(config)
 	JackpotSystem.initialize(config)
 	# 영속 잭팟 풀(이전 실행 누적분)을 시드로 강제 리셋 → 매 측정 동일 초기상태 보장.

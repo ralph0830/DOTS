@@ -38,6 +38,10 @@ func _build_layout() -> void:
 	var bg := BackgroundFX.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+	# 배경 아트 오버레이(셰이더 위, 릴 아래) — BackgroundFX 가 로드한 TextureRect.
+	var bg_art: TextureRect = bg.get_bg_art()
+	if bg_art != null:
+		add_child(bg_art)
 	# 릴 영역
 	_reel_area = Control.new()
 	_reel_area.name = "ReelArea"
