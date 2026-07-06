@@ -187,47 +187,139 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 
 ---
 
-## 3. 향후 TODO
+## 3. 향후 TODO — 토템 스핀 디펜스 확장
 
-### 🔴 단기 (Phase 5 잔여 — 기능 완성)
+> **2026-07-06: 슬롯머신 MVP(Phase 1~6) 완성 → GDD 기반 디펜스 게임으로 확장 결정.**
+> GDD(`GDD.md`): 파타폰 실루엣 아트 + 뱀서식 3지선다 로그라이크 + 단일 라인 디펜스.
+> 슬롯 코어(EventBus + EvaluationPass + SymbolMechanic)는 그대로 재사용, 전투/디펜스 계층 신규 구축.
 
-> **2026-07-03: Phase 6 작업으로 단기 TODO 대부분 완료.** 아래는 완료 이력.
+### 📊 재사용 매핑 요약
 
-- [x] **#13 사운드 SFX** ✅ (Phase 6 완료) — **프로시저럴 합성**으로 구현(외부 에셋 0).
-  - `AudioManager.gd`에 파형 생성기 3종(`_make_tone`/`_make_sweep`/`_make_chord`) 추가 — AudioStreamWAV + 16-bit PCM(PackedByteArray.encode_s16).
-  - SFX 5종: spin_start(스윕), win(상승스윕), big_win(C5+E5+G5 화음), jackpot(4음 팡파레), free_spins(스윕).
-  - EventBus 구독: spin_started / evaluation_completed(has_win 분기) / big_win / jackpot_won / free_spins_started.
-  - 헤드리스 가드(`DisplayServer.get_name()=="headless"`) → 시뮬 성능 보호 + WASAPI 에러 방지.
-- [x] **RNG 재현성 확보** ✅ (2026-07-06) — `run_rtp_sim.gd`에 `FIXED_SEED` 상수 추가 (0=무작위, 양수=재현 가능). 밸런싱 회귀 테스트 시 시드 고정하면 매 실행 동일 RTP 도출.
-- [x] **CameraShake 검증 후 제거** ✅ (2026-07-03) — Phase 6에서 Camera2D 기반 CameraShake를 활성화했으나 **Control 기반 UI 씬에서 Camera2D 활성화 시 2D 좌표계가 변해 모든 UI가 화면 밖으로 밀려 보이지 않는 치명 버그 발생**. 원래 인라인 릴 영역 tween 방식이 Control UI에 맞는 정답이므로 CameraShake.gd 파일 제거 + 인라인 tween으로 원복.
-- [x] **🚨 잭팟 save 시뮬 왜곡 수정** ✅ (Phase 6 완료) — `JackpotSystem.reset_to_seeds()` 공개 메서드 추가 + `run_rtp_sim.gd`에서 `initialize()` 직후 호출. 검증: GRAND=500000 누적 조건에서도 RTP 90~98%(정상) — 이전 같은 조건 시 110%+ 왜곡 방지 확인.
-- [x] **EventBus 시그널 정리** ✅ (Phase 6 완료):
-  - `celebration_finished` 삭제(데드), `clear_highlights` 삭제(orphan — `spin_started`로 PaylineOverlay 이미 처리).
-  - `WalletManager`에 `_emit_credit()`/`_emit_bet()` 헬퍼 추가 → 자체 시그널 + EventBus forward 동시 발행(BonusManager 모범 패턴과 일원화). HUD의 autoload 직접 접근 우회 해소.
+| 계층 | 재사용 | 신규 |
+|---|---|---|
+| 슬롯 코어 (`scripts/core/`) | ✅ EvaluationPass 체인, SymbolMechanic, WinCalculator | 유닛 소환 Pass, 꽝 보정 Pass |
+| 데이터 (`scripts/data/`) | ✅ ReelStrip, SymbolData(texture/mechanic) | UnitData, WaveData, LevelUpChoice |
+| 뷰 (`scripts/view/`) | ✅ ReelView(무한스크롤), SymbolView(실루엣 texture) | BattleFieldView, LevelUpUI, HUD 재설계 |
+| 이펙트 (`scripts/effects/`) | ✅ WinEffects, SlowMotion, FloatingText, JackpotFX, ParticleBudget | 눈동자 애니메이션, 토템 연출 |
+| autoload | ✅ EventBus(확장), AudioManager(SFX 추가), WalletManager(영혼/골드) | GameManager(WAVE/런), ArtifactManager, MetaProgression |
 
-### 🟡 중기 (폴리싱 / 에셋 / 품질)
-- [x] **에셋 교체** ✅ (2026-07-03 완전 완료) — ComfyUI(사용자 서버 ralphpark.com:2202)로 **도트/픽셀아트 심볼 7종 생성** (귀엽고 아기자기한 16-bit 스타일, 180×180 투명 PNG). `assets/sprites/{id}_transparent_180.png` 배치 + `generate_default_data.gd`에서 texture 자동 로드(`ResourceLoader.exists` 폴백). 프로시저럴 도형 → 실제 아트 자동 교체 파이프라인 완성.
-  - 생성 파이프라인: `tools/comfyui/comfy_gem.py`(SDXL+pixel-art LoRA→flood-fill 투명변환), `comfy_dots_symbols.py`(7종 일괄), `seed_explore.py`(시드 탐색). 가이드: `docs/COMFYUI_GUIDE.md`.
-  - **투명도 번짐 해결** (2026-07-03): 이전 darkness 기반 알고리즘이 심볼 내부 하이라이트까지 반투명화(13%) → **flood-fill 기반 배경 검출**로 교체. 모서리에서 순백 픽셀만 BFS 탐색하여 외부 배경만 투명화, 심볼 내부는 불투명 유지 (번짐 1.8%).
-  - **시드 최적화** (2026-07-03): unicorn(0.8%→43.3%), rune(0.5%→33.8%) — 각 8개 시드 탐색 후 최적 선택 (unicorn=500, rune=300).
-- [x] **배경 아트** ✅ (2026-07-06) — ComfyUI로 판타지 배경 3종 생성 (mystic/treasure/enchanted, 1080×1920). BackgroundFX에 TextureRect 오버레이 지원 추가, 기본 bg_mystic 적용.
-- [ ] **모바일 성능 최적화**
-  - ParticleBudget 자동 티어 분류(OS.get_name()/메모리 기반) 검증.
-  - 드로우콜 프로파일링, 파티클 캡 조정.
-  - SymbolView 인스턴스 풀링 점검.
-- [ ] **SafeArea 실기기 검증** — 에디터(데스크톱)에선 offset 0이라 노치 대응이 안 보임. Android/iOS 실기기 또는 에뮬레이터에서 확인.
-- [ ] **자동스핀 고도화** — 횟수 지정(10/25/50/무한), 손실 한도, 프리스핀 중 자동스핀 토글 잠금.
-- [ ] **잭팟 풀 영속 검증** — `user://jackpot.save` 누적 동작 실기 확인.
+---
 
-### 🟢 장기 (확장 / 배포)
-- [ ] **설정/저장 화면** — 사운드 볼륨, 자동스핀 기본값, 크레딧 리셋.
-- [ ] **open-structure 확장 예시 추가** (새 메카닉/평가패스 데모):
-  - 멀티플라이어 심볼 메카닉(당첨 시 배수 적용).
-  - 추가 EvaluationPass(예: 인접 매치 ways 시스템, 캐스케이드 릴).
-- [ ] **추가 메타** — 미니게임 보너스, 일일 보너스, 레벨/경험치.
-- [ ] **내보내기(빌드)** — Android(.apk/.aab), iOS, WebGL 클라이언트. 모바일 키스토어/프로비저닝.
-- [ ] **CI** — 헤드리스 임포트 + RTP 시뮬 자동화(밸런스 회귀 감지).
-- [ ] **로컬라이제이션** — HUD/잭팟 메시지 CSV 번역(`*.translation`).
+### 🎨 모바일 세로형 상하 분할 (1080×1920)
+
+```
+┌─────────────────────────────────────┐  ← SafeArea top
+│  WAVE 3   기지████░░   영혼●●●  토템│  상태바 ~120px
+├─────────────────────────────────────┤
+│                                     │
+│  ▣ 아군기지                          │
+│  ▣▣▶ ▶▶ ▶ ═══전투═══ ◀◀ ◀ ◀▣▣   │  전투 필드 (55% ≈ 1056px)
+│       ▶▶    (frontline)   ◀◀      │  단일 라인, 좌→우 진격
+│  ▣▣▶         ⚡낙뢰         ◀▣    │
+│                                     │
+│  ─────── 피버 ▓▓▓░░░ ──────       │  ~80px
+├─────────────────────────────────────┤  ← 분할선
+│        ┌───┬───┬───┐                │
+│  🎰   │ ● │ ● │ ● │  3릴 시작      │  슬롯 영역 (45% ≈ 664px)
+│  토템 │ ◆ │ ◆ │ ◆ │  (확장 5릴)    │
+│  눈👁️ │ ★ │ ★ │ ★ │                │
+│        └───┴───┴───┘                │
+│          ┌──────────┐               │
+│          │   SPIN   │               │  하단 컨트롤 (엄지 영역)
+│          └──────────┘               │
+└─────────────────────────────────────┘  ← SafeArea bottom
+
+[3지선다 모달 — 레벨업시만 풀스크린 오버레이]
+  ┌─────┐  ┌─────┐  ┌─────┐
+  │ 🛡️  │  │ 🏹  │  │ ⚡  │   각 240×360px 터치 카드
+  │방패병│  │창병  │  │유물  │   JackpotFX 오버레이 패턴 재사용
+  └─────┘  └─────┘  └─────┘
+```
+
+---
+
+### 🔴 Phase 7 — 프로토타입 1: 슬롯 & 라인전 검증 (MVP)
+
+> 목표: 슬롯 스핀 → 유닛 소환 → 단일 라인 전투 루프 검증 (더미 실루엣).
+
+- [ ] **P7-1 유닛 엔티티** (`scripts/battle/Unit.gd` + `UnitData.gd`)
+  - CharacterBody2D 기반. 체력/공격력/이동속도/사거리. 아군(좌→우)/적(우→좌) 진격.
+  - `UnitData.gd` (Resource): `unit_id`, `role`(TANK/DEALER/SUPPORTER), `base_hp`, `base_atk`, `move_speed`, `attack_range`, `texture`.
+  - `SymbolData`에 `unit_id` 필드 추가 → 매칭 시 해당 유닛 소환.
+- [ ] **P7-2 라인 디펜스 필드** (`scripts/battle/BattleField.gd`)
+  - Node2D. 단일 레인. 아군 기지(좌단) / 적 포탈(우단). 전선(frontline) 추적.
+  - 유닛 충돌 시 전투 해상. 기지 체력 시스템.
+- [ ] **P7-3 유닛 생산 파이프라인** (`scripts/battle/UnitSpawner.gd`)
+  - `EventBus.evaluation_completed` 구독 → SpinResult 매칭 결과를 유닛 소환으로 변환.
+  - `SymbolData.unit_id` → UnitData 인스턴스화. 매칭 수 비례 소환량.
+  - **꽝(Miss) 보정**: 매치 0개 시 최소 미니언 1기 소환 (GDD 핵심).
+- [ ] **P7-4 적/WAVE 시스템** (`scripts/battle/WaveManager.gd` + `WaveData.gd`)
+  - WAVE별 적 스폰 타이밍/종류/수. 적 포탈에서 스폰.
+  - `WaveData.gd` (Resource): WAVE별 적 구성/보스 여부.
+- [ ] **P7-5 유닛 전투 AI** (`scripts/battle/UnitAI.gd`)
+  - 전방 적 탐지 → 사거리 내 공격 / 전방 이동. 사망 시 이펙트 + 영혼 드랍.
+- [ ] **P7-6 레이아웃 전환** — `SlotMachineView` 상단/하단 분할 배치.
+  - 상단 전투 55% / 하단 슬롯 45%. `ReelView.SYMBOL_SIZE` 180→120 축소.
+  - HUD 재설계: 크레딧→영혼, 당첨→WAVE/기지 체력. SPIN 버튼 유지, AUTO 제거(오토배틀러).
+- [ ] **P7-7 스핀 쿨타임** — `SlotMachine.State`에 COOLDOWN 추가. 전투 실시간 진행 중 쿨타임 후 스핀.
+- [ ] **P7-8 EventBus 확장** — `unit_spawned`, `wave_started`, `enemy_killed`, `base_damaged`, `unit_died` 시그널 추가.
+- [ ] **P7 테스트**: 스핀→유닛 소환→라인전 루프 캡처 검증. 기지 파괴/방어 시나리오.
+
+### 🟡 Phase 8 — 프로토타입 2: 3지선다 빌드업 검증
+
+> 목표: 뱀서식 3지선다로 기하급수적 성장 카타르시스 검증.
+
+- [ ] **P8-1 3지선다 레벨업 UI** (`scripts/view/LevelUpUI.gd`)
+  - 영혼 게이지 충전 시 게임 일시정지 + 3장 주술 카드 표시. `JackpotFX` 풀스크린 오버레이 패턴 재사용.
+- [ ] **P8-2 선택지 데이터** (`scripts/data/LevelUpChoice.gd` Resource)
+  - 카테고리: 유닛 추가/교체, 릴 개조, 유물. `ChoiceEffect` 플러그인 구조(EvaluationPass 참고).
+- [ ] **P8-3 릴 개조 시스템** (`scripts/systems/ReelModifier.gd`)
+  - 런타임 ReelStrip 조작(심볼 추가/교체). 특정 칸 멀티플라이어 부여. 가변 복사본 래퍼.
+- [ ] **P8-4 유물 시스템** (`scripts/systems/ArtifactManager.gd` autoload)
+  - 패시브 효과(원시 낙뢰, 진격의 로프). `BonusManager` 상태머신 패턴 참고.
+- [ ] **P8-5 피버 타임** (`scripts/systems/FeverManager.gd`)
+  - 잭팫/대매칭 시 게이지 충전 → 쿨타임 없는 연타 스핀. `BonusManager` 구조 전환.
+- [ ] **P8 테스트**: 3지선다 선택→릴 개조→유닛 진화 카타르시스 밸런스 캡처 검증.
+
+### 🟢 Phase 9 — 비주얼 폴리싱 (파타폰 아트)
+
+> 목표: 실루엣 아트 + 눈동자 + 네온 포인트 컬러 + 진화 연출.
+
+- [ ] **P9-1 시너지 진화** (`scripts/data/EvolutionRecipe.gd` + `EvolutionPass.gd`)
+  - 특정 유닛+유물 만렙 → 진화 유닛 해금. `JackpotEvaluationPass` 조건 평가 패턴 재사용.
+- [ ] **P9-2 파타폰 실루엣 아트** — ComfyUI로 유닛/적/토템 실루엣 PNG 생성. `SymbolView.texture` 교체.
+- [ ] **P9-3 눈동자 애니메이션** (`scripts/battle/EyeAnimator.gd`)
+  - 유닛/토템 눈동자 회전·점화 연출. 스핀 시 굴림, 잭팟 시 점화.
+- [ ] **P9-4 토템 슬롯 연출** (`scripts/view/TotemView.gd`)
+  - 토템 입 벌림/유닛 뱉어내는 연출. `_on_big_win` 진동 tween 패턴 확장.
+- [ ] **P9-5 네온 포인트 컬러** — 흑백 베이스 + 잭팟/스킬 네온(Red/Cyan/Yellow). 셰이더/이펙트 색상 조정.
+- [ ] **P9 테스트**: 파타폰 톤 비주얼 + 진화 연출 캡처 검증.
+
+### 🔵 Phase 10 — 메타 / 배포
+
+- [ ] **P10-1 영구 성장** (`autoload/MetaProgression.gd`) — 부족 토템 연구소, 심볼 도감. `WalletManager` 영속 패턴 재사용.
+- [ ] **P10-2 BM 기초** — 영웅 가챠, 확률 제어 아이템, 배틀패스 구조 설계.
+- [ ] **P10-3 내보내기** — Android(.apk/.aab), iOS, WebGL. 모바일 키스토어/프로비저닝.
+- [ ] **P10-4 CI** — 헤드리스 임포트 + 전투 시뮬레이션 자동화.
+- [ ] **P10-5 로컬라이제이션** — HUD/메시지 CSV 번역.
+
+---
+
+### 📝 슬롯머신 완성 이력 (Phase 1~6, 보존)
+
+> 아래는 토템 스핀 디펜스 확장 전 슬롯머신 단독 MVP 완성 이력.
+
+- [x] **#13 사운드 SFX** ✅ (Phase 6) — 프로시저럴 합성(파형 3종 + SFX 5종 + 헤드리스 가드).
+- [x] **RNG 재현성** ✅ (2026-07-06) — `FIXED_SEED` 상수 (0=무작위, 양수=재현).
+- [x] **CameraShake 제거** ✅ (Phase 6) — Control UI에서 Camera2D 좌표계 변형 버그 → 인라인 tween 원복.
+- [x] **잭팟 save 시뮬 왜곡 수정** ✅ (Phase 6) — `reset_to_seeds()` 추가.
+- [x] **EventBus 시그널 정리** ✅ (Phase 6) — 데드 시그널 2종 삭제 + WalletManager forward.
+- [x] **에셋 교체** ✅ (2026-07-03) — ComfyUI 도트 심볼 7종 (180×180 투명 PNG). flood-fill 투명변환(번짐 13%→1.8%).
+- [x] **배경 아트** ✅ (2026-07-06) — 판타지 배경 3종 (mystic/treasure/enchanted).
+- [x] **자동스핀 고도화** ✅ (2026-07-06) — 버튼 순환(×10/25/50/∞) + 손실 한도 50%.
+- [x] **설정 패널** ✅ (2026-07-06) — ⚙ 버튼 → 사운드 볼륨/음소거/크레딧 리셋.
+- [x] **모바일 성능 최적화** ✅ (이미 구현) — ParticleBudget 티어 분류, SymbolView 풀링, gl_compatibility.
+- [x] **Android 빌드 환경** ✅ (2026-07-03) — APK 빌드 성공 (58MB), 실기 테스트 PASS.
 
 ---
 
@@ -299,4 +391,4 @@ assets/shaders/  # 배경 셰이더
 
 ---
 
-_최종 갱신: 2026-07-03 (Phase 6 + 화면 렌더링 버그 수정) — 단기 TODO 4건 완료. 추가로 2가지 치명 버그 발견/수정: (1) AudioManager.gd `inti()` 오타(→`int()`)로 autoload 로드 실패, (2) CameraShake(Camera2D) 활성화가 Control UI 좌표계 변형시켜 화면 안 보임 → 파일 제거 + 인라인 tween 원복, (3) HUD SafeArea offset이 모니터 전체 기준이라 데스크톱 작은 창에서 폭주해 버튼이 안 보임 → 데스크톱 offset 0 처리. GUI 캡처로 SPIN/BET/AUTO 버튼 + CREDIT/WIN HUD + 5×3 릴 모두 정상 렌더링 확인 완료._
+_최종 갱신: 2026-07-06 — 슬롯머신 MVP(Phase 1~6) 완성. GDD 분석 완료, "토템 스핀 디펜스" 확장 계획 수립 (Phase 7~10). 모바일 세로형 상하 분할(전투 55% / 슬롯 45%) 설계. Phase 7(프로토타입 1: 슬롯 & 라인전)부터 착수 예정._
