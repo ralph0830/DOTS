@@ -362,13 +362,22 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 - [ ] **P8-D2 칸 멀티플라이어** — 특정 릴 위치에 [X2]/[X3] 배수 부여. 소환 수 배수 적용.
 - [ ] **P8-D3 5번째 줄 배수 릴** (필립 성주 전용 — Phase 10). 알베르트는 심볼 교체 위주.
 
-#### P8-E 유물/패시브 시스템 (`scripts/systems/ArtifactManager.gd` autoload)
-- [ ] **P8-E1 유물 데이터** (`scripts/data/ArtifactData.gd`) — id/display_name/effect_type/params.
-- [ ] **P8-E2 유물 효과 3종** (GDD §4.1):
-  - **원시 낙뢰** — 아군 공격 시 5% 확률로 적 연쇄 감전.
-  - **진격의 로프** — 아군 사망 시 뒤 유닛 이속 중첩 가속.
-  - **가시 바리케이드** (알베르트) — 기지 앏 적에게 도트 데미지.
-- [ ] **P8-E3 유물 트리거 통합** — `EventBus` 적 처치/유닛 사망 시그널에 유물 훅 연결.
+#### P8-E 유물/패시브 시스템 (`scripts/systems/ArtifactManager.gd` autoload) ✅ 완료 (2026-07-07)
+- [x] **P8-E1 유물 데이터** (`scripts/data/ArtifactData.gd`) — id/display_name/description/effect_type/params. ✅
+- [x] **P8-E2 알베르트 수비 유물 2종** ✅
+  - **가시 바리케이드** (spike_barricade): 기지 근처(x<150) 적에게 도트 데미지 (5 dmg / 0.5초).
+  - **마력 보호막** (magic_shield): 기지 피해의 50% 흡수 (최대 50).
+- [x] **P8-E3 유물 트리거 통합** ✅
+  - `DefenseArtifactEffect.apply()` → `ArtifactManager.register(id)` 호출.
+  - 가시 바리케이드: `_physics_process`에서 BattleField 적 유닛 조회 → 데미지.
+  - 마력 보호막: `EventBus.base_damaged` 구독 → 피해 회복(치료) 형태로 흡수.
+  - 유물 효과 로그 출력 (`[ArtifactManager] 가시 바리케이드: 적 N체에 M 데미지`).
+
+##### P8-E 아키텍처
+- **ArtifactData** (Resource) — 유물 메타데이터. effect_type 문자열 키 + params Dictionary (확장성).
+- **ArtifactManager** (autoload) — 활성 유물 목록 + 실제 전장 효과 발동.
+- **DefenseArtifactEffect** (ChoiceEffect 서브클래스) — LordState.add_defense_artifact + ArtifactManager.register 동시 호출.
+- LordState는 유물 id 저장만 (UI 표시용), ArtifactManager가 실제 효과 담당 (관심사 분리).
 
 #### P8-F 시너지 진화 (`scripts/data/EvolutionRecipe.gd` + `EvolutionPass.gd`)
 - [ ] **P8-F1 진화 조건 데이터** — 유닛 만렙 + 유물 만렙 조합 → 진화 유닛 해금.

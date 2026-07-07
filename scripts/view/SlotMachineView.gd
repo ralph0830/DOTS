@@ -74,6 +74,8 @@ func _initialize_all() -> void:
 	LordState.reset()
 	# 9. 유닛 레지스트리 — 아군/적 UnitData 재생성 (Phase 8-C).
 	UnitRegistry.initialize()
+	# 10. 유물 매니저 — 활성 유물 초기화 (Phase 8-E).
+	ArtifactManager.initialize()
 	# DEBUG: 초기화 상태를 화면 표시용 딕셔너리로 emit.
 	var state := {
 		"credit": WalletManager.credit,
