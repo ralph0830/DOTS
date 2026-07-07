@@ -349,6 +349,19 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
   - 슬롯은 순수 유닛 생산 수단 (PRD/GDD 정합).
   - CREDIT는 스핀 베팅 비용(place_bet)으로만 감소.
   - WalletManager에서 total_won/add_win 제거 (도박 잔재 정리).
+- [x] **P8-C6 유닛 관리 EditorPlugin** (`addons/unit_manager/`) ✅ (2026-07-07)
+  - **EditorPlugin** — `unit_manager_plugin.gd`. 하단 패널 "유닛 관리" 탭 추가. `add_control_to_bottom_panel` + `make_bottom_panel_item_visible`.
+  - **Control 패널** — `unit_manager_panel.gd` (@tool). 한 화면에서 모든 UnitData(.tres) 편집.
+    - 아군/적 섹션 분리 + 프로시저럴 도형 미리보기 + SpinBox/OptionButton 인라인 편집.
+    - 행: 이름/역할/HP/공격/공속/이속/사거/EXP/도형/크기. "💾 모두 저장"/"🔄 새로고침" 버튼.
+  - **`unit_preview_rect.gd`** — 분리된 @tool 도형 미리보기 (inner class 대신 별도 파일 — 에디터 _draw() 호출 보장).
+  - **DOTS_test.bat** 메뉴 6: Godot 에디터로 유닛 수치 조정 진입.
+
+##### P8-C6 패널 빈 화면 버그 해결 (2026-07-07)
+- **현상**: EditorPlugin 패널이 펼쳐진 상태로 빈 화면 표시. Output 로그엔 "로드 완료: 아군 4, 적 3"이 5회 정상 출력됨.
+- **근본 원인**: `VBoxContainer`에 `set_anchors_preset(PRESET_FULL_RECT)` 미설정 → 루트 dock의 expand 공간을 받지 못해 ScrollContainer 높이가 0 → 행이 렌더링되어도 화면에 보이지 않음. 이전 5회 시도(_loaded/_loading 플래그, visibility_changed, free/queue_free, make_bottom_panel_item_visible, set_anchors_preset)는 전부 로드 시점/중복 방지 영역이라 레이아웃(크기 0) 문제에 닿지 않아 실패.
+- **해결**: (1) vbox에 `PRESET_FULL_RECT` 부여, (2) `_table_container`에 `SIZE_EXPAND_FILL`, (3) `_scroll`에 `custom_minimum_size=(0,120)` 안전장치, (4) `_PreviewRect` inner class를 별도 @tool 파일로 분리(_draw() 호출 보장), (5) DEBUG 로그로 이진 탐색 가능하게.
+- **검증**: 에디터 재시작 → 유닛 관리 탭 → 7행(아군 4 + 적 3) 정상 표시 확인. DEBUG=false로 토글.
 
 ##### P8-C/D 검증 (데스크톱, 2026-07-07)
 - 임포트 PASS (에러 0)
@@ -532,6 +545,7 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 | **✅ 모바일 SymbolMechanic lazy 로드 실패** (2026-07-07 해결) | `SymbolMechanic.for_kind()` 가 class_name 전역 식별자로 서브클래스를 lazy 참조 → 모바일 APK 런타임 첫 호출 시점에 서브클래스 스크립트가 아직 로드되지 않아 잘못된 폴백 메카닉 반환 → 매칭 실패. 데스크톱은 에디터가 글로벌 클래스 DB를 사전 완성하므로 정상 동작. | **해결**: (1) 서브클래스를 `preload` 로 컴파일 타임 강제 로드. (2) match 분기 대신 Dictionary 레지스트리로 OCP 확보. (3) `is ScatterMechanic`/`is BonusMechanic` 타입 체크를 `get_tags()` 태그 조회로 대체. |
 | **⚠️ APK 재설치 시 데이터 찌꺼기** (2026-07-07) | `adb install -r` 은 user:// 저장 데이터를 유지. 코드 변경 후 APK 복사만 하고 폰에서 재실행하면 이전 버전 캐시/데이터가 남아 "코드는 고쳤는데 안 고쳐진 것처럼" 보이는 함정. | **권장**: 코드 변경 후 폰 테스트 시 `adb shell pm clear com.ralph.dots` 로 user:// 초기화 후 재실행. 또는 APK 복사 후 반드시 재설치. |
 | **⚠️ DBG print 잔존 주의** (2026-07-07) | 디버그용 print가 production 코드에 남으면 로그 노이즈 + 성능 저하. | 현재 GameConfig/SlotMachine/SpinEvaluator/HUD/SlotMachineView/WaveManager에서 모두 제거 완료. 새 디버그 print는 커밋 전 제거. |
+| **⚠️ EditorPlugin @tool 레이아웃 주의** (2026-07-07 해결) | `add_control_to_bottom_panel` 로 추가한 Control은 루트 dock에서 크기를 받지만, 그 자식 VBoxContainer에 `PRESET_FULL_RECT` 미설정 시 expand 공간이 전달되지 않아 ScrollContainer 높이가 0이 되고 행이 보이지 않는 함정. 로그는 정상 출력되어 디버깅을 혼란스럽게 함. | **해결**: VBoxContainer에 `set_anchors_preset(PRESET_FULL_RECT)` + 자식 컨테이너 `SIZE_EXPAND_FILL` + 최소 높이 안전장치. inner class 대신 별도 @tool 파일로 _draw() 보장. |
 
 ---
 
@@ -580,10 +594,13 @@ autoload/    # EventBus(전투 시그널 9종+초기화), GameConfig, WalletMana
 scenes/
   slot/      # SlotMachine, Reel, Symbol, HUD, JackpotOverlay
   setup/     # SimScene, CaptureTest, ViewTest
-resources/   # symbols/(knight/archer/mage/skull), reels/, paylines/(row_r0~4), paytables/, config/ (*.tres)
+resources/   # symbols/(knight/archer/mage/skull), reels/, paylines/(row_r0~4), paytables/, config/,
+             # units/{ally,enemy}/*.tres (UnitData — EditorPlugin으로 튜닝)
+addons/
+  unit_manager/  # EditorPlugin: plugin.cfg, unit_manager_plugin.gd, unit_manager_panel.gd, unit_preview_rect.gd
 assets/shaders/  # 배경 셰이더
 ```
 
 ---
 
-_최종 갱신: 2026-07-07 — Phase 7(토템 스핀 디펜스 프로토타입 1) 완료. PRD/GDD 기준 todo.md 세분화 완료: Phase 8(3지선다/성주/릴개조/유물/진화/피버 — 8개 섹션), Phase 9(실루엣/눈동자/토템/네온 — 5개 섹션), Phase 10(유닛 7종/성주 3종/BM/배포 — 7개 섹션). 현재 심볼 4종(knight/archer/mage/skull), RTP 94.58%. 다음: Phase 8(3지선다 빌드업)._
+_최종 갱신: 2026-07-07 — Phase 8-A/B/C/D/E 완료 (영혼게이지/3지선다/ChoiceEffect/UnitRegistry/유물). 유닛 관리 EditorPlugin 정상 동작 (P8-C6). 다음: Phase 8-D(릴 개조) 또는 8-F(시너지 진화)._
