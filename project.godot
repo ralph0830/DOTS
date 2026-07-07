@@ -27,6 +27,7 @@ GameManager="*res://autoload/GameManager.gd"
 ParticleBudget="*res://scripts/effects/ParticleBudget.gd"
 SlowMotion="*res://scripts/effects/SlowMotion.gd"
 BonusManager="*res://scripts/systems/BonusManager.gd"
+SoulGauge="*res://scripts/systems/SoulGauge.gd"
 
 [display]
 

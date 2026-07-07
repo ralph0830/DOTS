@@ -44,7 +44,8 @@ func add_score(amount: int) -> void:
 
 
 ## Phase 7: 적 처치 처리.
-func _on_enemy_killed(_enemy_id: StringName) -> void:
+## Phase 8-A: exp_reward 인자 추가 (SoulGauge용) — GameManager는 무시.
+func _on_enemy_killed(_enemy_id: StringName, _exp_reward: int) -> void:
 	enemies_killed_total += 1
 	add_score(10)   # 적 처치 시 10점
 

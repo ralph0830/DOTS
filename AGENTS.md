@@ -48,7 +48,8 @@ scripts/
                  PaylineOverlay, HUD, GameOverOverlay
   effects/       BackgroundFX, WinEffects, FloatingText, JackpotFX, CameraShake,
                  ParticleBudget, SlowMotion (last two are also autoloads)
-  systems/       BonusManager (free-spin state machine; also an autoload)
+  systems/       BonusManager (free-spin state machine; also an autoload),
+                 SoulGauge (Phase 8-A: soul/level progression — enemy_killed listener)
   setup/         Data-gen + test harness scripts (above)
 resources/       Generated .tres: config/, symbols/(knight/archer/mage/skull), reels/, paylines/, paytables/
 scenes/          slot/ (game), setup/ (test harnesses), Main.tscn
@@ -69,7 +70,7 @@ This lets `BonusManager` (an autoload listener) apply the free-spin multiplier t
 ### Singleton autoloads (project.godot)
 
 `GameConfig`, `EventBus`, `WalletManager`, `JackpotSystem`, `AudioManager`, `GameManager`,
-`ParticleBudget`, `SlowMotion`, `BonusManager`.
+`ParticleBudget`, `SlowMotion`, `BonusManager`, `SoulGauge`.
 
 > **Naming gotcha:** Autoload scripts that would collide with a `class_name` (e.g. `SlotConfig`)
 > intentionally omit `class_name` and are referenced by their **autoload node name** (e.g.

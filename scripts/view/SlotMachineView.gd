@@ -68,6 +68,8 @@ func _initialize_all() -> void:
 	_auto_remaining = 0
 	# 6. 게임 매니저 런 상태.
 	GameManager.start_game()
+	# 7. 영혼 게이지 — 레벨 1, 게이지 0으로 리셋 (Phase 8-A).
+	SoulGauge.initialize()
 	# DEBUG: 초기화 상태를 화면 표시용 딕셔너리로 emit.
 	var state := {
 		"credit": WalletManager.credit,
@@ -76,9 +78,12 @@ func _initialize_all() -> void:
 		"enemy_hp": _battle_field.enemy_base_hp if _battle_field != null else -1,
 		"wave": GameManager.current_wave,
 		"running": GameManager.is_defense_active,
+		"soul": SoulGauge.soul,
+		"soul_max": SoulGauge.soul_max,
+		"lord_level": SoulGauge.level,
 	}
-	print("[init] 게임 초기화 완료: credit=%d bet=%d ally=%d enemy=%d wave=%d" \
-		% [state.credit, state.bet, state.ally_hp, state.enemy_hp, state.wave])
+	print("[init] 게임 초기화 완료: credit=%d bet=%d ally=%d enemy=%d wave=%d soul=%d/%d lv%d" \
+		% [state.credit, state.bet, state.ally_hp, state.enemy_hp, state.wave, state.soul, state.soul_max, state.lord_level])
 	EventBus.game_initialized.emit(state)
 
 

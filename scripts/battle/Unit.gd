@@ -77,7 +77,8 @@ func take_damage(amount: int) -> void:
 		_alive = false
 		died.emit(self)
 		if is_enemy:
-			EventBus.enemy_killed.emit(data.unit_id)
+			# Phase 8-A: exp_reward 를 페이로드로 추가 — SoulGauge 가 게이지 충전에 사용.
+			EventBus.enemy_killed.emit(data.unit_id, data.exp_reward)
 		else:
 			EventBus.unit_died.emit(data.unit_id)
 		queue_free()

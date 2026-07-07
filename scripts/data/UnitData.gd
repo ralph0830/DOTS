@@ -16,6 +16,9 @@ enum Role { TANK, DEALER, SUPPORTER, MINION, ENEMY }
 @export var attack_interval: float = 1.0   # 공격 쿨타임(초)
 @export var move_speed: float = 60.0       # px/초
 @export var attack_range: float = 70.0     # 공격 사거리(px)
+## Phase 8-A: 이 유닛(주로 적)을 처치했을 때 얻는 영혼(EXP) 보상.
+## 아군 유닛은 보통 0. SoulGauge 가 enemy_killed 시그널에서 이 값을 읽어 게이지 충전.
+@export var exp_reward: int = 0
 # 임시 렌더링 (프로시저럴 도형)
 enum Shape { CIRCLE, SQUARE, TRIANGLE, DIAMOND }
 @export var shape: Shape = Shape.CIRCLE

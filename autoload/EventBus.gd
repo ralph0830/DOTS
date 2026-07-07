@@ -35,7 +35,9 @@ signal jackpot_won(tier: int, amount: int)
 # --- 전투 / 디펜스 (Phase 7: 토템 스핀 디펜스) ---
 signal unit_spawned(unit_id: StringName, count: int)   # 슬롯 매칭 → 유닛 소환
 signal enemy_spawned(enemy_id: StringName)             # WAVE → 적 스폰
-signal enemy_killed(enemy_id: StringName)              # 적 처치
+# Phase 8-A: exp_reward 추가 — SoulGauge 가 게이지 충전에 사용.
+# GameManager/WaveManager 는 exp_reward 를 무시(_ prefix)하고 enemy_id 만 소비.
+signal enemy_killed(enemy_id: StringName, exp_reward: int)
 signal unit_died(unit_id: StringName)                  # 아군 유닛 사망
 signal base_damaged(amount: int)                       # 아군 기지 피해
 signal base_hp_changed(ally_hp: int, ally_max: int, enemy_hp: int, enemy_max: int)  # 양 기지 HP 동기화
@@ -44,3 +46,11 @@ signal wave_cleared(wave_num: int)                     # WAVE 클리어
 signal game_over(victory: bool)                        # 게임 종료 (승리/패배)
 # DEBUG: 게임 초기화 완료 (각 매니저 상태를 화면에 표시하기 위함).
 signal game_initialized(state: Dictionary)
+
+# --- 영혼 게이지 / 레벨업 (Phase 8-A: 3지선다 빌드업 트리거) ---
+# soul_changed: 게이지 변화 (value/maximum/level). HUD 게이지바 갱신용.
+# level_up_available: 게이지 100% 도달 → LevelUpUI 표시 + 게임 일시정지(Phase 8-B).
+# level_up_completed: 선택지 적용 완료 → 게임 재개 + 다음 레벨 게이지 리셋.
+signal soul_changed(value: int, maximum: int, level: int)
+signal level_up_available(level: int)
+signal level_up_completed(new_level: int)

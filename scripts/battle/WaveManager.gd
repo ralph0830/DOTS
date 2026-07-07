@@ -27,17 +27,18 @@ func _ready() -> void:
 
 
 func _build_enemy_registry() -> void:
-	# Phase 7 임시 적 유닛 (빨간 도형들)
-	_register_enemy(&"goblin", _make_enemy("goblin", "Goblin", 20, 6, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2)))
-	_register_enemy(&"orc", _make_enemy("orc", "Orc", 40, 10, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1)))
-	_register_enemy(&"boss", _make_enemy("boss", "Boss", 150, 20, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0))
+	# Phase 7 임시 적 유닛 (빨간 도형들).
+	# Phase 8-A: exp_reward 세팅 — goblin=1, orc=3, boss=10 (보스 처치 시 대량 EXP).
+	_register_enemy(&"goblin", _make_enemy("goblin", "Goblin", 20, 6, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1))
+	_register_enemy(&"orc", _make_enemy("orc", "Orc", 40, 10, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3))
+	_register_enemy(&"boss", _make_enemy("boss", "Boss", 150, 20, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10))
 
 
 func _register_enemy(id: StringName, data: UnitData) -> void:
 	_enemy_registry[id] = data
 
 
-func _make_enemy(id: StringName, name: String, hp: int, atk: int, spd: float, rng: float, shape: UnitData.Shape, col: Color, sz: float = 60.0) -> UnitData:
+func _make_enemy(id: StringName, name: String, hp: int, atk: int, spd: float, rng: float, shape: UnitData.Shape, col: Color, sz: float = 60.0, exp: int = 1) -> UnitData:
 	var e := UnitData.new()
 	e.unit_id = id
 	e.display_name = name
@@ -49,6 +50,7 @@ func _make_enemy(id: StringName, name: String, hp: int, atk: int, spd: float, rn
 	e.shape = shape
 	e.color = col
 	e.size = sz
+	e.exp_reward = exp   # Phase 8-A: 적 처치 시 지급 영혼(EXP)
 	return e
 
 
@@ -101,7 +103,7 @@ func _spawn_enemy() -> void:
 		EventBus.enemy_spawned.emit(enemy_id)
 
 
-func _on_enemy_killed(_enemy_id: StringName) -> void:
+func _on_enemy_killed(_enemy_id: StringName, _exp_reward: int) -> void:
 	_enemy_killed_in_wave += 1
 
 

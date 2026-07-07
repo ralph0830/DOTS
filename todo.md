@@ -293,12 +293,25 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 > 목표: 뱀서식 3지선다로 기하급수적 성장 카타르시스 검증.
 > **PRD 기준**: 성주 알베르트 1명 구현, 영혼 게이지 → 3지선다 주술 카드 → 릴 개조/유물/유닛 진화.
 
-#### P8-A 영혼 게이지 & 레벨업 트리거
-- [ ] **P8-A1 영혼 게이지 시스템** (`autoload/SoulGauge.gd` 또는 GameManager 확장)
-  - 적 처치 시 영혼(EXP) 획득 — `EventBus.enemy_killed` 이미 있음, 여기에 EXP 누적 가드.
-  - 게이지 100% 도달 시 `EventBus.level_up_available` emit → 게임 일시정지(`get_tree().paused`).
-  - 현재 `GameManager.score`가 점수만 추적. EXP/레벨 분리 필요.
-- [ ] **P8-A2 레벨업 일시정지 처리** — LevelUpUI 표시 중 `process_mode = PROCESS_MODE_WHEN_PAUSED`로 UI만 동작.
+#### P8-A 영혼 게이지 & 레벨업 트리거 ✅ 완료 (2026-07-07)
+- [x] **P8-A1 영혼 게이지 시스템** (`scripts/systems/SoulGauge.gd` autoload) ✅
+  - 적 처치 시 영혼(EXP) 획득 — `EventBus.enemy_killed(enemy_id, exp_reward)` 시그널 페이로드 확장.
+  - 게이지 임계값: `10 + level*5` (Lv1=15, Lv2=20...) — 로그라이크 표준 레벨 비례 곡선.
+  - 100% 도달 시 `level_up_available` emit + `_level_up_pending` 가드 (중복 레벨업 방지).
+  - GameManager.score(점수)와 soul(EXP)/level(레벨) 분리 — 단일 책임 원칙.
+- [x] **P8-A2 EventBus 시그널 3종 추가** ✅
+  - `soul_changed(value, maximum, level)` — HUD 게이지바 갱신용.
+  - `level_up_available(level)` — LevelUpUI(Phase 8-B) 표시 트리거.
+  - `level_up_completed(new_level)` — 선택지 적용 후 게임 재개.
+- [x] **P8-A3 데이터 확장** ✅
+  - `UnitData.exp_reward` 필드 추가 (개별 int — 모바일 직렬화 안전).
+  - WaveManager 적 데이터에 exp_reward 세팅 (goblin=1, orc=3, boss=10).
+- [ ] **P8-A4 레벨업 일시정지 처리** — LevelUpUI 표시 중 `get_tree().paused` + `PROCESS_MODE_WHEN_PAUSED`. (Phase 8-B에서 구현)
+
+##### P8-A 검증 (데스크톱, 2026-07-07)
+- 임포트 PASS (에러 0)
+- RTP 시뮬: 99.46% (코어 영향 0 — 영혼 게이지는 평가 로직에 간섭 안 함)
+- 캡처: 초기화 `soul=0/15 lv1` 정상, 적 처치 시 `EXP +1 → soul=1/15...` 누적 확인 ✅
 
 #### P8-B 3지선다 주술 카드 UI (`scripts/view/LevelUpUI.gd`)
 - [ ] **P8-B1 카드 오버레이** — `JackpotOverlay.tscn` 풀스크린 패턴 재사용. 3장 카드 240×360px 터치.
