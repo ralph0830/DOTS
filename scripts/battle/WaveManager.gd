@@ -1,8 +1,8 @@
 class_name WaveManager
 extends Node
 ## WAVE 시스템 — 일정 시간 간격으로 적 포탈(우단)에서 적을 스폰.
-## Phase 7 임시: 단순 타이머 기반 적 스폰. WAVE 증가 시 적 수/강도 증가.
-## 적 유닛 데이터(UnitData)는 코드로 임시 생성 (빨간 도형).
+## WAVE 증가 시 적 수/강도 증가.
+## Phase 8-C: 적 유닛 데이터는 UnitRegistry autoload 에서 조회 (중앙 관리).
 
 signal wave_changed(wave_num: int)
 
@@ -15,43 +15,13 @@ var _wave_timer := 0.0
 var _spawn_timer := 0.0
 var _enemies_to_spawn := 0
 var _enemy_killed_in_wave := 0
-var _enemy_registry: Dictionary = {}
 
 
 func _ready() -> void:
-	_build_enemy_registry()
 	EventBus.enemy_killed.connect(_on_enemy_killed)
 	EventBus.game_over.connect(_on_game_over)
 	# 첫 WAVE 시작 (약간의 대기 후)
 	_wave_timer = -5.0   # 첫 WAVE 전 5초 대기
-
-
-func _build_enemy_registry() -> void:
-	# Phase 7 임시 적 유닛 (빨간 도형들).
-	# Phase 8-A: exp_reward 세팅 — goblin=1, orc=3, boss=10 (보스 처치 시 대량 EXP).
-	_register_enemy(&"goblin", _make_enemy("goblin", "Goblin", 20, 6, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1))
-	_register_enemy(&"orc", _make_enemy("orc", "Orc", 40, 10, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3))
-	_register_enemy(&"boss", _make_enemy("boss", "Boss", 150, 20, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10))
-
-
-func _register_enemy(id: StringName, data: UnitData) -> void:
-	_enemy_registry[id] = data
-
-
-func _make_enemy(id: StringName, name: String, hp: int, atk: int, spd: float, rng: float, shape: UnitData.Shape, col: Color, sz: float = 60.0, exp: int = 1) -> UnitData:
-	var e := UnitData.new()
-	e.unit_id = id
-	e.display_name = name
-	e.role = UnitData.Role.ENEMY
-	e.max_hp = hp
-	e.attack = atk
-	e.move_speed = spd
-	e.attack_range = rng
-	e.shape = shape
-	e.color = col
-	e.size = sz
-	e.exp_reward = exp   # Phase 8-A: 적 처치 시 지급 영혼(EXP)
-	return e
 
 
 func _physics_process(delta: float) -> void:
@@ -97,7 +67,8 @@ func _spawn_enemy() -> void:
 		enemy_id = &"boss"
 	elif _wave_num >= 3 and randf() < 0.3:
 		enemy_id = &"orc"
-	var data: UnitData = _enemy_registry.get(enemy_id)
+	# Phase 8-C: UnitRegistry 에서 적 UnitData 조회.
+	var data: UnitData = UnitRegistry.get_enemy_unit(enemy_id)
 	if data != null:
 		battle.spawn_enemy(data)
 		EventBus.enemy_spawned.emit(enemy_id)

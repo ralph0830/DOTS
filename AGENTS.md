@@ -50,7 +50,8 @@ scripts/
                  ParticleBudget, SlowMotion (last two are also autoloads)
   systems/       BonusManager (free-spin state machine; also an autoload),
                  SoulGauge (Phase 8-A: soul/level progression — enemy_killed listener),
-                 LordState (Phase 8-B: lord upgrade state + choice pool)
+                 LordState (Phase 8-B: lord upgrade state + choice pool),
+                 UnitRegistry (Phase 8-C: ally/enemy UnitData central store)
   setup/         Data-gen + test harness scripts (above)
 resources/       Generated .tres: config/, symbols/(knight/archer/mage/skull), reels/, paylines/, paytables/
 scenes/          slot/ (game), setup/ (test harnesses), Main.tscn
@@ -64,14 +65,19 @@ signals rather than passing references.
 
 ### Critical evaluation ordering
 
-In `SlotMachine._evaluate()`, `evaluation_completed` is emitted **before** `WalletManager.add_win`.
+In `SlotMachine._evaluate()`, `evaluation_completed` is emitted **before** any win handling.
 This lets `BonusManager` (an autoload listener) apply the free-spin multiplier to `SpinResult.total_win`
-*in place* before the win is credited. Do not reorder these without updating `BonusManager._on_eval`.
+*in place* before `UnitSpawner` converts the result to unit spawns.
+**Phase 8-C change**: `WalletManager.add_win()` is **removed** — the slot is a unit-production
+mechanism, not a gambling one. `total_win` still exists on `SpinResult` for UI/big-win purposes
+but is no longer credited to `WalletManager`. Credit only decreases via `place_bet()` (spin cost).
+Do not reorder the emit/UnitSpawner chain without updating both `BonusManager._on_eval` and
+`UnitSpawner._on_evaluation_completed`.
 
 ### Singleton autoloads (project.godot)
 
 `GameConfig`, `EventBus`, `WalletManager`, `JackpotSystem`, `AudioManager`, `GameManager`,
-`ParticleBudget`, `SlowMotion`, `BonusManager`, `SoulGauge`, `LordState`.
+`ParticleBudget`, `SlowMotion`, `BonusManager`, `SoulGauge`, `LordState`, `UnitRegistry`.
 
 > **Naming gotcha:** Autoload scripts that would collide with a `class_name` (e.g. `SlotConfig`)
 > intentionally omit `class_name` and are referenced by their **autoload node name** (e.g.

@@ -72,6 +72,8 @@ func _initialize_all() -> void:
 	SoulGauge.initialize()
 	# 8. 성주 상태 — 강화 레벨 전체 리셋 (Phase 8-B).
 	LordState.reset()
+	# 9. 유닛 레지스트리 — 아군/적 UnitData 재생성 (Phase 8-C).
+	UnitRegistry.initialize()
 	# DEBUG: 초기화 상태를 화면 표시용 딕셔너리로 emit.
 	var state := {
 		"credit": WalletManager.credit,

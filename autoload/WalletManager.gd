@@ -1,5 +1,8 @@
 extends Node
-## WalletManager — 크레딧/베팅/총당첨 관리 autoload. 영속(user://wallet.save).
+## WalletManager — 크레딧/베팅 관리 autoload. 영속(user://wallet.save).
+## Phase 8-C: 슬롯 도박 잔재 제거 — total_won/add_win 삭제.
+## 크레딧은 스핀 베팅 비용으로만 감소 (시작값 10000에서 차감).
+## 크레딧 충전은 디버그(HUD 탭) 또는 향후 보상 시스템(Phase 10)만.
 
 signal credit_changed(credit: int)
 signal bet_changed(bet: int)
@@ -10,7 +13,6 @@ var credit: int = 10000
 var current_bet: int = 50
 var bet_steps: PackedInt32Array = []
 var bet_index: int = 0
-var total_won: int = 0
 var _initialized: bool = false
 
 
@@ -49,16 +51,6 @@ func place_bet() -> bool:
 	return true
 
 
-## 당첨 금액 적립.
-func add_win(amount: int) -> void:
-	if amount <= 0:
-		return
-	credit += amount
-	total_won += amount
-	_emit_credit(credit)
-	_save()
-
-
 ## 크레딧 충전(디버그/보너스용).
 func add_credit(amount: int) -> void:
 	if amount == 0:
@@ -71,7 +63,6 @@ func add_credit(amount: int) -> void:
 ## 크레딧을 지정 금액으로 리셋(시그널 발생 → HUD 즉시 갱신). 테스트/재시작용.
 func reset_credit(amount: int) -> void:
 	credit = amount
-	total_won = 0
 	_emit_credit(credit)
 	_save()
 
@@ -106,7 +97,6 @@ func _save() -> void:
 		return
 	var f := ConfigFile.new()
 	f.set_value("wallet", "credit", credit)
-	f.set_value("wallet", "total_won", total_won)
 	f.save(SAVE_PATH)
 
 
@@ -115,4 +105,3 @@ func _load() -> void:
 	if f.load(SAVE_PATH) != OK:
 		return
 	credit = int(f.get_value("wallet", "credit", credit))
-	total_won = int(f.get_value("wallet", "total_won", 0))

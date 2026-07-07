@@ -334,13 +334,27 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 - 캡처 (임계치 3으로 임시 낮춤): 게이지 100% → `[SoulGauge] 레벨업 가능!` → `[LevelUpUI] 카드 3장: ["가시 바리케이드", "유닛 체급 진화", "마력 보호막"]` ✅
 - 일시정지 정상 동작 (게임 멈춤, UI 표시됨) ✅
 
-#### P8-C 선택지 데이터/플러그인 구조 (`scripts/data/LevelUpChoice.gd`)
-- [ ] **P8-C1 ChoiceEffect 플러그인 인터페이스** — `EvaluationPass` 패턴 참고. `apply(lord_state)` 메서드.
-- [ ] **P8-C2 선택지 카테고리 3종** (PRD §3.3 알베르트 기준):
-  - **유닛 체급 진화** — 기사/방패병 티어 업(훈련병→정규직→왕실 근위대). 누적 스탯 강화.
-  - **꽝 보정 강화** — 미니언 마리수 증가 / 정예 유닛으로 변경.
-  - **수비형 유물** — 가시 바리케이드, 마력 보호막 등 패시브.
+#### P8-C 선택지 데이터/플러그인 구조 (`scripts/data/LevelUpChoice.gd`) ✅ 완료 (2026-07-07)
+- [x] **P8-C1 ChoiceEffect 플러그인 인터페이스** (`scripts/data/ChoiceEffect.gd`) — EvaluationPass 패턴. `apply(lord)`/`can_choose(lord)` 메서드. ✅
+- [x] **P8-C2 선택지 카테고리 3종** (PRD §3.3 알베르트 기준): ✅
+  - **유닛 체급 진화** (`UnitEvolutionEffect`) — 기사/방패병 티어 업.
+  - **꽝 보정 강화** (`MissCompensationEffect`) — 미니언 마리수 증가.
+  - **수비형 유물** (`DefenseArtifactEffect`) — 가시 바리케이드, 마력 보호막.
 - [ ] **P8-C3 선택지 풀 데이터화** — `resources/choices/*.tres` (향후 성주별 풀 분리).
+- [x] **P8-C4 UnitRegistry autoload** (`scripts/systems/UnitRegistry.gd`) — 아군/적 UnitData 중앙 관리. ✅
+  - UnitSpawner/WaveManager 하드코딩 데이터 제거, UnitRegistry 조회로 통합.
+  - LordState 티어업 연동: `get_ally_unit()` 호출 시 티어 반영 스탯 반환 (HP +30%/atk +20% per tier).
+- [x] **P8-C5 슬롯 보상 분리** — `SlotMachine._evaluate()`에서 `WalletManager.add_win()` 제거. ✅
+  - 슬롯은 순수 유닛 생산 수단 (PRD/GDD 정합).
+  - CREDIT는 스핀 베팅 비용(place_bet)으로만 감소.
+  - WalletManager에서 total_won/add_win 제거 (도박 잔재 정리).
+
+##### P8-C/D 검증 (데스크톱, 2026-07-07)
+- 임포트 PASS (에러 0)
+- RTP 시뮬: 94.88% (코어 영향 0)
+- 캡처: CREDIT 10000→9950→9900...→9600 (스핀당 -50만, **당첨 시 증가 없음** ✅)
+- UnitSpawner: LordState.miss_compensation 반영 (꽝 시 미니언 1+comp명 소환)
+- WaveManager: UnitRegistry.get_enemy_unit() 정상 동작
 
 #### P8-D 릴 개조 시스템 (`scripts/systems/ReelModifier.gd`)
 - [ ] **P8-D1 런타임 ReelStrip 조작** — 심볼 추가/교체/제거. 원본 훼손 방지용 가변 복사본 래퍼.

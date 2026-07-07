@@ -86,7 +86,9 @@ func on_reel_stopped(_reel_index: int) -> void:
 		_evaluate()
 
 
-## 평가 실행. 모디파이어 → evaluation_completed(BonusManager 가공) → 지갑 반영 → 하이라이트/잭팟 emit.
+## 평가 실행. 모디파이어 → evaluation_completed(BonusManager 가공) → 하이라이트/잭팟 emit.
+## Phase 8-C: add_win(지갑 반영) 제거 — 슬롯은 유닛 생산 수단, CREDIT는 베팅 비용만.
+## total_win 은 여전히 SpinResult 에 존재 (UI 표시/빅윈 연출용) but 지갑에 반영 안 함.
 func _evaluate() -> void:
 	_set_state(State.EVALUATING)
 	var result := WinCalculator.evaluate(
@@ -95,12 +97,12 @@ func _evaluate() -> void:
 	# 확장 훅: 결과 모디파이어.
 	for cb in _result_modifiers:
 		cb.call(result)
-	# evaluation_completed 를 먼저 emit → BonusManager(리스너)가 프리스핀 배수 등을 가공.
-	# 가공된 total_win 을 그 다음 add_win 으로 지갑에 반영.
+	# evaluation_completed emit → UnitSpawner(리스너)가 매칭 결과를 유닛 소환으로 변환.
+	# BonusManager 도 리스너로 프리스핀 배수 가공 (total_win 자체는 연출용).
 	evaluation_completed.emit(result)
 	EventBus.evaluation_completed.emit(result)
 	if result.has_win():
-		WalletManager.add_win(result.total_win)
+		# WalletManager.add_win() 제거 (Phase 8-C) — 슬롯=유닛 생산 수단, 도박 아님.
 		EventBus.highlight_wins.emit(result)
 		if result.is_big_win(WalletManager.current_bet):
 			EventBus.big_win.emit(result.total_win)

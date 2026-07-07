@@ -29,6 +29,7 @@ SlowMotion="*res://scripts/effects/SlowMotion.gd"
 BonusManager="*res://scripts/systems/BonusManager.gd"
 SoulGauge="*res://scripts/systems/SoulGauge.gd"
 LordState="*res://scripts/systems/LordState.gd"
+UnitRegistry="*res://scripts/systems/UnitRegistry.gd"
 
 [display]
 
