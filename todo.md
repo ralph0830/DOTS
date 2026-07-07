@@ -313,10 +313,26 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 - RTP 시뮬: 99.46% (코어 영향 0 — 영혼 게이지는 평가 로직에 간섭 안 함)
 - 캡처: 초기화 `soul=0/15 lv1` 정상, 적 처치 시 `EXP +1 → soul=1/15...` 누적 확인 ✅
 
-#### P8-B 3지선다 주술 카드 UI (`scripts/view/LevelUpUI.gd`)
-- [ ] **P8-B1 카드 오버레이** — `JackpotOverlay.tscn` 풀스크린 패턴 재사용. 3장 카드 240×360px 터치.
-- [ ] **P8-B2 카드 생성 로직** — `Lord.choice_pool`에서 무작위 3장 추출. 중복 방지.
-- [ ] **P8-B3 카드 터치 처리** — 선택 시 `ChoiceEffect.apply()` 실행 → 게임 재개.
+#### P8-B 3지선다 주술 카드 UI (`scripts/view/LevelUpUI.gd`) ✅ 완료 (2026-07-07)
+- [x] **P8-B1 카드 오버레이** — GameOverOverlay 패턴 재사용 (Control + z_index=100 + MOUSE_FILTER_STOP). 3장 카드 280×420px 터치. ✅
+- [x] **P8-B2 카드 생성 로직** — `LordState.roll_choices(3)` 에서 무작위 3장 추출. `can_choose()` 필터링 (만렙 제외). ✅
+- [x] **P8-B3 카드 터치 처리** — 선택 시 `ChoiceEffect.apply(lord)` 실행 → 게임 재개. ✅
+- [x] **P8-B4 레벨업 일시정지** — `level_up_available` 수신 시 `get_tree().paused = true`. LevelUpUI는 `PROCESS_MODE_WHEN_PAUSED`로 동작. ✅
+
+##### P8-B 아키텍처 (open-structure)
+- **ChoiceEffect** (`scripts/data/ChoiceEffect.gd`, Resource 베이스) — EvaluationPass 패턴. `apply(lord)`/`can_choose(lord)` 메서드. 서브클래싱으로 새 효과 추가.
+- **구체 ChoiceEffect 3종** (`scripts/data/effects/`):
+  - `UnitEvolutionEffect` — 기사/방패병 티어 +1 (알베르트 선택지 1).
+  - `MissCompensationEffect` — 꽝 보정 강화 +1 (선택지 2).
+  - `DefenseArtifactEffect` — 수비형 유물 획득 (선택지 3, spike_barricade/magic_shield).
+- **LevelUpChoice** (`scripts/data/LevelUpChoice.gd`, Resource) — 카드 메타(id/표시명/설명/아이콘 색상) + effect 필드.
+- **LordState** (`scripts/systems/LordState.gd`, autoload) — 성주 강화 상태 추적 + 선택지 풀 관리. ChoiceEffect.apply()의 적용 대상.
+- **LevelUpUI** (`scripts/view/LevelUpUI.gd`) — 3카드 HBox 레이아웃. 터치 시 효과 적용 + `SoulGauge.complete_level_up()` 호출.
+
+##### P8-B 검증 (데스크톱, 2026-07-07)
+- 임포트 PASS (에러 0)
+- 캡처 (임계치 3으로 임시 낮춤): 게이지 100% → `[SoulGauge] 레벨업 가능!` → `[LevelUpUI] 카드 3장: ["가시 바리케이드", "유닛 체급 진화", "마력 보호막"]` ✅
+- 일시정지 정상 동작 (게임 멈춤, UI 표시됨) ✅
 
 #### P8-C 선택지 데이터/플러그인 구조 (`scripts/data/LevelUpChoice.gd`)
 - [ ] **P8-C1 ChoiceEffect 플러그인 인터페이스** — `EvaluationPass` 패턴 참고. `apply(lord_state)` 메서드.

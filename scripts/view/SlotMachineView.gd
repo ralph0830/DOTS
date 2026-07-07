@@ -70,6 +70,8 @@ func _initialize_all() -> void:
 	GameManager.start_game()
 	# 7. 영혼 게이지 — 레벨 1, 게이지 0으로 리셋 (Phase 8-A).
 	SoulGauge.initialize()
+	# 8. 성주 상태 — 강화 레벨 전체 리셋 (Phase 8-B).
+	LordState.reset()
 	# DEBUG: 초기화 상태를 화면 표시용 딕셔너리로 emit.
 	var state := {
 		"credit": WalletManager.credit,
@@ -127,6 +129,9 @@ func _build_layout() -> void:
 	# Phase 8: 게임오버/승리 오버레이 (탭 시 리스타트)
 	var game_over_overlay := GameOverOverlay.new()
 	add_child(game_over_overlay)
+	# Phase 8-B: 레벨업 3지선다 카드 UI (level_up_available 시 표시)
+	var level_up_ui := LevelUpUI.new()
+	add_child(level_up_ui)
 
 
 func _setup_core() -> void:
