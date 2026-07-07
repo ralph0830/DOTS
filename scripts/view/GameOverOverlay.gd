@@ -23,8 +23,12 @@ func _ready() -> void:
 	add_child(bg)
 
 	# 중앙 콘텐츠
+	# ★ size_flags EXPAND_FILL 필수 — anchor만 PRESET_FULL_RECT 면 CenterContainer 가
+	#   자식 최소 크기(VBox)만 확보하고 좌상단에 머무름. 부모(게임 화면)를 채워야 중앙 정렬됨.
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(center)
 
 	var vbox := VBoxContainer.new()
