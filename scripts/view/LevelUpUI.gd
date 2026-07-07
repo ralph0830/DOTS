@@ -3,15 +3,16 @@ extends Control
 ## 레벨업 3지선다 카드 UI (Phase 8-B).
 ## EventBus.level_up_available 수신 → 게임 일시정지 → 3장 카드 표시 → 선택 시 효과 적용 + 재개.
 ##
-## 패턴 (GameOverOverlay 참고):
-##   - Control + z_index=100 + MOUSE_FILTER_STOP (릴 아래 입력 차단)
-##   - process_mode = PROCESS_MODE_WHEN_PAUSED (일시정지 중 UI만 동작)
-##   - bg ColorRect (어두운 오버레이) + 중앙 카드 컨테이너
+## 레이아웃 주의 (GameOverOverlay 와 동일): 오버레이 자체(visible)를 끄면 Godot 가 layout 을
+## 계산하지 않아 size 가 0 이 되고, CenterContainer 가 좌상단에 minimum size 만큼만 표시되는 버그.
+## 따라서 오버레이는 항상 visible + full rect 로 두고, 표시/숨김은 내부(_bg/_center)의 visible
+## 토글 + mouse_filter 토글로 제어한다.
 
 const CARD_SIZE := Vector2(280.0, 420.0)
 const CARD_SEPARATION := 40.0
 
 var _bg: ColorRect
+var _center: CenterContainer
 var _card_container: HBoxContainer
 var _title_label: Label
 var _cards: Array = []   # 현재 표시 중인 LevelUpChoice 목록
@@ -19,9 +20,9 @@ var _lord_node: Node     # LordState autoload (선택지 적용 대상)
 
 
 func _ready() -> void:
+	# 오버레이 자체는 항상 full rect 로 화면을 채운다 (visible 은 끄지 않음 — 끄면 layout 이 0 이 됨).
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE   # 표시 전에는 입력 통과
 	z_index = 100
 	# 일시정지 중에도 UI 동작 — 게임은 멈추고 카드 선택만 가능.
 	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
@@ -35,21 +36,22 @@ func _build_ui() -> void:
 	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_bg.color = Color(0.02, 0.02, 0.08, 0.92)
 	_bg.mouse_filter = Control.MOUSE_FILTER_STOP
+	_bg.visible = false                          # 표시 전 숨김
 	add_child(_bg)
 
 	# 중앙 콘텐츠
-	# ★ size_flags EXPAND_FILL 필수 — anchor만 PRESET_FULL_RECT 면 CenterContainer 가
-	#   자식 최소 크기(VBox)만 확보하고 좌상단에 머무름. 부모(게임 화면)을 채워야 중앙 정렬됨.
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(center)
+	# size_flags EXPAND_FILL 필수 — 부모(오버레이 full rect)를 채워야 중앙 정렬됨.
+	_center = CenterContainer.new()
+	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_center.visible = false                      # 표시 전 숨김
+	add_child(_center)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 40)
 	vbox.custom_minimum_size = Vector2(960, 0)
-	center.add_child(vbox)
+	_center.add_child(vbox)
 
 	# 타이틀
 	_title_label = Label.new()
@@ -82,14 +84,32 @@ func _on_level_up_available(_level: int) -> void:
 		return
 	# 카드 렌더링
 	_render_cards(_cards)
-	# 게임 일시정지 + UI 표시
+	# 표시 직전 overlay 를 부모 전체로 강제 — lazy layout 으로 size=0 되어 CenterContainer 가
+	# 좌상단에 표시되는 버그 방지 (GameOverOverlay 와 동일).
+	_ensure_full_rect()
+	_bg.visible = true
+	_center.visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	# 게임 일시정지
 	get_tree().paused = true
-	visible = true
 	var names := []
 	for c in _cards:
 		var ch: LevelUpChoice = c
 		names.append(String(ch.display_name))
 	print("[LevelUpUI] 레벨업 UI 표시 — 카드 %d장: %s" % [_cards.size(), str(names)])
+
+
+## overlay size 를 부모(게임 화면) 전체로 강제.
+func _ensure_full_rect() -> void:
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	var p := get_parent()
+	if p is Control and p.size.x > 0.0 and p.size.y > 0.0:
+		position = Vector2.ZERO
+		size = p.size
+	if _bg != null:
+		_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	if _center != null:
+		_center.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 
 ## 3장 카드를 HBoxContainer 에 렌더링.
@@ -168,8 +188,10 @@ func _on_card_selected(index: int) -> void:
 	# ChoiceEffect.apply() 실행 (duck-typing — effect는 Resource, apply 메서드 호출)
 	if choice.effect != null and choice.effect.has_method("apply"):
 		choice.effect.apply(_lord_node)
-	# UI 숨기기 + 게임 재개
-	visible = false
+	# 내부 숨김 + 오버레이 입력 비활성화 + 게임 재개
+	_bg.visible = false
+	_center.visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	get_tree().paused = false
 	_cards.clear()
 	# SoulGauge 레벨업 완료 처리 (다음 게이지 리셋)

@@ -131,10 +131,15 @@ func _build_layout() -> void:
 	var hud := preload("res://scenes/slot/HUD.tscn").instantiate()
 	add_child(hud)
 	# Phase 8: 게임오버/승리 오버레이 (탭 시 리스타트)
+	# ★ add_child 전에 부모가 직접 anchor 설정 — 자식의 _ready(deferred) 에만 의존하면
+	#   부모 layout 확정 타이밍과 어긋나 overlay size 가 0 으로 남아 좌상단에 작게 표시됨.
+	#   BackgroundFX 도 동일 패턴(add_child 전 set_anchors_preset) 으로 정상 동작 중.
 	var game_over_overlay := GameOverOverlay.new()
+	game_over_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(game_over_overlay)
 	# Phase 8-B: 레벨업 3지선다 카드 UI (level_up_available 시 표시)
 	var level_up_ui := LevelUpUI.new()
+	level_up_ui.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(level_up_ui)
 
 
