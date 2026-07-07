@@ -1,8 +1,8 @@
 class_name SlotMachineView
 extends Control
 ## 슬롯머신 뷰 오케스트레이터 + 이펙트 통합 지점.
-## 코어 SlotMachine + ReelView[5] + PaylineOverlay + 이펙트(BackgroundFX/WinEffects/FloatingText) 를 연결.
-## 코어-이펙트는 EventBus 만 사용(느슨한 결합). 빅윈 시 릴 영역 진동.
+## ReelView[5] + PaylineOverlay + 이펙트(BackgroundFX/WinEffects/FloatingText) 를 연결.
+## 코어(SlotMachine)와는 EventBus 시그널로만 통신 — 코어 인스턴스를 직접 호출하지 않는다.
 
 const REEL_W := 180.0
 const ROW_H := 180.0
@@ -12,7 +12,8 @@ const REEL_STOP_DELAY := 0.18   # 릴 간 정지 간격
 const BATTLE_H := 1056.0        # 전투 영역 높이 (1920 × 0.55)
 const SLOT_H := 864.0           # 슬롯 영역 높이 (1920 × 0.45) = 1920 - 1056
 
-var _core: SlotMachine
+var _core: SlotMachine                          # 생성/초기화 전용 — 런타임 호출은 EventBus 경유
+var _is_idle: bool = true                       # 코어 IDLE 상태 추적(EventBus.state_changed 구독)
 var _reel_area: Control
 var _reels: Array[ReelView] = []
 var _paylines: PaylineOverlay
@@ -36,8 +37,10 @@ func _ready() -> void:
 	_setup_battle()   # Phase 7: 전투 시스템 (UnitSpawner/WaveManager) 초기화
 	# 모든 싱글턴/매니저를 결정론적으로 초기화 (게임 시작 시 항상 동일 상태).
 	_initialize_all()
-	# EventBus 구독
+	# EventBus 구독 — 코어 직접 참조 없이 시그널로 통신.
 	EventBus.spin_requested.connect(_on_spin_requested)
+	EventBus.state_changed.connect(_on_state_changed)
+	EventBus.spin_complete.connect(_on_spin_complete)
 	EventBus.highlight_wins.connect(_on_highlight)
 	EventBus.big_win.connect(_on_big_win)
 	EventBus.auto_spin_changed.connect(_on_auto_changed)
@@ -122,10 +125,10 @@ func _build_layout() -> void:
 
 
 func _setup_core() -> void:
+	# 코어 인스턴스는 생성/초기화만 담당 — 이후 모든 통신은 EventBus.
 	_core = SlotMachine.new()
 	add_child(_core)
 	_core.initialize(GameConfig.config)
-	_core.spin_complete.connect(_on_spin_complete)
 
 
 func _setup_reels() -> void:
@@ -168,10 +171,17 @@ func _layout_reels() -> void:
 
 # --- 스핀 흐름 ---
 
+## 스핀 요청 수신(EventBus.spin_requested) — 뷰 책임: 이전 당첨 하이라이트 제거만.
+## 실제 스핀 개시는 코어가 EventBus.spin_requested를 직접 구독해 수행한다.
 func _on_spin_requested() -> void:
 	for reel in _reels:   # 이전 당첨 하이라이트 제거
 		reel.clear_highlights()
-	_core.request_spin()
+
+
+## 코어 상태 전이 수신(EventBus.state_changed) — _is_idle 추적.
+## _maybe_auto_spin 등이 코어 직접 참조 대신 이 플래그를 사용.
+func _on_state_changed(_from: int, to: int) -> void:
+	_is_idle = (to == SlotMachine.State.IDLE)
 
 
 func _on_spin_complete(grid: Array) -> void:
@@ -201,8 +211,9 @@ func _stop_reel(i: int) -> void:
 	_reels[i].stop_at(result)
 
 
+## 릴 정지 완료(ReelView 시그널) → 코어에 EventBus로 보고.
 func _on_reel_stopped(reel_index: int) -> void:
-	_core.on_reel_stopped(reel_index)
+	EventBus.reel_stopped.emit(reel_index)
 
 
 # --- 이펙트 훅 ---
@@ -256,7 +267,7 @@ func _on_eval_auto(_r: SpinResult) -> void:
 
 ## 조건(IDLE + 자금/손실한도/프리스핀)이 맞으면 다음 스핀 요청.
 func _maybe_auto_spin() -> void:
-	if _core == null or _core.state != SlotMachine.State.IDLE:
+	if not _is_idle:
 		return
 	# 프리스핀 중이면 횟수/자금 제약 없이 스핀.
 	if _free_spins_active():

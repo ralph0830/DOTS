@@ -29,6 +29,9 @@ func initialize(cfg: SlotConfig) -> void:
 	rng = RandomNumberGenerator.new()
 	rng.seed = cfg.rng_seed if cfg.rng_seed != 0 else randi()
 	_set_state(State.IDLE)
+	# EventBus 구독 — 뷰가 코어를 직접 호출하지 않고 시그널로 통신(느슨한 결합).
+	EventBus.spin_requested.connect(request_spin)
+	EventBus.reel_stopped.connect(on_reel_stopped)
 
 
 ## 결과 모디파이어 등록(Phase 4). Callable 은 SpinResult 를 받아 in-place 수정한다.
@@ -125,3 +128,4 @@ func _set_state(new_state: int) -> void:
 	var old := state
 	state = new_state
 	state_changed.emit(old, new_state)
+	EventBus.state_changed.emit(old, new_state)

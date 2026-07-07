@@ -10,6 +10,10 @@ enum Kind { NORMAL, WILD, SCATTER, BONUS }
 # Phase 8: 유닛 4종(기사/궁수/마법사/해골) 식별용 도형 추가. 기존 보석 도형은 호환 유지.
 enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX, KNIGHT, ARCHER, MAGE, SKULL }
 
+# 메카닉 태그 — is_scatter/is_bonus 가 타입 체크 대신 조회(코어 OCP).
+const TAG_SCATTER := &"scatter"
+const TAG_BONUS := &"bonus"
+
 @export var id: StringName = &""                       # 고유 식별자 ("ruby", "unicorn" ...)
 @export var kind: Kind = Kind.NORMAL                   # 심볼 종류
 @export var display_name: String = ""                  # UI 표시명
@@ -25,7 +29,7 @@ enum Shape { CIRCLE, DIAMOND, SQUARE, TRIANGLE, STAR, HEX, KNIGHT, ARCHER, MAGE,
 ## Phase 7: 매칭 시 소환할 유닛 ID (빈 값 = 유닛 미매핑/순수 크레딧 심볼).
 @export var unit_id: StringName = &""
 
-## 확장 축: 커스텀 메카닉(확장 Wild·Multiplier·Sticky 등). null이면 kind 기반 기본 동작.
+## 확장 축: 커스텀 메카닉(확장 Wild·Multiplier·Sticky 등). null이면 kind 기반 기본 메카닉(for_kind).
 ## 새 메카닉은 SymbolMechanic 서브클래스 리소스를 만들어 여기에 할당하면 된다.
 @export var mechanic: SymbolMechanic
 
@@ -44,13 +48,10 @@ func get_payout(match_count: int) -> int:
 	return 0
 
 
-## 이 심볼이 라인 지불 대상인지 (일반 심볼만). 메카닉 기반.
-func is_payable() -> bool:
-	return participates_in_line() and can_be_line_target() and not is_substitutable()
-
-
-# --- 메카닉 위임 ---
-# SpinEvaluator 가 kind 를 직접 모르게 한다. 모든 평가 질문은 메카닉으로.
+# --- 메카닉 위임 (Open-structure 핵심) ---
+# SpinEvaluator 가 kind 를 직접 모르게 한다. 모든 평가 질문은 메카닉으로 위임한다.
+# 기본 메카닉(for_kind)의 모바일 export 안전성은 SymbolMechanic.gd 의 preload 강제
+# 로드로 보장된다 — kind 를 직접 분기하는 회피 없이도 APK/데스크톱이 동일하게 동작.
 
 ## 유효 메카닉: mechanic 우선, 없으면 kind 기본 메카닉(for_kind).
 func effective_mechanic() -> SymbolMechanic:
@@ -58,24 +59,28 @@ func effective_mechanic() -> SymbolMechanic:
 		return mechanic
 	return SymbolMechanic.for_kind(kind)
 
+
 func participates_in_line() -> bool:
 	return effective_mechanic().participates_in_line()
+
 
 func can_be_line_target() -> bool:
 	return effective_mechanic().can_be_line_target()
 
+
 func is_substitutable() -> bool:
 	return effective_mechanic().is_substitutable()
+
 
 func matches(target_symbol: SymbolData) -> bool:
 	return effective_mechanic().matches(target_symbol, self)
 
 
-## 스캐터 계열 심볼인지(ScatterMechanic 또는 그 서브클래스).
+## 스캐터 계열 심볼인지(메카닉 태그 기반 — 타입 체크 대신).
 func is_scatter() -> bool:
-	return effective_mechanic() is ScatterMechanic
+	return effective_mechanic().get_tags().has(TAG_SCATTER)
 
 
-## 보너스 계열 심볼인지(BonusMechanic 또는 서브클래스 — 잭팟 트리거).
+## 보너스 계열 심볼인지(메카닉 태그 기반 — 잭팟 트리거).
 func is_bonus() -> bool:
-	return effective_mechanic() is BonusMechanic
+	return effective_mechanic().get_tags().has(TAG_BONUS)

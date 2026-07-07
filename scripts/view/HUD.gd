@@ -230,10 +230,8 @@ func _on_auto_pressed() -> void:
 func _on_credit_clicked(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed:
 		WalletManager.add_credit(DEBUG_CREDIT_ADD)
-		print("[DEBUG] +CREDIT %d → %d" % [DEBUG_CREDIT_ADD, WalletManager.credit])
 	elif event is InputEventMouseButton and event.pressed:
 		WalletManager.add_credit(DEBUG_CREDIT_ADD)
-		print("[DEBUG] +CREDIT %d → %d" % [DEBUG_CREDIT_ADD, WalletManager.credit])
 
 
 ## 하단 행2: (spacer) … SPIN (우측, 큼).
@@ -248,7 +246,8 @@ func _build_spin_bar() -> HBoxContainer:
 
 	var spin := _make_button("SPIN", SPIN_SIZE)
 	spin.add_theme_font_size_override("font_size", 54)
-	spin.pressed.connect(func() -> void: EventBus.spin_requested.emit())
+	spin.pressed.connect(func() -> void:
+		EventBus.spin_requested.emit())
 	bar.add_child(spin)
 	return bar
 

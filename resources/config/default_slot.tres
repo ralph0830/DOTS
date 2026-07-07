@@ -8,121 +8,171 @@
 
 [sub_resource type="Resource" id="Resource_vvnye"]
 script = ExtResource("1_qlbk2")
-row_per_reel = PackedInt32Array(1, 1, 1, 1, 1)
+row_r0 = 1
+row_r1 = 1
+row_r2 = 1
+row_r3 = 1
+row_r4 = 1
 debug_color = Color(1, 0.25, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_vplpe"]
 script = ExtResource("1_qlbk2")
 id = 1
-row_per_reel = PackedInt32Array(0, 0, 0, 0, 0)
 debug_color = Color(1, 0.47500002, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_63mc7"]
 script = ExtResource("1_qlbk2")
 id = 2
-row_per_reel = PackedInt32Array(2, 2, 2, 2, 2)
+row_r0 = 2
+row_r1 = 2
+row_r2 = 2
+row_r3 = 2
+row_r4 = 2
 debug_color = Color(1, 0.70000005, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_or823"]
 script = ExtResource("1_qlbk2")
 id = 3
-row_per_reel = PackedInt32Array(0, 1, 2, 1, 0)
+row_r1 = 1
+row_r2 = 2
+row_r3 = 1
 debug_color = Color(1, 0.925, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_m1r14"]
 script = ExtResource("1_qlbk2")
 id = 4
-row_per_reel = PackedInt32Array(2, 1, 0, 1, 2)
+row_r0 = 2
+row_r1 = 1
+row_r3 = 1
+row_r4 = 2
 debug_color = Color(0.84999996, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_8secf"]
 script = ExtResource("1_qlbk2")
 id = 5
-row_per_reel = PackedInt32Array(0, 0, 1, 2, 2)
+row_r2 = 1
+row_r3 = 2
+row_r4 = 2
 debug_color = Color(0.625, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_ewiff"]
 script = ExtResource("1_qlbk2")
 id = 6
-row_per_reel = PackedInt32Array(2, 2, 1, 0, 0)
+row_r0 = 2
+row_r1 = 2
+row_r2 = 1
 debug_color = Color(0.39999998, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_qd1wa"]
 script = ExtResource("1_qlbk2")
 id = 7
-row_per_reel = PackedInt32Array(1, 0, 0, 0, 1)
+row_r0 = 1
+row_r4 = 1
 debug_color = Color(0.25, 1, 0.32499993, 1)
 
 [sub_resource type="Resource" id="Resource_iod01"]
 script = ExtResource("1_qlbk2")
 id = 8
-row_per_reel = PackedInt32Array(1, 2, 2, 2, 1)
+row_r0 = 1
+row_r1 = 2
+row_r2 = 2
+row_r3 = 2
+row_r4 = 1
 debug_color = Color(0.25, 1, 0.5500001, 1)
 
 [sub_resource type="Resource" id="Resource_qktj7"]
 script = ExtResource("1_qlbk2")
 id = 9
-row_per_reel = PackedInt32Array(0, 1, 1, 1, 0)
+row_r1 = 1
+row_r2 = 1
+row_r3 = 1
 debug_color = Color(0.25, 1, 0.77499986, 1)
 
 [sub_resource type="Resource" id="Resource_12suu"]
 script = ExtResource("1_qlbk2")
 id = 10
-row_per_reel = PackedInt32Array(2, 1, 1, 1, 2)
+row_r0 = 2
+row_r1 = 1
+row_r2 = 1
+row_r3 = 1
+row_r4 = 2
 debug_color = Color(0.25, 1, 1, 1)
 
 [sub_resource type="Resource" id="Resource_w28li"]
 script = ExtResource("1_qlbk2")
 id = 11
-row_per_reel = PackedInt32Array(1, 0, 1, 2, 1)
+row_r0 = 1
+row_r2 = 1
+row_r3 = 2
+row_r4 = 1
 debug_color = Color(0.25, 0.77499986, 1, 1)
 
 [sub_resource type="Resource" id="Resource_jfwdd"]
 script = ExtResource("1_qlbk2")
 id = 12
-row_per_reel = PackedInt32Array(1, 2, 1, 0, 1)
+row_r0 = 1
+row_r1 = 2
+row_r2 = 1
+row_r4 = 1
 debug_color = Color(0.25, 0.5499999, 1, 1)
 
 [sub_resource type="Resource" id="Resource_u774b"]
 script = ExtResource("1_qlbk2")
 id = 13
-row_per_reel = PackedInt32Array(0, 1, 0, 1, 0)
+row_r1 = 1
+row_r3 = 1
 debug_color = Color(0.25, 0.3250001, 1, 1)
 
 [sub_resource type="Resource" id="Resource_s6uy7"]
 script = ExtResource("1_qlbk2")
 id = 14
-row_per_reel = PackedInt32Array(2, 1, 2, 1, 2)
+row_r0 = 2
+row_r1 = 1
+row_r2 = 2
+row_r3 = 1
+row_r4 = 2
 debug_color = Color(0.39999986, 0.25, 1, 1)
 
 [sub_resource type="Resource" id="Resource_5bvnk"]
 script = ExtResource("1_qlbk2")
 id = 15
-row_per_reel = PackedInt32Array(0, 0, 1, 0, 0)
+row_r2 = 1
 debug_color = Color(0.625, 0.25, 1, 1)
 
 [sub_resource type="Resource" id="Resource_pjk1h"]
 script = ExtResource("1_qlbk2")
 id = 16
-row_per_reel = PackedInt32Array(2, 2, 1, 2, 2)
+row_r0 = 2
+row_r1 = 2
+row_r2 = 1
+row_r3 = 2
+row_r4 = 2
 debug_color = Color(0.85000014, 0.25, 1, 1)
 
 [sub_resource type="Resource" id="Resource_y7a5v"]
 script = ExtResource("1_qlbk2")
 id = 17
-row_per_reel = PackedInt32Array(1, 1, 0, 1, 1)
+row_r0 = 1
+row_r1 = 1
+row_r3 = 1
+row_r4 = 1
 debug_color = Color(1, 0.25, 0.9249997, 1)
 
 [sub_resource type="Resource" id="Resource_qih66"]
 script = ExtResource("1_qlbk2")
 id = 18
-row_per_reel = PackedInt32Array(1, 1, 2, 1, 1)
+row_r0 = 1
+row_r1 = 1
+row_r2 = 2
+row_r3 = 1
+row_r4 = 1
 debug_color = Color(1, 0.25, 0.7000003, 1)
 
 [sub_resource type="Resource" id="Resource_l2f7h"]
 script = ExtResource("1_qlbk2")
 id = 19
-row_per_reel = PackedInt32Array(0, 2, 0, 2, 0)
+row_r1 = 2
+row_r3 = 2
 debug_color = Color(1, 0.25, 0.47500014, 1)
 
 [sub_resource type="Resource" id="Resource_ctg16"]

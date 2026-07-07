@@ -5,5 +5,7 @@
 [resource]
 script = ExtResource("1_3ltq6")
 id = 9
-row_per_reel = PackedInt32Array(0, 1, 1, 1, 0)
+row_r1 = 1
+row_r2 = 1
+row_r3 = 1
 debug_color = Color(0.25, 1, 0.77499986, 1)

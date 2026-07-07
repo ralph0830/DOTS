@@ -118,7 +118,13 @@ func _build_paylines() -> Array:
 	for i in range(PAYLINES.size()):
 		var pl := Payline.new()
 		pl.id = i
-		pl.row_per_reel = PackedInt32Array(PAYLINES[i])
+		# PackedInt32Array 대신 개별 int로 분해 (모바일 export 직렬화 손실 회피).
+		var pattern: Array = PAYLINES[i]
+		pl.row_r0 = pattern[0]
+		pl.row_r1 = pattern[1]
+		pl.row_r2 = pattern[2]
+		pl.row_r3 = pattern[3]
+		pl.row_r4 = pattern[4]
 		pl.debug_color = Color.from_hsv(float(i) / float(PAYLINES.size()), 0.75, 1.0)
 		_save(pl, PAYLINE_DIR + "payline_%02d.tres" % i)
 		out.append(pl)

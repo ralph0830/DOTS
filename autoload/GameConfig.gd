@@ -13,9 +13,3 @@ func _ready() -> void:
 		push_error("[GameConfig] default_slot.tres 로드 실패. 리소스가 존재하는지 확인.")
 		return
 	config = loaded
-	# DEBUG: 로드된 심볼 payout 확인 (모바일 .res 변환 시 손실 여부 진단).
-	print("[GameConfig] config 로드: symbols=%d reels=%d paylines=%d" \
-		% [config.symbols.size(), config.reels.size(), config.paylines.size()])
-	for sym in config.symbols:
-		print("[GameConfig]   %s: kind=%d payout[3,4,5]=[%d,%d,%d] unit_id=%s" \
-			% [sym.id, sym.kind, sym.get_payout(3), sym.get_payout(4), sym.get_payout(5), sym.unit_id])

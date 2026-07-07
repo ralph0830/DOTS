@@ -238,32 +238,55 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 
 ---
 
-### 🔴 Phase 7 — 프로토타입 1: 슬롯 & 라인전 검증 (MVP)
+### 🔴 Phase 7 — 프로토타입 1: 슬롯 & 라인전 검증 (MVP) ✅ 완료
 
 > 목표: 슬롯 스핀 → 유닛 소환 → 단일 라인 전투 루프 검증 (더미 실루엣).
+> **2026-07-07 완료** — 슬롯 심볼 4종(기사/궁수/마법사/해골) 재설계 + 모바일 직렬화 버그 2종 해결.
 
-- [ ] **P7-1 유닛 엔티티** (`scripts/battle/Unit.gd` + `UnitData.gd`)
-  - CharacterBody2D 기반. 체력/공격력/이동속도/사거리. 아군(좌→우)/적(우→좌) 진격.
-  - `UnitData.gd` (Resource): `unit_id`, `role`(TANK/DEALER/SUPPORTER), `base_hp`, `base_atk`, `move_speed`, `attack_range`, `texture`.
+- [x] **P7-1 유닛 엔티티** (`scripts/battle/Unit.gd` + `UnitData.gd`) ✅
+  - Area2D 기반. 체력/공격력/이동속도/사거리. 아군(좌→우)/적(우→좌) 진격.
+  - `UnitData.gd` (Resource): `unit_id`, `role`(TANK/DEALER/SUPPORTER/MINION/ENEMY), 스탯, shape/color/size(프로시저럴 도형).
   - `SymbolData`에 `unit_id` 필드 추가 → 매칭 시 해당 유닛 소환.
-- [ ] **P7-2 라인 디펜스 필드** (`scripts/battle/BattleField.gd`)
-  - Node2D. 단일 레인. 아군 기지(좌단) / 적 포탈(우단). 전선(frontline) 추적.
-  - 유닛 충돌 시 전투 해상. 기지 체력 시스템.
-- [ ] **P7-3 유닛 생산 파이프라인** (`scripts/battle/UnitSpawner.gd`)
+- [x] **P7-2 라인 디펜스 필드** (`scripts/battle/BattleField.gd`) ✅
+  - Node2D. 단일 레인. 아군 기지(좌단) / 적 포탈(우단).
+  - 유닛 충돌 시 전투 해상(area_entered). 양 기지 체력 시스템(base_hp/enemy_base_hp).
+- [x] **P7-3 유닛 생산 파이프라인** (`scripts/battle/UnitSpawner.gd`) ✅
   - `EventBus.evaluation_completed` 구독 → SpinResult 매칭 결과를 유닛 소환으로 변환.
-  - `SymbolData.unit_id` → UnitData 인스턴스화. 매칭 수 비례 소환량.
+  - `SymbolData.unit_id` → UnitData 인스턴스화. 매칭 수 비례 소환량(3매치=1기, 4=2, 5=3).
   - **꽝(Miss) 보정**: 매치 0개 시 최소 미니언 1기 소환 (GDD 핵심).
-- [ ] **P7-4 적/WAVE 시스템** (`scripts/battle/WaveManager.gd` + `WaveData.gd`)
+- [x] **P7-4 적/WAVE 시스템** (`scripts/battle/WaveManager.gd`) ✅
   - WAVE별 적 스폰 타이밍/종류/수. 적 포탈에서 스폰.
-  - `WaveData.gd` (Resource): WAVE별 적 구성/보스 여부.
-- [ ] **P7-5 유닛 전투 AI** (`scripts/battle/UnitAI.gd`)
-  - 전방 적 탐지 → 사거리 내 공격 / 전방 이동. 사망 시 이펙트 + 영혼 드랍.
-- [ ] **P7-6 레이아웃 전환** — `SlotMachineView` 상단/하단 분할 배치.
-  - 상단 전투 55% / 하단 슬롯 45%. `ReelView.SYMBOL_SIZE` 180→120 축소.
-  - HUD 재설계: 크레딧→영혼, 당첨→WAVE/기지 체력. SPIN 버튼 유지, AUTO 제거(오토배틀러).
-- [ ] **P7-7 스핀 쿨타임** — `SlotMachine.State`에 COOLDOWN 추가. 전투 실시간 진행 중 쿨타임 후 스핀.
-- [ ] **P7-8 EventBus 확장** — `unit_spawned`, `wave_started`, `enemy_killed`, `base_damaged`, `unit_died` 시그널 추가.
-- [ ] **P7 테스트**: 스핀→유닛 소환→라인전 루프 캡처 검증. 기지 파괴/방어 시나리오.
+  - 적 3종(goblin/orc/boss). 5WAVE마다 보스. WAVE 번호 비례 적 수 증가.
+- [x] **P7-5 유닛 전투 AI** (`scripts/battle/Unit.gd`) ✅
+  - Area2D 간 area_entered 감지 → 타겟 지정 → 사거리 내 공격 / 전방 이동.
+  - 사망 시 died 시그널 + queue_free. EventBus.enemy_killed/unit_died emit.
+- [x] **P7-6 레이아웃 전환** — `SlotMachineView` 상단/하단 분할 배치. ✅
+  - 상단 전투 55%(1056px) / 하단 슬롯 45%(864px).
+  - HUD 재설계: CREDIT/BET/WIN 정보 바(릴 아래) + SPIN/BET±/AUTO 버튼.
+- [x] **P7-7 EventBus 확장** — 전투 시그널 9종 추가. ✅
+  - `unit_spawned`, `enemy_spawned`, `enemy_killed`, `unit_died`, `base_damaged`,
+    `base_hp_changed`, `wave_started`, `wave_cleared`, `game_over`, `game_initialized`.
+- [x] **P7 테스트**: 스핀→유닛 소환→라인전 루프 캡처 검증. 기지 파괴/방어 시나리오. ✅
+
+#### 🐛 Phase 7 해결된 주요 버그
+
+| 버그 | 원인 | 해결 | 커밋 |
+|---|---|---|---|
+| **유닛 전투 미동작** | Area2D 간 감지를 body_entered로 시도 (PhysicsBody2D 전용) | area_entered/area_exited + monitorable/monitoring 활성화 + 사거리 기반 충돌 영역 | `518a5ab` |
+| **승리 루프** | WaveManager 첫 WAVE 시작 조건 누락 → 적 스폰 안 됨 → 아군이 적 기지 무조건 파괴 | WAVE 시작 조건 2분할 (첫 WAVE: 타이머≥0, 다음 WAVE: 타이머≥DURATION) | `cf68750` |
+| **초기화 안 됨** | 각 매니저가 제각각 _ready 초기화 + 저장값 로드 | `_initialize_all()` 통합 (credit 10000, HP 100/100, WAVE 리셋, 자동스핀 끔) | `0915e3b` |
+| **모바일 매칭 0% (치명적)** | Godot 4.7에서 `@export PackedInt32Array`가 Resource 바이너리 export 시 빈 배열로 직렬화 손실 → payout/payline 데이터가 모바일에서 0/빈 값 로드 | **3곳 모두 개별 int 필드로 분해**: `SymbolData.payout_3/4/5`, `Payline.row_r0~r4` | `7c53931` + Claude Code |
+| **mechanic 모바일 로딩 실패** | `SymbolMechanic.for_kind()`가 class_name lazy 참조 → 모바일 APK 런타임 첫 호출 시 서브클래스 미로드 → 잘못된 폴백 | preload 강제 로드 + 무상태 싱글톤 레지스트리 패턴 + `get_tags()` 태그 조회(`is X` 타입 체크 대체) | Claude Code |
+
+#### 📊 Phase 7 밸런스 (5000스핀 시뮬)
+
+| 항목 | 값 | 비고 |
+|---|---|---|
+| 심볼 | 4종 (knight/archer/mage/skull) | 보석 7종 → 유닛 4종 축소 |
+| 히트율 | 83.82% | 4종 균등 배치 (각 릴 knight 6/archer 6/mage 5/skull 3) |
+| RTP | 94.58% | 목표 92~96% 달성 |
+| payout | knight[6,20,60] archer[5,15,45] mage[8,25,80] skull[1,2,3] | skull=꽝(최소 payout) |
+| 매치 분포 | 3매치 5136 / 4매치 1448 / 5매치 532 | 균형 |
 
 ### 🟡 Phase 8 — 프로토타입 2: 3지선다 빌드업 검증
 
@@ -321,6 +344,19 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 - [x] **모바일 성능 최적화** ✅ (이미 구현) — ParticleBudget 티어 분류, SymbolView 풀링, gl_compatibility.
 - [x] **Android 빌드 환경** ✅ (2026-07-03) — APK 빌드 성공 (58MB), 실기 테스트 PASS.
 
+### 📝 Phase 7 디펜스 확장 이력 (2026-07-07)
+
+- [x] **상하 분할 레이아웃** ✅ — 전투 55%(1056px) / 슬롯 45%(864px). BattleFieldView + BattleField(Node2D).
+- [x] **유닛/적 엔티티** ✅ — Unit.gd(Area2D) + UnitData.gd. 프로시저럴 도형(방패/활/마법진/해골).
+- [x] **슬롯→유닛 생산 파이프라인** ✅ — UnitSpawner가 evaluation_completed 구독 → 매칭 결과를 유닛 소환.
+- [x] **WAVE 시스템** ✅ — WaveManager. 적 3종 + 보스(5WAVE마다). WAVE 비례 적 수 증가.
+- [x] **양 기지 HP 표시** ✅ — BattleFieldView HP 바 + 숫자 라벨. base_hp_changed 시그널로 실시간 갱신.
+- [x] **슬롯 심볼 4종 재설계** ✅ — 보석 7종 → 유닛 4종(knight/archer/mage/skull). 4종 균등 릴 배치.
+- [x] **통합 초기화** ✅ — `_initialize_all()` (credit/battle/wave/auto 모두 결정론적 리셋).
+- [x] **승리/패배 화면** ✅ — GameOverOverlay. 탭 시 리스타트.
+- [x] **CREDIT 디버그 머니** ✅ — CREDIT 탭 시 +1000 (출시 전 제거 예정).
+- [x] **모바일 직렬화 버그 2종 해결** ✅ — PackedInt32Array 손실(payout/payline) + mechanic lazy 로드. **치명적 버그**.
+
 ---
 
 ## 4. 기술 부채 / 주의점
@@ -339,6 +375,10 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 | **GameManager 슬롯 무관** (2026-07-03) | 점수/일시정지 로직이 슬롯 도메인과 무관한 boilerplate. | **유지 결정**(2026-07-03): 향후 메인메뉴/레벨 확장 대비. |
 | **WASAPI 에러(헤드리스)** | Godot 헤드리스 실행 시 오디오 드라이버 init 실패 경고 → dummy 폴백. | 정상(무시). GUI 모드에선 문제 없음. AudioManager 헤드리스 가드로 이제 미발생. |
 | **✅ HUD SafeArea offset 폭주** (2026-07-03 해결) | `DisplayServer.get_display_safe_area()` 가 모니터 전체 기준이라 작은 창(데스크톱)에서 offset 이 폭주 → HUD 전체가 화면 밖으로 밀려 버튼이 안 보임. | **해결**: 데스크톱(Android/iOS 외)은 offset 0, 모바일만 창 내부 비율로 안전 계산(safe 영역이 창 밖이면 무시). |
+| **✅ 모바일 PackedInt32Array 직렬화 손실** (2026-07-07 해결, **치명적**) | Godot 4.7에서 `@export var x: PackedInt32Array` 가 Resource 바이너리 export(.res) 시 빈 배열로 직렬화 손실. 데스크톱 .tres는 정상이지만 모바일 APK에서만 빈 값 로드. **SymbolData.payout**(모든 심볼 payout 0 → 매칭돼도 당첨 인식 안 됨), **Payline.row_per_reel**(get_row()가 -1 → 모든 라인 매칭 실패) 2곳 영향. | **해결**: 개별 int 필드로 분해. `SymbolData.payout_3/4/5`, `Payline.row_r0~r4`. `get_payout()`/`get_row()` match 문 분기. |
+| **✅ 모바일 SymbolMechanic lazy 로드 실패** (2026-07-07 해결) | `SymbolMechanic.for_kind()` 가 class_name 전역 식별자로 서브클래스를 lazy 참조 → 모바일 APK 런타임 첫 호출 시점에 서브클래스 스크립트가 아직 로드되지 않아 잘못된 폴백 메카닉 반환 → 매칭 실패. 데스크톱은 에디터가 글로벌 클래스 DB를 사전 완성하므로 정상 동작. | **해결**: (1) 서브클래스를 `preload` 로 컴파일 타임 강제 로드. (2) match 분기 대신 Dictionary 레지스트리로 OCP 확보. (3) `is ScatterMechanic`/`is BonusMechanic` 타입 체크를 `get_tags()` 태그 조회로 대체. |
+| **⚠️ APK 재설치 시 데이터 찌꺼기** (2026-07-07) | `adb install -r` 은 user:// 저장 데이터를 유지. 코드 변경 후 APK 복사만 하고 폰에서 재실행하면 이전 버전 캐시/데이터가 남아 "코드는 고쳤는데 안 고쳐진 것처럼" 보이는 함정. | **권장**: 코드 변경 후 폰 테스트 시 `adb shell pm clear com.ralph.dots` 로 user:// 초기화 후 재실행. 또는 APK 복사 후 반드시 재설치. |
+| **⚠️ DBG print 잔존 주의** (2026-07-07) | 디버그용 print가 production 코드에 남으면 로그 노이즈 + 성능 저하. | 현재 GameConfig/SlotMachine/SpinEvaluator/HUD/SlotMachineView/WaveManager에서 모두 제거 완료. 새 디버그 print는 커밋 전 제거. |
 
 ---
 
@@ -373,22 +413,24 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 ```
 project.godot                              # 세로 1080×1920, autoload 9개, main_scene
 scripts/
-  data/      # SymbolData, ReelStrip, Payline, Paytable, SlotConfig, SpinResult, LineWin,
-             # SymbolMechanic + mechanics/{Normal,Wild,Scatter,Bonus}
+  data/      # SymbolData(payout_3/4/5), ReelStrip, Payline(row_r0~4), Paytable, SlotConfig,
+             # SpinResult, LineWin, UnitData, SymbolMechanic(preload 레지스트리) + mechanics/{4종}
   core/      # SlotMachine, SpinEvaluator, WinCalculator, EvaluationPass,
              # passes/{LineEvaluationPass,ScatterEvaluationPass,JackpotEvaluationPass}
-  view/      # SymbolView, ReelView, SlotMachineView, HUD, PaylineOverlay
+  view/      # SymbolView(유닛 도형), ReelView, SlotMachineView(전투 통합), HUD, PaylineOverlay, GameOverOverlay
   effects/   # WinEffects, ParticleBudget, FloatingText, CameraShake, SlowMotion, BackgroundFX, JackpotFX
+  battle/    # Unit(Area2D), BattleField(양 기지 HP), BattleFieldView(HP 바), UnitSpawner, WaveManager
   systems/   # BonusManager
-  setup/     # generate_default_data, run_rtp_sim, run_capture_test
-autoload/    # EventBus, GameConfig, WalletManager, JackpotSystem, AudioManager, GameManager, ParticleBudget, SlowMotion, BonusManager
+  setup/     # generate_default_data, run_rtp_sim, run_capture_test, run_view_test
+autoload/    # EventBus(전투 시그널 9종+초기화), GameConfig, WalletManager, JackpotSystem,
+             # AudioManager, GameManager, ParticleBudget, SlowMotion, BonusManager
 scenes/
   slot/      # SlotMachine, Reel, Symbol, HUD, JackpotOverlay
-  setup/     # SimScene, CaptureTest
-resources/   # symbols/, reels/, paylines/, paytables/, config/ (*.tres)
+  setup/     # SimScene, CaptureTest, ViewTest
+resources/   # symbols/(knight/archer/mage/skull), reels/, paylines/(row_r0~4), paytables/, config/ (*.tres)
 assets/shaders/  # 배경 셰이더
 ```
 
 ---
 
-_최종 갱신: 2026-07-06 — 슬롯머신 MVP(Phase 1~6) 완성. GDD 분석 완료, "토템 스핀 디펜스" 확장 계획 수립 (Phase 7~10). 모바일 세로형 상하 분할(전투 55% / 슬롯 45%) 설계. Phase 7(프로토타입 1: 슬롯 & 라인전)부터 착수 예정._
+_최종 갱신: 2026-07-07 — Phase 7(토템 스핀 디펜스 프로토타입 1) 완료. 슬롯 심볼 4종(기사/궁수/마법사/해골) 재설계 + 모바일 직렬화 버그 2종(PackedInt32Array 손실, mechanic lazy 로드) 해결. RTP 94.58% / 히트율 83.82%. 다음: Phase 8(3지선다 빌드업)._

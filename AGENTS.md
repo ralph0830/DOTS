@@ -40,14 +40,17 @@ scripts/
                  SpinEvaluator.gd     – single-payline evaluation
                  passes/              – EvaluationPass subclasses (Line/Scatter/Jackpot)
   data/          Resource data classes (SlotConfig, SymbolData, ReelStrip, Payline, Paytable,
-                 SpinResult, LineWin) + mechanics/ (SymbolMechanic subclasses per Kind)
-  data/mechanics/ SymbolMechanic plugins — Normal/Wild/Scatter/Bonus
-  view/          UI: SlotMachineView (orchestrator), ReelView, SymbolView, PaylineOverlay, HUD
+                 SpinResult, LineWin, UnitData) + mechanics/ (SymbolMechanic subclasses per Kind)
+  data/mechanics/ SymbolMechanic plugins — Normal/Wild/Scatter/Bonus (preload-loaded, tag-based)
+  battle/        Phase 7 defense layer: Unit (Area2D), BattleField (lane + base HP),
+                 BattleFieldView (HP bars), UnitSpawner (slot→unit pipeline), WaveManager
+  view/          UI: SlotMachineView (orchestrator + battle integration), ReelView, SymbolView,
+                 PaylineOverlay, HUD, GameOverOverlay
   effects/       BackgroundFX, WinEffects, FloatingText, JackpotFX, CameraShake,
                  ParticleBudget, SlowMotion (last two are also autoloads)
   systems/       BonusManager (free-spin state machine; also an autoload)
   setup/         Data-gen + test harness scripts (above)
-resources/       Generated .tres: config/, symbols/, reels/, paylines/, paytables/
+resources/       Generated .tres: config/, symbols/(knight/archer/mage/skull), reels/, paylines/, paytables/
 scenes/          slot/ (game), setup/ (test harnesses), Main.tscn
 assets/          audio/, fonts/, shaders/, sprites/ (currently placeholder only)
 ```
@@ -94,10 +97,22 @@ Both load on `_ready()`, save on every mutation **only after** `initialize()` ha
 - **Comments and docstrings are written in Korean** (GDScript `##` headers). Match this when editing.
 - Typed code: use `class_name`, typed arrays (`Array[ReelStrip]`), `PackedInt32Array`/`PackedFloat32Array`.
   Note typed arrays cannot be assigned a plain `Array` directly — convert explicitly (see `generate_default_data.gd`).
-- Symbols: `ruby/sapphire/emerald` (normal), `dragon` (high-pay normal), `unicorn` (Wild),
-  `chest` (Scatter → free spins), `rune` (Bonus → jackpot trigger, appended 1 per reel by the data-gen).
+  **⚠️ MOBILE SERIALIZATION BUG (2026-07-07)**: Do NOT use `@export var x: PackedInt32Array` on
+  `Resource` subclasses — Godot 4.7 silently serializes it as an empty array in binary `.res` export
+  (desktop `.tres` is unaffected, so this only breaks on Android/iOS). This caused a full week of
+  debugging (matches evaluated to `has_win=false` on phone only). **Use individual `@export int` fields
+  instead** — see `SymbolData.payout_3/4/5` and `Payline.row_r0..row_r4`. Same hazard applies to
+  `PackedFloat32Array` and `PackedStringArray` on exported Resource fields.
+- Symbols (Phase 8 redesign): `knight` (tank, blue shield), `archer` (ranged dealer, green bow),
+  `mage` (heavy dealer, purple magic circle), `skull` (miss/grunt, gray skull). Wild/Scatter/Bonus
+  symbols were **removed** when gems were cut to 4 unit types — the `Kind` enum and mechanic classes
+  remain for forward compatibility. Each `SymbolData.unit_id` maps a match to a `UnitData` to spawn.
+- **SymbolMechanic mobile loading**: `SymbolMechanic.for_kind()` must `preload` its subclasses
+  (Normal/Wild/Scatter/Bonus) — `class_name` lazy references fail on APK runtime first call. The
+  registry uses a `Dictionary` (OCP: add new mechanic via `_register()` one-liner, no match edit).
+  `is_scatter()`/`is_bonus()` use `get_tags()` lookup, **not** `is X` type checks (forward-compat).
 - `.tres` resources are **generated**, not hand-edited for balance — change constants in
-  `generate_default_data.gd` (`REEL_STRIPS`, `PAYLINES`, payout arrays, paytable) and regenerate.
+  `generate_default_data.gd` (`REEL_STRIPS`, `PAYLINES`, payout fields, paytable) and regenerate.
 - Renderer **must stay `gl_compatibility`** for both desktop and mobile — keep shaders/assets compatible.
 - Godot `.uid` files and `.godot/` (the latter is gitignored) are engine-managed; don't hand-edit.
 
@@ -107,6 +122,11 @@ Both load on `_ready()`, save on every mutation **only after** `initialize()` ha
 - Full setup + install guide: see **`docs/MOBILE_TEST_GUIDE.md`**.
 - Build via `DOTS_test.bat` [6], install to phone via [7] (requires USB debugging + USB connection).
 - Package name: `com.ralph.dots`. Output: `build/DOTS-debug.apk` (~58MB).
+- **⚠️ Stale data trap (2026-07-07 lesson)**: `adb install -r` preserves `user://` save data
+  (`wallet.save`, `jackpot.save`). After code changes, if you rebuild APK but the phone is still
+  running the old version, the old code + old save produces "fixed-but-still-broken" symptoms.
+  Always (a) rebuild APK after edits, (b) `adb install -r` to actually update the on-device binary,
+  (c) `adb shell pm clear com.ralph.dots` to wipe stale user data when behavior looks stale.
 
 ## Asset generation (ComfyUI)
 

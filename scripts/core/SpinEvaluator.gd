@@ -38,10 +38,7 @@ static func evaluate_line(grid: Array, payline: Payline) -> LineWin:
 	if match_count < MIN_MATCH:
 		return null
 	var amount2 := target.get_payout(match_count)
-	# DEBUG: 매칭됐으나 payout 0인 케이스 포착 (모바일 payout 손실 진단).
 	if amount2 <= 0:
-		print("[DBG] match=%d target=%s BUT payout=0 → null (payout size=%d)" \
-			% [match_count, target.id, target.payout.size()])
 		return null
 
 	var lw := LineWin.new()

@@ -8,3 +8,8 @@ func participates_in_line() -> bool:
 
 func can_be_line_target() -> bool:
 	return false
+
+
+## 보너스 태그 — SymbolData.is_bonus()가 타입 체크 대신 조회.
+func get_tags() -> PackedStringArray:
+	return PackedStringArray([&"bonus"])

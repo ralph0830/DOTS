@@ -8,7 +8,9 @@ extends Node
 signal spin_requested()
 signal spin_started(bet: int)
 signal spin_complete(grid: Array)              # 5x3 결과 그리드(SymbolData)
+signal reel_stopped(reel_index: int)           # 뷰→코어: 릴 정지 보고
 signal evaluation_completed(result: SpinResult)
+signal state_changed(from: int, to: int)       # 코어→뷰: 코어 상태 전이(IDLE/SPINNING/...)
 
 # --- 크레딧 / 베팅 ---
 # WalletManager 자체 시그널과 동일 이름 — WalletManager 가 매 emit 시 EventBus 로 forward 한다.
