@@ -13,7 +13,10 @@ func _enter_tree() -> void:
 	_panel = PanelScene.instantiate()
 	_panel.custom_minimum_size = Vector2(800, 300)
 	add_control_to_bottom_panel(_panel, "유닛 관리")
-	# 로드는 패널이 처음 표시될 때(_on_visibility_changed) 자동 수행.
+	# ★ 핵심: 하단 패널을 펼치고 활성화 (안 하면 접힌 상태로 보이지 않음).
+	make_bottom_panel_item_visible(_panel)
+	# 패널이 트리에 추가된 후 로드.
+	_panel.call_deferred("_load_units")
 	print("[UnitManager] 플러그인 활성화 — 하단 패널 추가됨")
 
 

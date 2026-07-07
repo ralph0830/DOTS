@@ -16,9 +16,11 @@ var _loading: bool = false  # 중복 로드 방지
 
 func _ready() -> void:
 	_build_ui()
+	# _ready 직후 바로 로드 (플러그인이 make_bottom_panel_item_visible 로 펼칠 것).
+	call_deferred("_load_units")
 
 
-## 하단 탭이 처음 표시될 때 한 번만 로드.
+## 하단 탭 표시 시 아직 로드 안 됐으면 로드.
 func _on_visibility_changed() -> void:
 	if visible and not _loaded and not _loading:
 		_load_units()
