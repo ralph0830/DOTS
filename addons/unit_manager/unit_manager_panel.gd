@@ -5,7 +5,13 @@ extends Control
 
 const UNIT_ALLY_DIR := "res://resources/units/ally/"
 const UNIT_ENEMY_DIR := "res://resources/units/enemy/"
+# inner class 대신 별도 @tool 파일 — 에디터에서 도형 _draw() 가 호출되려면 분리 필요.
+const PreviewRect := preload("res://addons/unit_manager/unit_preview_rect.gd")
 
+# 진단 로그 토글. 문제 해결 확인 후 false 로 변경.
+const DEBUG := false
+
+var _vbox: VBoxContainer
 var _scroll: ScrollContainer
 var _table_container: VBoxContainer
 var _status_label: Label
@@ -14,14 +20,23 @@ var _loaded: bool = false
 var _loading: bool = false  # 중복 로드 방지
 
 
+## DEBUG 토글용 래퍼 — 한 곳에서 로그 on/off.
+func _dbg(msg: String) -> void:
+	if DEBUG:
+		print("[UnitManager] ", msg)
+
+
 func _ready() -> void:
+	_dbg("_ready() 진입 — visible=%s" % visible)
 	_build_ui()
+	_dbg("_ready() _build_ui 완료 — 루트 자식 수 %d" % get_child_count())
 	# _ready 직후 바로 로드 (플러그인이 make_bottom_panel_item_visible 로 펼칠 것).
 	call_deferred("_load_units")
 
 
 ## 하단 탭 표시 시 아직 로드 안 됐으면 로드.
 func _on_visibility_changed() -> void:
+	_dbg("visibility_changed — visible=%s loaded=%s loading=%s" % [visible, _loaded, _loading])
 	if visible and not _loaded and not _loading:
 		_load_units()
 
@@ -30,22 +45,28 @@ func _build_ui() -> void:
 	for child in get_children():
 		child.queue_free()
 
-	# set_anchors_preset 를 명시적으로 호출하여 패널 전체 채우기.
+	# 루트 자신을 부모(하단 패널 dock)에 꽉 채우기.
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 
-	var vbox := VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(vbox)
+	_vbox = VBoxContainer.new()
+	_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# ★ 핵심 수정: vbox 도 루트를 꽉 채워야 자식(특히 ScrollContainer)이
+	#   EXPAND 공간을 받아 표시됨. anchor 미설정 시 vbox 는 minimum size 로 고정되어
+	#   ScrollContainer 의 expand 공간이 사라지고 높이가 0 → 행이 화면에 안 보임.
+	_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_vbox)
+	_dbg("_build_ui: vbox 추가 — size=%s" % _vbox.size)
 
 	# visibility_changed 시그널 (탭 클릭 시 로드).
 	# 자식이 아닌 이 노드 자체의 visibility 변경을 감지.
-	visibility_changed.connect(_on_visibility_changed)
+	if not visibility_changed.is_connected(_on_visibility_changed):
+		visibility_changed.connect(_on_visibility_changed)
 
 	# --- 툴바 ---
 	var toolbar := HBoxContainer.new()
 	toolbar.add_theme_constant_override("separation", 10)
-	vbox.add_child(toolbar)
+	_vbox.add_child(toolbar)
 
 	var title := Label.new()
 	title.text = "유닛 수치 관리"
@@ -71,12 +92,12 @@ func _build_ui() -> void:
 	_status_label.text = "유닛을 로드하려면 '새로고침'을 누르세요."
 	_status_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	_status_label.add_theme_font_size_override("font_size", 12)
-	vbox.add_child(_status_label)
+	_vbox.add_child(_status_label)
 
 	# --- 헤더 행 ---
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 4)
-	vbox.add_child(header)
+	_vbox.add_child(header)
 	var headers := ["", "이름", "역할", "HP", "공격", "공속", "이속", "사거", "EXP", "도형", "크기"]
 	var widths := [50, 100, 70, 55, 55, 55, 55, 55, 45, 80, 55]
 	for i in range(headers.size()):
@@ -92,16 +113,26 @@ func _build_ui() -> void:
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	vbox.add_child(_scroll)
+	# 레이아웃이 잡히기 전 expand 공간이 없을 때도 행이 보이도록 최소 높이 보장.
+	_scroll.custom_minimum_size = Vector2(0, 120)
+	_vbox.add_child(_scroll)
 
 	_table_container = VBoxContainer.new()
 	_table_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_table_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_table_container.add_theme_constant_override("separation", 2)
 	_scroll.add_child(_table_container)
+	_dbg("_build_ui: 컨테이너 구축 완료 — scroll.size=%s table.size=%s" % [_scroll.size, _table_container.size])
 
 
 func _load_units() -> void:
+	_dbg("_load_units() 진입 — loading=%s loaded=%s" % [_loading, _loaded])
 	if _loading:
+		_dbg("_load_units: 이미 로딩 중 → 반환")
+		return
+	# 새로고침이 _loaded=false 로 풀지 않는 한, 두 번째 call_deferred 는 여기서 차단.
+	if _loaded:
+		_dbg("_load_units: 이미 로드됨(_loaded=true) → 반환")
 		return
 	_loading = true
 	_loaded = true
@@ -111,20 +142,25 @@ func _load_units() -> void:
 		child.free()
 
 	_units.clear()
+	_dbg("_load_units: 기존 행 제거 완료 — table 자식 수 %d" % _table_container.get_child_count())
 
 	var ally_count := _load_dir(UNIT_ALLY_DIR, true)
 	var enemy_count := _load_dir(UNIT_ENEMY_DIR, false)
 
 	_status_label.text = "로드 완료: 아군 %d종, 적 %d종 (총 %d)" % [ally_count, enemy_count, ally_count + enemy_count]
+	_dbg("_load_units() 완료 — 아군 %d, 적 %d, table 자식 수 %d" % [ally_count, enemy_count, _table_container.get_child_count()])
+	_dbg("_load_units: table.size=%s scroll.size=%s vbox.size=%s" % [_table_container.size, _scroll.size, _vbox.size])
 	_loading = false
 
 
 func _load_dir(dir_path: String, is_ally: bool) -> int:
 	if not DirAccess.dir_exists_absolute(dir_path):
 		_status_label.text = "디렉토리 없음: %s" % dir_path
+		_dbg("_load_dir: 디렉토리 없음 — %s" % dir_path)
 		return 0
 	var dir := DirAccess.open(dir_path)
 	if dir == null:
+		_dbg("_load_dir: DirAccess.open 실패 — %s" % dir_path)
 		return 0
 
 	var section := Label.new()
@@ -145,6 +181,9 @@ func _load_dir(dir_path: String, is_ally: bool) -> int:
 				_units.append({"data": data, "path": res_path, "is_ally": is_ally})
 				_add_row(data, res_path, is_ally)
 				count += 1
+				_dbg("_load_dir: 행 추가 — %s (table 자식 수 %d)" % [data.display_name, _table_container.get_child_count()])
+			else:
+				_dbg("_load_dir: 스킵 — %s (data=%s)" % [res_path, data])
 		fname = dir.get_next()
 	dir.list_dir_end()
 	return count
@@ -157,14 +196,14 @@ func _add_row(data: UnitData, res_path: String, is_ally: bool) -> void:
 		row.modulate = Color(1.0, 0.92, 0.92)
 	_table_container.add_child(row)
 
-	var preview := _PreviewRect.new()
+	var preview := PreviewRect.new()
 	preview.color = data.color
-	preview.shape = data.shape
+	preview.shape = int(data.shape)
 	preview.custom_minimum_size = Vector2(40, 40)
 	row.add_child(preview)
 
 	row.add_child(_make_label(String(data.display_name), 100))
-	row.add_child(_make_label(_role_name(data.role), 70))
+	row.add_child(_make_label(_role_name(int(data.role)), 70))
 	row.add_child(_make_spin(data, "max_hp", 1, 9999, 55))
 	row.add_child(_make_spin(data, "attack", 0, 999, 55))
 	row.add_child(_make_float_spin(data, "attack_interval", 0.1, 5.0, 55))
@@ -179,9 +218,10 @@ func _make_spin(data: UnitData, prop: String, min_val: int, max_val: int, w: int
 	var spin := SpinBox.new()
 	spin.min_value = min_val
 	spin.max_value = max_val
-	spin.value = int(data.get(prop))
+	var v = data.get(prop)
+	spin.value = int(v) if v != null else 0
 	spin.custom_minimum_size = Vector2(w, 24)
-	spin.value_changed.connect(func(v: float): data.set(prop, int(v)))
+	spin.value_changed.connect(func(val: float): data.set(prop, int(val)))
 	return spin
 
 
@@ -190,18 +230,20 @@ func _make_float_spin(data: UnitData, prop: String, min_val: float, max_val: flo
 	spin.min_value = min_val
 	spin.max_value = max_val
 	spin.step = 0.1
-	spin.value = float(data.get(prop))
+	var v = data.get(prop)
+	spin.value = float(v) if v != null else 0.0
 	spin.custom_minimum_size = Vector2(w, 24)
-	spin.value_changed.connect(func(v: float): data.set(prop, v))
+	spin.value_changed.connect(func(val: float): data.set(prop, val))
 	return spin
 
 
 func _make_shape_option(data: UnitData, w: int) -> OptionButton:
 	var opt := OptionButton.new()
 	opt.custom_minimum_size = Vector2(w, 24)
-	for s in ["CIRCLE", "SQUARE", "TRIANGLE", "DIAMOND", "KNIGHT", "ARCHER", "MAGE", "SKULL"]:
+	# UnitData.Shape enum = 4개(CIRCLE, SQUARE, TRIANGLE, DIAMOND)와 정확히 일치.
+	for s in ["CIRCLE", "SQUARE", "TRIANGLE", "DIAMOND"]:
 		opt.add_item(s)
-	opt.selected = data.shape
+	opt.selected = int(data.shape)
 	opt.item_selected.connect(func(idx: int): data.shape = idx)
 	return opt
 
@@ -239,20 +281,3 @@ func _save_all() -> void:
 		if err == OK:
 			saved += 1
 	_status_label.text = "저장 완료: %d개 유닛" % saved
-
-
-class _PreviewRect:
-	extends Control
-	var color: Color = Color.WHITE
-	var shape: int = 0
-
-	func _draw() -> void:
-		var r := minf(size.x, size.y) * 0.4
-		var center := size * 0.5
-		match shape:
-			0: draw_circle(center, r, color)
-			1: draw_rect(Rect2(center - Vector2(r, r), Vector2(r * 2, r * 2)), color)
-			2: draw_colored_polygon(PackedVector2Array([center + Vector2(0, -r), center + Vector2(r, r), center + Vector2(-r, r)]), color)
-			3: draw_colored_polygon(PackedVector2Array([center + Vector2(0, -r), center + Vector2(r, 0), center + Vector2(0, r), center + Vector2(-r, 0)]), color)
-			_: draw_circle(center, r, color)
-		draw_arc(center, r, 0.0, TAU, 24, color.darkened(0.3), 2.0)
