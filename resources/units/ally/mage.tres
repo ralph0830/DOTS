@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="UnitData" format=3]
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://dokn4qk3qntdi"]
 
-[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_rlc5f"]
+[ext_resource type="Script" uid="uid://cl8m5dbedgwii" path="res://scripts/data/UnitData.gd" id="1_rlc5f"]
 
 [resource]
 script = ExtResource("1_rlc5f")

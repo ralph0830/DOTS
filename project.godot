@@ -16,10 +16,6 @@ run/main_scene="res://scenes/slot/SlotMachine.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
-[editor_plugins]
-
-enabled=PackedStringArray("unit_manager")
-
 [autoload]
 
 GameConfig="*res://autoload/GameConfig.gd"
@@ -45,6 +41,10 @@ window/stretch/aspect="expand"
 window/handheld/orientation=1
 window/size/test_width=540
 window/size/test_height=960
+
+[editor_plugins]
+
+enabled=PackedStringArray("unit_manager")
 
 [layer_names]
 
