@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_n1w25"]
+
+[resource]
+script = ExtResource("1_n1w25")
+unit_id = &"goblin"
+display_name = "Goblin"
+role = 4
+max_hp = 20
+attack = 6
+move_speed = 50.0
+attack_range = 50.0
+exp_reward = 1
+color = Color(0.8, 0.2, 0.2, 1)

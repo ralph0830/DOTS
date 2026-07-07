@@ -53,7 +53,8 @@ scripts/
                  LordState (Phase 8-B: lord upgrade state + choice pool),
                  UnitRegistry (Phase 8-C: ally/enemy UnitData central store)
   setup/         Data-gen + test harness scripts (above)
-resources/       Generated .tres: config/, symbols/(knight/archer/mage/skull), reels/, paylines/, paytables/
+resources/       Generated .tres: config/, symbols/(knight/archer/mage/skull), reels/, paylines/, paytables/,
+                 units/{ally,enemy}/ (UnitData .tres — edit in Godot inspector to tune balance)
 scenes/          slot/ (game), setup/ (test harnesses), Main.tscn
 assets/          audio/, fonts/, shaders/, sprites/ (currently placeholder only)
 ```

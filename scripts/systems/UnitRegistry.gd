@@ -3,12 +3,16 @@ extends Node
 ## UnitSpawner(아군 소환)와 WaveManager(적 스폰)가 각자 하드코딩하던 데이터를 통합.
 ##
 ## 설계 (open-structure):
-##   - 데이터 생성은 이곳에 집중 — 향후 resources/units/*.tres 로 점진적 전환.
+##   - 데이터는 resources/units/{ally,enemy}/*.tres 에서 로드 (에디터 인스펙터로 튜닝).
+##   - .tres 가 없으면 코드 생성 폴백 (안전망 — generate_default_data.gd 미실행 시).
 ##   - UnitSpawner/WaveManager는 조회만 (결합도 감소).
 ##   - LordState 티어업 연동점: get_ally_unit() 호출 시 LordState.unit_tier를 반영.
 ##
 ## 아군 4종 (슬롯 심볼 매칭으로 소환): knight/archer/mage/minion(꽝 보정).
 ## 적 3종 (WAVE 스폰): goblin/orc/boss.
+
+const UNIT_ALLY_DIR := "res://resources/units/ally/"
+const UNIT_ENEMY_DIR := "res://resources/units/enemy/"
 
 var _allies: Dictionary = {}   # StringName → UnitData
 var _enemies: Dictionary = {}  # StringName → UnitData
@@ -19,38 +23,71 @@ func _ready() -> void:
 	initialize()
 
 
-## 모든 유닛 데이터 생성. 향후 .tres 로딩으로 대체 가능.
+## 유닛 데이터 로드. .tres 파일 우선, 없으면 코드 생성 폴백.
 func initialize() -> void:
 	_allies.clear()
 	_enemies.clear()
-	# --- 아군 4종 ---
-	# 기사(탱커): 높은 HP, 낮은 공격, 짧은 사거리, 방패 모양(파랑).
+	# .tres 디렉토리 로드 시도.
+	var ally_loaded := _load_from_dir(UNIT_ALLY_DIR, true)
+	var enemy_loaded := _load_from_dir(UNIT_ENEMY_DIR, false)
+	# 폴백: .tres 파일이 없으면 코드 생성 (안전망).
+	if not ally_loaded:
+		print("[UnitRegistry] 아군 .tres 없음 — 코드 생성 폴백")
+		_build_ally_fallback()
+	if not enemy_loaded:
+		print("[UnitRegistry] 적 .tres 없음 — 코드 생성 폴백")
+		_build_enemy_fallback()
+	# skull 심볼 매칭 → 미니언 alias (별도 .tres 없이).
+	if _allies.has(&"minion") and not _allies.has(&"skull"):
+		_allies[&"skull"] = _allies[&"minion"]
+	_initialized = true
+
+
+## 디렉토리 내 모든 .tres 로드. 하나라도 로드되면 true.
+func _load_from_dir(dir_path: String, is_ally: bool) -> bool:
+	if not DirAccess.dir_exists_absolute(dir_path):
+		return false
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return false
+	var loaded_any := false
+	dir.list_dir_begin()
+	var fname := dir.get_next()
+	while fname != "":
+		if not dir.current_is_dir() and fname.ends_with(".tres"):
+			var res_path := dir_path + fname
+			var data: UnitData = load(res_path)
+			if data != null and data.unit_id != &"":
+				if is_ally:
+					_allies[data.unit_id] = data
+				else:
+					_enemies[data.unit_id] = data
+				loaded_any = true
+		fname = dir.get_next()
+	dir.list_dir_end()
+	return loaded_any
+
+
+# --- 코드 생성 폴백 (.tres 미존재 시 안전망) ---
+
+func _build_ally_fallback() -> void:
 	_register_ally(&"knight", _make(&"knight", "Knight", UnitData.Role.TANK,
 		80, 8, 1.0, 45.0, 55.0, UnitData.Shape.SQUARE, Color(0.25, 0.55, 0.95), 64.0, 0))
-	# 궁수(원거리 딜러): 낮은 HP, 중공격, 긴 사거리(120px), 삼각(초록).
 	_register_ally(&"archer", _make(&"archer", "Archer", UnitData.Role.DEALER,
 		30, 12, 0.9, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0, 0))
-	# 마법사(강력 딜러): 중간 HP, 고공격, 중사거리, 다이아(보라).
 	_register_ally(&"mage", _make(&"mage", "Mage", UnitData.Role.DEALER,
 		40, 18, 1.1, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0, 0))
-	# 꽝 보정 미니언 (skull 매칭/꽝일 때 1기 소환).
 	_register_ally(&"minion", _make(&"minion", "Minion", UnitData.Role.MINION,
 		20, 5, 1.0, 55.0, 50.0, UnitData.Shape.CIRCLE, Color(0.6, 0.6, 0.6), 50.0, 0))
-	# skull 심볼 매칭 → 미니언과 동일 (꽝이지만 약한 유닛 1기).
-	_allies[&"skull"] = _allies[&"minion"]
 
-	# --- 적 3종 ---
-	# goblin: 기본 적. exp_reward=1.
+
+func _build_enemy_fallback() -> void:
 	_register_enemy(&"goblin", _make(&"goblin", "Goblin", UnitData.Role.ENEMY,
 		20, 6, 1.0, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1))
-	# orc: 중간 적. exp_reward=3.
 	_register_enemy(&"orc", _make(&"orc", "Orc", UnitData.Role.ENEMY,
 		40, 10, 1.0, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3))
-	# boss: 보스. 대형, 강함. exp_reward=10.
 	_register_enemy(&"boss", _make(&"boss", "Boss", UnitData.Role.ENEMY,
 		150, 20, 1.2, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10))
-
-	_initialized = true
 
 
 ## 아군 UnitData 조회. LordState.unit_tier를 반영한 강화 사본 반환 (원본 훼손 방지).

@@ -344,6 +344,7 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 - [x] **P8-C4 UnitRegistry autoload** (`scripts/systems/UnitRegistry.gd`) — 아군/적 UnitData 중앙 관리. ✅
   - UnitSpawner/WaveManager 하드코딩 데이터 제거, UnitRegistry 조회로 통합.
   - LordState 티어업 연동: `get_ally_unit()` 호출 시 티어 반영 스탯 반환 (HP +30%/atk +20% per tier).
+  - **Phase 8-C+: UnitData .tres 파일화** — `resources/units/{ally,enemy}/*.tres` (에디터 인스펙터로 밸런스 튜닝). 코드 생성 폴백 내장.
 - [x] **P8-C5 슬롯 보상 분리** — `SlotMachine._evaluate()`에서 `WalletManager.add_win()` 제거. ✅
   - 슬롯은 순수 유닛 생산 수단 (PRD/GDD 정합).
   - CREDIT는 스핀 베팅 비용(place_bet)으로만 감소.

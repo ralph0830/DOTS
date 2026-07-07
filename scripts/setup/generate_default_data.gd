@@ -13,6 +13,9 @@ const PAYTABLE_DIR := "res://resources/paytables/"
 const CONFIG_DIR := "res://resources/config/"
 const PAYTABLE_PATH := PAYTABLE_DIR + "default_paytable.tres"
 const CONFIG_PATH := CONFIG_DIR + "default_slot.tres"
+# Phase 8-C: 유닛 데이터 .tres 디렉토리 (에디터 인스펙터로 밸런스 튜닝).
+const UNIT_ALLY_DIR := "res://resources/units/ally/"
+const UNIT_ENEMY_DIR := "res://resources/units/enemy/"
 
 # 5개 릴 스트립(각 20 심볼). 빈도 = 출현 확률 → RTP/변동성 결정.
 # Phase 8: 유닛 4종(knight/archer/mage/skull)만 배치. Wild/Scatter/Bonus 제거.
@@ -58,12 +61,13 @@ func _init() -> void:
 	var paylines := _build_paylines()
 	var paytable := _build_paytable()
 	_build_config(sym, reels, paylines, paytable)
+	_build_units()   # Phase 8-C: 유닛 데이터 .tres 생성
 	print("[setup] 기본 슬롯 데이터 생성 완료: 심볼 %d, 릴 %d, 페이라인 %d" % [sym.size(), reels.size(), paylines.size()])
 	quit()
 
 
 func _ensure_dirs() -> void:
-	for d in [SYMBOL_DIR, REEL_DIR, PAYLINE_DIR, PAYTABLE_DIR, CONFIG_DIR]:
+	for d in [SYMBOL_DIR, REEL_DIR, PAYLINE_DIR, PAYTABLE_DIR, CONFIG_DIR, UNIT_ALLY_DIR, UNIT_ENEMY_DIR]:
 		DirAccess.make_dir_recursive_absolute(d)
 
 
@@ -143,6 +147,54 @@ func _build_paytable() -> Paytable:
 	p.bonus_line_jackpot = {}
 	_save(p, PAYTABLE_PATH)
 	return p
+
+
+## Phase 8-C: 유닛 데이터 .tres 생성 (에디터 인스펙터로 밸런스 튜닝용).
+## 아군 4종(ally/) + 적 3종(enemy/). UnitRegistry 가 이 파일들을 런타임에 로드.
+## 밸런스 튜닝 시 이 함수 재실행으로 초기화, 또는 에디터에서 직접 필드 수정.
+func _build_units() -> void:
+	var ally_count := 0
+	var enemy_count := 0
+	# --- 아군 4종 ---
+	# [id, name, role, hp, atk, interval, spd, range, shape, color, size, exp]
+	ally_count += _save_unit(UNIT_ALLY_DIR, "knight", "Knight", UnitData.Role.TANK,
+		80, 8, 1.0, 45.0, 55.0, UnitData.Shape.SQUARE, Color(0.25, 0.55, 0.95), 64.0, 0)
+	ally_count += _save_unit(UNIT_ALLY_DIR, "archer", "Archer", UnitData.Role.DEALER,
+		30, 12, 0.9, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0, 0)
+	ally_count += _save_unit(UNIT_ALLY_DIR, "mage", "Mage", UnitData.Role.DEALER,
+		40, 18, 1.1, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0, 0)
+	ally_count += _save_unit(UNIT_ALLY_DIR, "minion", "Minion", UnitData.Role.MINION,
+		20, 5, 1.0, 55.0, 50.0, UnitData.Shape.CIRCLE, Color(0.6, 0.6, 0.6), 50.0, 0)
+	# skull 심볼 매칭 → 미니언과 동일 (별도 파일 없이 UnitRegistry에서 alias).
+	# --- 적 3종 ---
+	enemy_count += _save_unit(UNIT_ENEMY_DIR, "goblin", "Goblin", UnitData.Role.ENEMY,
+		20, 6, 1.0, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1)
+	enemy_count += _save_unit(UNIT_ENEMY_DIR, "orc", "Orc", UnitData.Role.ENEMY,
+		40, 10, 1.0, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3)
+	enemy_count += _save_unit(UNIT_ENEMY_DIR, "boss", "Boss", UnitData.Role.ENEMY,
+		150, 20, 1.2, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10)
+	print("[setup] 유닛 데이터 생성: 아군 %d종, 적 %d종" % [ally_count, enemy_count])
+
+
+## UnitData 인스턴스 생성 + .tres 저장 헬퍼.
+func _save_unit(dir: String, id: String, display_name: String, role: UnitData.Role,
+		hp: int, atk: int, interval: float, spd: float, rng: float,
+		shape: UnitData.Shape, col: Color, sz: float, exp: int) -> int:
+	var u := UnitData.new()
+	u.unit_id = StringName(id)
+	u.display_name = display_name
+	u.role = role
+	u.max_hp = hp
+	u.attack = atk
+	u.attack_interval = interval
+	u.move_speed = spd
+	u.attack_range = rng
+	u.shape = shape
+	u.color = col
+	u.size = sz
+	u.exp_reward = exp
+	_save(u, dir + id + ".tres")
+	return 1
 
 
 func _build_config(sym: Dictionary, reels: Array, paylines: Array, paytable: Paytable) -> void:

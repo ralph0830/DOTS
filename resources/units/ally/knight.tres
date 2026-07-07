@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_8ypq1"]
+
+[resource]
+script = ExtResource("1_8ypq1")
+unit_id = &"knight"
+display_name = "Knight"
+role = 0
+max_hp = 80
+move_speed = 45.0
+attack_range = 55.0
+shape = 1
+color = Color(0.25, 0.55, 0.95, 1)
+size = 64.0

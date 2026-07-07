@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_wehxo"]
+
+[resource]
+script = ExtResource("1_wehxo")
+unit_id = &"minion"
+display_name = "Minion"
+role = 3
+max_hp = 20
+attack = 5
+move_speed = 55.0
+attack_range = 50.0
+color = Color(0.6, 0.6, 0.6, 1)
+size = 50.0
