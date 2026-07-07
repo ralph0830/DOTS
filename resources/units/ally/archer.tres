@@ -6,10 +6,11 @@
 script = ExtResource("1_h32eh")
 unit_id = &"archer"
 display_name = "Archer"
-attack = 12
+max_hp = 10
+attack = 3
 attack_interval = 0.9
 move_speed = 70.0
 attack_range = 120.0
 shape = 2
 color = Color(0.3, 0.85, 0.45, 1)
-size = 56.0
+size = 50.0

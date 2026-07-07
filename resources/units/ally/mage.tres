@@ -6,9 +6,10 @@
 script = ExtResource("1_rlc5f")
 unit_id = &"mage"
 display_name = "Mage"
-max_hp = 40
-attack = 18
+max_hp = 5
+attack = 4
 attack_interval = 1.1
 attack_range = 90.0
 shape = 3
 color = Color(0.7, 0.35, 0.95, 1)
+size = 50.0
