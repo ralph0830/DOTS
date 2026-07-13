@@ -75,7 +75,7 @@ func _draw_shape() -> void:
 	var col: Color = symbol_data.color
 	# 하이라이트 중이면 밝기 펄스 + 테두리 번쩍
 	if _highlight:
-		var pulse := 0.5 + 0.5 * sin(_highlight_t * 8.0)
+		var pulse := 0.5 + 0.5 * cos(_highlight_t * 8.0)   # cos → t=0 최대(릴 멈춤과 동시 밝게 시작)
 		col = col.lerp(Color.WHITE, pulse * 0.5)
 		radius *= 1.0 + pulse * 0.08
 		# 테두리 번쩍 (neon_color → 흰색 펄스) — 매칭 시 심볼 카드 강조. 색상은 심볼별 neon_color.
@@ -122,7 +122,7 @@ func _draw_hex_shape(c: Vector2, r: float, col: Color) -> void:
 func _draw_texture() -> void:
 	var tint := Color.WHITE
 	if _highlight:
-		var pulse := 0.5 + 0.5 * sin(_highlight_t * 8.0)
+		var pulse := 0.5 + 0.5 * cos(_highlight_t * 8.0)   # cos → 시작 최대
 		tint = Color.WHITE.lerp(symbol_data.color, pulse * 0.5)
 		var neon := symbol_data.neon_color.lerp(Color.WHITE, pulse)
 		draw_rect(Rect2(Vector2.ZERO, size), neon, false, 4.0 + pulse * 4.0)

@@ -62,6 +62,8 @@ static func _pick_target(line: Array) -> SymbolData:
 			continue
 		if not sym.participates_in_line() or not sym.can_be_line_target():
 			continue
+		if sym.id == &"skull":   # skull은 당첨 라인 타겟 제외(꽝 심볼 — 매칭/당첨 표시 안 함).
+			continue
 		if fallback == null:
 			fallback = sym
 		if not sym.is_substitutable():

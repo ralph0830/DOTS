@@ -5,6 +5,10 @@ extends Control
 ## 하단 경험치(영혼) 게이지. 실제 유닛/적 렌더링은 BattleField(Node2D).
 
 const BG_PATH := "res://assets/backgrounds/bg_battle_solid_512.png"
+# 소환 알림 유닛 한글명 매핑.
+const _UNIT_NAME_KO := {
+	&"knight": "기사", &"archer": "궁수", &"mage": "마법사", &"minion": "미니언",
+}
 
 var _bg_tex: Texture2D
 var _ally_hp: int = 100
@@ -44,6 +48,7 @@ func _ready() -> void:
 	EventBus.enemy_spawned.connect(_on_enemy_spawned)
 	EventBus.enemy_killed.connect(_on_enemy_killed)
 	EventBus.boss_hp_changed.connect(_on_boss_hp_changed)
+	EventBus.unit_spawned.connect(_on_unit_spawned)
 	_build_speed_button()
 	_build_wave_banner()
 
@@ -127,6 +132,13 @@ func _on_enemy_spawned(enemy_id: StringName) -> void:
 			_boss_max = data.max_hp
 		_show_banner("BOSS 등장!!", 2.0)
 		queue_redraw()
+
+
+## 유닛 소환 알림 — "기사[LV2] x 3 소환!!" 배틀창 배너.
+func _on_unit_spawned(unit_id: StringName, count: int) -> void:
+	var name_ko: String = _UNIT_NAME_KO.get(unit_id, String(unit_id))
+	var text := "%s[LV%d] x %d 소환!!" % [name_ko, _level, count]
+	_show_banner(text, 1.2)
 
 
 ## 웨이브/보스 경고 배너 빌드 — 전투 영역 중앙 큰 텍스트 + 페이드 인/아웃.
