@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="SymbolData" format=3]
+[gd_resource type="Resource" script_class="SymbolData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/data/SymbolData.gd" id="1_gj33k"]
+[ext_resource type="Texture2D" path="res://assets/slot_icon/slot_archor_normal.png" id="2_tex"]
 
 [resource]
 script = ExtResource("1_gj33k")
@@ -14,3 +15,4 @@ payouts = {
 5: 45
 }
 unit_id = &"archer"
+texture = ExtResource("2_tex")
