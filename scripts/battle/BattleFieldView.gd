@@ -162,7 +162,7 @@ func _show_spawn_slide(text: String) -> void:
 		add_child(_spawn_label)
 	_spawn_label.text = text
 	_spawn_label.visible = true
-	var cy: float = size.y * 0.5 + 200.0   # 전투 중앙 + 200px 아래(Layout.line_y 정렬)
+	var cy: float = size.y * 0.5 - 200.0   # 전투 중앙 - 200px 위
 	_spawn_label.position = Vector2(0.0, cy)
 	_spawn_label.modulate.a = 0.0
 	if _spawn_tween != null and _spawn_tween.is_valid():
