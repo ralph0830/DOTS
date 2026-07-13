@@ -10,6 +10,7 @@ signal reel_stopped(reel_index: int)
 
 var SYMBOL_SIZE := 180.0   # 셀 크기 — Layout.cell_size()로 런타임 갱신 (정사형)
 const ROWS := 5
+const DECEL_TIME := 0.5    # 정지 감속 시간(초) — 자연스러운 멈춤(0.5초 더 회전)
 # 비활성 셀 회색 오버레이 색 — 불투명 진회형(배경 대비, 활성 셀과 명확 구분).
 const INACTIVE_COLOR := Color(0.10, 0.10, 0.13, 0.95)
 # 릴 비활성(x1 릴0/4) → blue grey + "x2" 표시(x2 단계에서 열릴 예정).
@@ -37,6 +38,7 @@ var _rng := RandomNumberGenerator.new()
 var _tween: Tween
 var _active_rows: Array = [0, 1, 2, 3, 4]
 var _dimmed: bool = false   # 릴 전체 비활성 (오버레이 5행 전부)
+var _decel_elapsed: float = 0.0   # STOP 감속 누적 시간
 
 
 func _ready() -> void:
@@ -111,31 +113,39 @@ func start_spin() -> void:
 	set_physics_process(true)
 
 
-## 결과(활성 행 수 개)로 즉시 정지.
-## 결과를 pool[0..n-1]에 직접 배치 — cycle/감속 의존을 제거해 마지막 행이 늦게 나타나거나
-## 교체 깜빡이는 버그(모든 bet_level)를 원천 차단. 감속은 _next_stop 순차 정지로 자연스럽게.
+## 결과(활성 행 수 개)로 정지 — 즉시 배치 대신 DECEL_TIME 감속 후 결과 배치(자연스러운 멈춤).
 func stop_at(result: Array) -> void:
 	_result = result
 	_state = _State.STOP
-	var n: int = min(_active_rows.size(), result.size())
-	# 결과를 pool[0..n-1]에 직접 배치.
+	_decel_elapsed = 0.0
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	set_physics_process(true)   # 감속 위해 physics 계속
+
+
+## 감속 완료 — 결과 pool 배치 + 정지.
+func _place_result_and_land() -> void:
+	var n: int = min(_active_rows.size(), _result.size())
 	for i in range(n):
-		_pool[i].symbol_data = result[i]
-	# 나머지 풀(버퍼)은 랜덤 심볼.
+		_pool[i].symbol_data = _result[i]
 	for i in range(n, _pool.size()):
 		if not _strip.is_empty():
 			_pool[i].symbol_data = _strip[_rng.randi() % _strip.size()]
 	_offset = 0.0
 	_layout(0.0)
-	# 감속 tween 종료 처리.
-	if _tween != null and _tween.is_valid():
-		_tween.kill()
 	_land()
 
 
 func _physics_process(delta: float) -> void:
 	if _state == _State.SPIN:
 		_set_offset(_offset + spin_speed * delta)
+	elif _state == _State.STOP:
+		# 선형 감속 — 속도 spin_speed → 0, DECEL_TIME 후 결과 배치 + 정지.
+		_decel_elapsed += delta
+		var t := clampf(_decel_elapsed / DECEL_TIME, 0.0, 1.0)
+		_set_offset(_offset + spin_speed * (1.0 - t) * delta)
+		if t >= 1.0:
+			_place_result_and_land()
 
 
 ## offset 설정. SYMBOL_SIZE 도달 시 풀을 한 칸 순환(무한 스크롤).
