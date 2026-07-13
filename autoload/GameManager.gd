@@ -17,6 +17,13 @@ var current_wave: int = 0           # 현재 WAVE 번호
 var enemies_killed_total: int = 0   # 총 적 처치 수
 var is_defense_active: bool = false # 디펜스 진행 중 여부
 
+# --- Idle gold (게임 플레이 중 자동 획득) ---
+## game time 기준 간격(초). delta 는 Engine.time_scale(SPD) 반영 → x3 시 3배 빠르게 누적.
+## 레벨업 카드 등으로 set_idle_gold() 호출해 간격/량 변경(확장 포인트).
+var idle_gold_interval: float = 2.0   # 기본 2초마다 1
+var idle_gold_amount: int = 1
+var _idle_gold_timer: float = 0.0
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -32,6 +39,7 @@ func start_game() -> void:
 	current_wave = 0
 	enemies_killed_total = 0
 	is_defense_active = true
+	_idle_gold_timer = 0.0
 	score_changed.emit(score)
 	game_started.emit()
 	print("[GameManager] 디펜스 런 시작.")
@@ -80,3 +88,20 @@ func change_scene(scene_path: String) -> void:
 ## 안전한 종료. 저장 등 정리가 필요하면 이곳에 추가한다.
 func quit_game() -> void:
 	get_tree().quit()
+
+
+## idle gold(자동 획득) — 게임 플레이 중 time_scale(SPD) 연동 누적.
+func _process(delta: float) -> void:
+	if not is_defense_active:
+		return
+	# delta 는 Engine.time_scale 반영 → SPD ×3 시 3배 빠르게 누적(real 2/3초마다 1).
+	_idle_gold_timer += delta
+	while _idle_gold_timer >= idle_gold_interval and idle_gold_interval > 0.0:
+		_idle_gold_timer -= idle_gold_interval
+		WalletManager.add_credit(idle_gold_amount)
+
+
+## idle gold 설정 변경(레벨업 카드 등). interval=간격(초, game time), amount=획득량.
+func set_idle_gold(interval: float, amount: int) -> void:
+	idle_gold_interval = maxf(0.1, interval)
+	idle_gold_amount = maxi(0, amount)
