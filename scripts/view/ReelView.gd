@@ -16,6 +16,9 @@ const INACTIVE_COLOR := Color(0.10, 0.10, 0.13, 0.95)
 const BLUE_GREY := Color(0.30, 0.40, 0.50, 0.92)
 # 행 비활성(x1/x2 행0/4) → red grey + "x3" 표시(x3 단계에서 열릴 예정).
 const RED_GREY := Color(0.50, 0.30, 0.32, 0.92)
+# 라벨 색 — x2=녹색, x3=파란색.
+const LABEL_GREEN := Color(0.30, 0.90, 0.40)
+const LABEL_BLUE := Color(0.30, 0.55, 0.95)
 
 enum _State { IDLE, SPIN, STOP }
 
@@ -59,13 +62,18 @@ func _build_overlays() -> void:
 		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		lbl.add_theme_font_size_override("font_size", 72)
+		lbl.add_theme_font_size_override("font_size", 69)   # 72 → 69 (3px 작게)
 		lbl.add_theme_color_override("font_color", Color.WHITE)
 		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
 		lbl.add_theme_constant_override("outline_size", 12)
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		rect.add_child(lbl)
 		_overlay_labels.append(lbl)
+		# 천천히 페이드 인/아웃 점멸 (3초 주기 = 1.5초 아웃 + 1.5초 인, 무한).
+		var tw := create_tween()
+		tw.set_loops(0)
+		tw.tween_property(lbl, "modulate:a", 0.2, 1.5)
+		tw.tween_property(lbl, "modulate:a", 1.0, 1.5)
 
 
 ## 활성 행 수에 맞춰 스핀 풀 재구성 (활성 행 수 + 1 감속 버퍼).
@@ -188,6 +196,11 @@ func _layout(offset: float) -> void:
 			txt = "x2"
 		_overlays[i].color = col
 		_overlay_labels[i].text = txt
+		# x2=녹색, x3=파란색 라벨.
+		if txt == "x2":
+			_overlay_labels[i].add_theme_color_override("font_color", LABEL_GREEN)
+		elif txt == "x3":
+			_overlay_labels[i].add_theme_color_override("font_color", LABEL_BLUE)
 
 
 ## 특정 행(전역 행 인덱스) 하이라이트 토글(당첨 강조). 활성 행 풀 인덱스로 변환.
