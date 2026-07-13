@@ -69,7 +69,7 @@ func _physics_process(delta: float) -> void:
 			return
 	# 이동 — behavior 별 전진 결정.
 	_advance_by_behavior(delta)
-	position.y = Layout.line_y()
+	position.y = Layout.line_y() - data.size_h * 0.5   # 하단 정렬(발이 바닥선)
 
 
 ## 감지 영역 내 가장 가까운 적대 유닛을 찾는다 (매 프레임 갱신).
