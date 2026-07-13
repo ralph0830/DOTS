@@ -17,6 +17,10 @@ extends Resource
 @export var description: String = ""            # 카드 설명 ("기사/방패병 티어 +1")
 @export var icon_color: Color = Color.WHITE     # 카드 아이콘 색상 (프로시저럴 도형용)
 @export var category: StringName = &"general"   # 카테고리 (성주별 선택지 풀 필터링용)
+## 레벨 구간 제한 — SoulGauge.level 이 이 범위일 때만 선택지에 등장.
+## 초반 1-10 / 중반 11-25 / 후반 26+.
+@export var min_level: int = 1
+@export var max_level: int = 999
 ## ★핵심: 이 카드를 선택했을 때 실행될 효과. ChoiceEffect 서브클래스 인스턴스.
 ## null 이면 효과 없는 더미 카드 (테스트용).
 ## Resource 타입으로 선언 (apply/can_choose 메서드 duck-typing 호출).

@@ -42,15 +42,65 @@ const REEL_STRIPS: Array = [
 	 "skull", "archer", "mage", "skull"],
 ]
 
-# 20 페이라인 패턴 (각 값 = 행 인덱스 0/1/2, 길이 5)
+# 50 페이라인 패턴 (5×5, 각 값 = 행 인덱스 0~4, 길이 5).
+# bet_level별 활성: x1=릴1,2,3×행1,2,3 / x2=+릴4 / x3=+릴0 / x4=+행0 / x5=전체.
+# 순서 = 활성 확장 순서 (LineEvaluationPass slice 0..count 로 단계별 적용).
 const PAYLINES: Array = [
-	[1, 1, 1, 1, 1], [0, 0, 0, 0, 0], [2, 2, 2, 2, 2],
-	[0, 1, 2, 1, 0], [2, 1, 0, 1, 2], [0, 0, 1, 2, 2],
-	[2, 2, 1, 0, 0], [1, 0, 0, 0, 1], [1, 2, 2, 2, 1],
-	[0, 1, 1, 1, 0], [2, 1, 1, 1, 2], [1, 0, 1, 2, 1],
-	[1, 2, 1, 0, 1], [0, 1, 0, 1, 0], [2, 1, 2, 1, 2],
-	[0, 0, 1, 0, 0], [2, 2, 1, 2, 2], [1, 1, 0, 1, 1],
-	[1, 1, 2, 1, 1], [0, 2, 0, 2, 0],
+	# --- x1 (5): 가운데 3×3 (릴1,2,3 × 행1,2,3) ---
+	[2, 2, 2, 2, 2],       # 0: 중앙 가로
+	[1, 1, 1, 1, 1],       # 1: 행1 가로
+	[3, 3, 3, 3, 3],       # 2: 행3 가로
+	[1, 2, 3, 2, 1],       # 3: V
+	[3, 2, 1, 2, 3],       # 4: 역V
+	# --- x2 (3): 릴4 확장 ---
+	[2, 1, 2, 1, 2],       # 5
+	[2, 3, 2, 3, 2],       # 6
+	[1, 2, 1, 2, 1],       # 7
+	# --- x3 (7): 릴0 확장, 5릴 × 중앙 3행 ---
+	[1, 1, 2, 3, 3],       # 8
+	[3, 3, 2, 1, 1],       # 9
+	[2, 1, 2, 3, 2],       # 10
+	[2, 3, 2, 1, 2],       # 11
+	[1, 2, 2, 2, 3],       # 12
+	[3, 2, 2, 2, 1],       # 13
+	[2, 2, 1, 2, 2],       # 14
+	# --- x4 (10): 행0 추가, 5릴 × 행0-3 ---
+	[0, 0, 0, 0, 0],       # 15: 행0 가로
+	[0, 1, 2, 3, 2],       # 16
+	[0, 2, 1, 2, 3],       # 17
+	[2, 3, 2, 1, 0],       # 18
+	[1, 0, 1, 2, 3],       # 19
+	[3, 0, 1, 2, 3],       # 20
+	[0, 3, 2, 1, 2],       # 21
+	[0, 1, 1, 1, 2],       # 22
+	[0, 3, 3, 3, 2],       # 23
+	[2, 1, 0, 1, 2],       # 24
+	# --- x5 (25): 행4 추가, 전체 5×5 ---
+	[4, 4, 4, 4, 4],       # 25: 행4 가로
+	[4, 3, 2, 3, 4],       # 26
+	[4, 2, 3, 2, 4],       # 27
+	[2, 3, 4, 3, 2],       # 28
+	[0, 1, 2, 3, 4],       # 29: 우하향 대각
+	[4, 3, 2, 1, 0],       # 30: 우상향 대각
+	[4, 2, 0, 2, 4],       # 31
+	[0, 2, 4, 2, 0],       # 32
+	[4, 1, 4, 1, 4],       # 33
+	[0, 1, 0, 1, 0],       # 34
+	[2, 4, 2, 4, 2],       # 35
+	[2, 0, 2, 0, 2],       # 36
+	[1, 3, 1, 3, 1],       # 37
+	[3, 1, 3, 1, 3],       # 38
+	[4, 3, 1, 3, 4],       # 39
+	[0, 1, 3, 1, 0],       # 40
+	[1, 4, 2, 4, 1],       # 41
+	[3, 0, 2, 0, 3],       # 42
+	[4, 2, 2, 2, 0],       # 43
+	[0, 2, 2, 2, 4],       # 44
+	[2, 4, 4, 4, 2],       # 45
+	[2, 0, 0, 0, 2],       # 46
+	[1, 2, 3, 4, 3],       # 47
+	[3, 2, 1, 0, 1],       # 48
+	[4, 1, 2, 1, 4],       # 49
 ]
 
 
@@ -91,9 +141,7 @@ func _build_symbols() -> Dictionary:
 		s.display_name = d[1]
 		s.color = d[2]
 		s.shape = d[3]
-		s.payout_3 = d[4]
-		s.payout_4 = d[5]
-		s.payout_5 = d[6]
+		s.payouts = {3: d[4], 4: d[5], 5: d[6]}
 		s.unit_id = d[7]
 		# 에셋 교체: assets/sprites/{id}_transparent_180.png 가 있으면 texture 로드.
 		# null이면 프로시저럴 도형(SymbolView._draw) 폴백. 텍스처 할당 시 자동으로 실제 아트 적용.
@@ -160,26 +208,30 @@ func _build_units() -> void:
 	ally_count += _save_unit(UNIT_ALLY_DIR, "knight", "Knight", UnitData.Role.TANK,
 		80, 8, 1.0, 45.0, 55.0, UnitData.Shape.SQUARE, Color(0.25, 0.55, 0.95), 64.0, 0)
 	ally_count += _save_unit(UNIT_ALLY_DIR, "archer", "Archer", UnitData.Role.DEALER,
-		30, 12, 0.9, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0, 0)
+		30, 12, 0.9, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0, 0, 0,
+		true, 260.0, 10.0, Color(0.30, 0.85, 0.45))
 	ally_count += _save_unit(UNIT_ALLY_DIR, "mage", "Mage", UnitData.Role.DEALER,
-		40, 18, 1.1, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0, 0)
+		40, 18, 1.1, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0, 0, 0,
+		true, 200.0, 14.0, Color(0.70, 0.35, 0.95))
 	ally_count += _save_unit(UNIT_ALLY_DIR, "minion", "Minion", UnitData.Role.MINION,
 		20, 5, 1.0, 55.0, 50.0, UnitData.Shape.CIRCLE, Color(0.6, 0.6, 0.6), 50.0, 0)
 	# skull 심볼 매칭 → 미니언과 동일 (별도 파일 없이 UnitRegistry에서 alias).
 	# --- 적 3종 ---
 	enemy_count += _save_unit(UNIT_ENEMY_DIR, "goblin", "Goblin", UnitData.Role.ENEMY,
-		20, 6, 1.0, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1)
+		20, 6, 1.0, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1, 5)
 	enemy_count += _save_unit(UNIT_ENEMY_DIR, "orc", "Orc", UnitData.Role.ENEMY,
-		40, 10, 1.0, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3)
+		40, 10, 1.0, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3, 15)
 	enemy_count += _save_unit(UNIT_ENEMY_DIR, "boss", "Boss", UnitData.Role.ENEMY,
-		150, 20, 1.2, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10)
+		150, 20, 1.2, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10, 100)
 	print("[setup] 유닛 데이터 생성: 아군 %d종, 적 %d종" % [ally_count, enemy_count])
 
 
 ## UnitData 인스턴스 생성 + .tres 저장 헬퍼.
 func _save_unit(dir: String, id: String, display_name: String, role: UnitData.Role,
 		hp: int, atk: int, interval: float, spd: float, rng: float,
-		shape: UnitData.Shape, col: Color, sz: float, exp: int) -> int:
+		shape: UnitData.Shape, col: Color, sz: float, exp: int, credit: int = 0,
+		is_ranged: bool = false, proj_speed: float = 220.0,
+		proj_size: float = 12.0, proj_color: Color = Color.WHITE) -> int:
 	var u := UnitData.new()
 	u.unit_id = StringName(id)
 	u.display_name = display_name
@@ -191,8 +243,15 @@ func _save_unit(dir: String, id: String, display_name: String, role: UnitData.Ro
 	u.attack_range = rng
 	u.shape = shape
 	u.color = col
-	u.size = sz
+	u.size_w = sz
+	u.size_h = sz
 	u.exp_reward = exp
+	u.credit_reward = credit
+	u.is_ranged = is_ranged
+	u.behavior = UnitData.Behavior.RANGED if is_ranged else UnitData.Behavior.MELEE
+	u.projectile_speed = proj_speed
+	u.projectile_size = proj_size
+	u.projectile_color = proj_color
 	_save(u, dir + id + ".tres")
 	return 1
 
@@ -200,7 +259,7 @@ func _save_unit(dir: String, id: String, display_name: String, role: UnitData.Ro
 func _build_config(sym: Dictionary, reels: Array, paylines: Array, paytable: Paytable) -> void:
 	var c := SlotConfig.new()
 	c.reel_count = 5
-	c.row_count = 3
+	c.row_count = 5
 	c.payline_count = 20
 	c.base_bet_steps = PackedFloat32Array([10.0, 25.0, 50.0, 100.0, 250.0, 500.0])
 	c.default_bet_index = 2
@@ -210,7 +269,7 @@ func _build_config(sym: Dictionary, reels: Array, paylines: Array, paytable: Pay
 	c.jackpot_seed_major = 25000
 	c.jackpot_seed_grand = 100000
 	c.rng_seed = 0
-	c.starting_credit = 10000
+	c.starting_credit = 100
 	# typed array(Array[ReelStrip] 등)에는 일반 Array 직접 할당 불가 → 명시 변환
 	var typed_reels: Array[ReelStrip] = []
 	for r in reels:

@@ -1,16 +1,17 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://cxaw1pbdtvd0s"]
+[gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" uid="uid://cl8m5dbedgwii" path="res://scripts/data/UnitData.gd" id="1_v7mdq"]
+[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_v7mdq"]
 
 [resource]
 script = ExtResource("1_v7mdq")
 unit_id = &"orc"
 display_name = "Orc"
 role = 4
-attack = 4
+max_hp = 40
+attack = 10
 move_speed = 40.0
 attack_range = 60.0
 exp_reward = 3
+credit_reward = 15
 shape = 1
 color = Color(0.7, 0.3, 0.1, 1)
-size = 40.0

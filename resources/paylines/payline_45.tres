@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="Payline" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/Payline.gd" id="1_risl4"]
+
+[resource]
+script = ExtResource("1_risl4")
+id = 45
+row_r0 = 2
+row_r1 = 4
+row_r2 = 4
+row_r3 = 4
+row_r4 = 2
+debug_color = Color(1, 0.25, 0.7000003, 1)

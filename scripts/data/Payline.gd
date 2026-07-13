@@ -16,13 +16,11 @@ extends Resource
 
 
 ## 특정 릴에서 이 페이라인이 가리키는 행. 범위 밖이면 -1.
+## row_r0~r4를 Array로 빌드해 조회 — match 분기 제거, 릴 확장 시 row_r 추가만 하면 됨.
 func get_row(reel_index: int) -> int:
-	match reel_index:
-		0: return row_r0
-		1: return row_r1
-		2: return row_r2
-		3: return row_r3
-		4: return row_r4
+	var rows := [row_r0, row_r1, row_r2, row_r3, row_r4]
+	if reel_index >= 0 and reel_index < rows.size():
+		return rows[reel_index]
 	return -1
 
 

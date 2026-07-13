@@ -8,14 +8,18 @@ extends Node
 ## 이 스크립트는 소환 변환 로직만 담당 — 데이터 생성/관리 책임 제거.
 
 const MISS_MINION_ID := &"minion"
+var _game_over: bool = false   # 게임 종료 중 소환 금지 (game_over 후 진행 중 스핀 결과도 방어)
 
 
 func _ready() -> void:
 	EventBus.evaluation_completed.connect(_on_evaluation_completed)
+	EventBus.game_over.connect(_on_game_over)
 
 
 ## 슬롯 평가 완료 → 유닛 소환.
 func _on_evaluation_completed(result: SpinResult) -> void:
+	if _game_over:
+		return   # ★ 게임오버 시 소환 금지 — 진행 중이던 스핀 결과도 무시.
 	var battle := _get_battle_field()
 	if battle == null:
 		return
@@ -23,7 +27,18 @@ func _on_evaluation_completed(result: SpinResult) -> void:
 	# LordState.miss_compensation 강화 시 미니언 수 증가 (Phase 8-D 연동).
 	var miss_count := _get_miss_compensation_count()
 	if not result.has_win():
-		_spawn_unit(battle, MISS_MINION_ID, miss_count)
+		var lord := get_node_or_null("/root/LordState")
+		# 재활용 주술 — 꽝 시 베팅의 50% 환급.
+		if lord != null and bool(lord.get("refund_on_miss")):
+			WalletManager.add_credit(int(float(WalletManager.current_bet) * 0.5))
+		# 정예 백업 — 미니언 대신 설정된 정예 유닛(LordState.elite_unit_id, 기본 knight).
+		if lord != null and bool(lord.get("elite_backup")):
+			var elite_id: StringName = &"knight"
+			if "elite_unit_id" in lord:
+				elite_id = lord.elite_unit_id
+			_spawn_unit(battle, elite_id, 1)
+		else:
+			_spawn_unit(battle, MISS_MINION_ID, miss_count)
 		return
 	# 라인 매칭 순회 → 심볼의 unit_id 로 소환
 	var spawned: Dictionary = {}   # unit_id → 총 소환 수 (중복 누적)
@@ -36,9 +51,10 @@ func _on_evaluation_completed(result: SpinResult) -> void:
 			if not spawned.has(MISS_MINION_ID):
 				spawned[MISS_MINION_ID] = miss_count
 			continue
-		var count := lw.match_count - 2   # 3매치=1기, 4매치=2기, 5매치=3기
+		# 배수 토글 — spawn_mult 만큼 소환 수 증가.
+		var count := (lw.match_count - 2) * _spawn_mult()
 		if count <= 0:
-			count = 1
+			count = 1 * _spawn_mult()
 		if spawned.has(sym.unit_id):
 			spawned[sym.unit_id] += count
 		else:
@@ -58,6 +74,11 @@ func _get_miss_compensation_count() -> int:
 	return 1
 
 
+## 소환 배수 — WalletManager.bet_level (확장 단계). 기본 1.
+func _spawn_mult() -> int:
+	return maxi(1, WalletManager.bet_level)
+
+
 ## 유닛 소환 (간격을 두고 다중 소환).
 func _spawn_unit(battle: BattleField, unit_id: StringName, count: int) -> void:
 	# UnitRegistry 에서 현재 LordState 티어가 반영된 UnitData 조회.
@@ -66,7 +87,7 @@ func _spawn_unit(battle: BattleField, unit_id: StringName, count: int) -> void:
 		return
 	for i in range(count):
 		var u: Unit = battle.spawn_ally(data)
-		u.global_position.x -= float(i) * 20.0   # 좌측으로 20px 오프셋 (중첩 방지)
+		u.global_position.x += float(i) * 20.0   # 진행 방향(우측 +x)으로 20px 오프셋 (중첩 방지)
 	EventBus.unit_spawned.emit(unit_id, count)
 
 
@@ -79,6 +100,16 @@ func _lookup_symbol(sym_id: StringName) -> SymbolData:
 		if sym.id == sym_id:
 			return sym
 	return null
+
+
+## 게임오버 수신 — 소환 금지. 리스타트 시 reset_game_over() 로 해제.
+func _on_game_over(_victory: bool) -> void:
+	_game_over = true
+
+
+## 런 리스타트 시 소환 금지 해제.
+func reset_game_over() -> void:
+	_game_over = false
 
 
 ## BattleField 참조 획득 (SlotMachineView 자식).

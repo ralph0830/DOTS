@@ -7,12 +7,33 @@ var reel_w: float = 180.0   # 심볼 크기(SYMBOL_SIZE)와 동일 — SlotMachi
 var row_h: float = 180.0
 
 var _lines: Array[Line2D] = []
+var _jackpot_flash: float = 0.0   # 잭팟 시 슬롯 테두리 번쩍
 
 
 func _ready() -> void:
 	EventBus.highlight_wins.connect(_on_highlight)
-	# 스핀이 시작되면 이전 당첨 라인을 즉시 지운다.
 	EventBus.spin_started.connect(_on_spin_started)
+	EventBus.jackpot_won.connect(_on_jackpot)
+	set_process(true)
+
+
+func _on_jackpot(_tier: int, _amount: int) -> void:
+	_jackpot_flash = 1.0
+
+
+func _process(delta: float) -> void:
+	if _jackpot_flash > 0.0:
+		_jackpot_flash = maxf(0.0, _jackpot_flash - delta * 1.5)
+		queue_redraw()
+
+
+func _draw() -> void:
+	# 잭팟 시 슬롯 영역(5릴×3행) 외곽 테두리 번쩍.
+	if _jackpot_flash > 0.0:
+		var w := reel_w * 5.0
+		var h := row_h * 3.0
+		var col := Color(1.0, 0.9, 0.2).lerp(Color.WHITE, _jackpot_flash)
+		draw_rect(Rect2(-4.0, -4.0, w + 8.0, h + 8.0), col, false, 8.0)
 
 
 func _on_spin_started(_bet: int) -> void:

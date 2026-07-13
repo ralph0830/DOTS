@@ -19,11 +19,9 @@ const TAG_BONUS := &"bonus"
 @export var display_name: String = ""                  # UI 표시명
 @export var color: Color = Color.WHITE                 # 플레이스홀더 도형 색상
 @export var shape: Shape = Shape.CIRCLE                # 플레이스홀더 도형 모양
-## 지불표: 3/4/5매치 당첨 배수. PackedInt32Array 대신 개별 int로 분해
-## (Godot 4.7 바이너리 export 시 PackedInt32Array 직렬화 손실 버그 회피).
-@export var payout_3: int = 0
-@export var payout_4: int = 0
-@export var payout_5: int = 0
+## 지불표: {매치수: 배수} Dictionary — 3/4/5 제한 없이 임의 매치 수 지원(open-structure).
+## 모바일 export 직렬화 안전(Dictionary는 PackedArray 손실 이슈 없음).
+@export var payouts: Dictionary = {3: 0, 4: 0, 5: 0}
 ## ★에셋 교체 포인트: null이면 프로시저럴 도형, 텍스처 할당 시 자동 적용.
 @export var texture: Texture2D
 ## Phase 7: 매칭 시 소환할 유닛 ID (빈 값 = 유닛 미매핑/순수 크레딧 심볼).
@@ -34,18 +32,14 @@ const TAG_BONUS := &"bonus"
 @export var mechanic: SymbolMechanic
 
 
-## 호환용 payout 배열 반환 (기존 코드 호환). payout_3/4/5를 합쳐서 반환.
+## 호환용 payout 배열 반환 (인덱스 3/4/5).
 func get_payout_array() -> PackedInt32Array:
-	return PackedInt32Array([0, 0, 0, payout_3, payout_4, payout_5])
+	return PackedInt32Array([0, 0, 0, get_payout(3), get_payout(4), get_payout(5)])
 
 
-## 주어진 매치 수(3/4/5)에 대한 배수를 반환. 범위 밖이면 0.
+## 주어진 매치 수에 대한 배수를 반환. Dictionary 조회 — 임의 매치 수 지원.
 func get_payout(match_count: int) -> int:
-	match match_count:
-		3: return payout_3
-		4: return payout_4
-		5: return payout_5
-	return 0
+	return int(payouts.get(match_count, 0))
 
 
 # --- 메카닉 위임 (Open-structure 핵심) ---

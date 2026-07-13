@@ -9,9 +9,11 @@ id = &"archer"
 display_name = "Archer"
 color = Color(0.3, 0.85, 0.45, 1)
 shape = 7
-payout_3 = 5
-payout_4 = 15
-payout_5 = 45
+payouts = {
+3: 5,
+4: 15,
+5: 45
+}
 unit_id = &"archer"
 
 [sub_resource type="Resource" id="Resource_ml1g4"]
@@ -20,9 +22,11 @@ id = &"mage"
 display_name = "Mage"
 color = Color(0.7, 0.35, 0.95, 1)
 shape = 8
-payout_3 = 8
-payout_4 = 25
-payout_5 = 80
+payouts = {
+3: 8,
+4: 25,
+5: 80
+}
 unit_id = &"mage"
 
 [sub_resource type="Resource" id="Resource_j383b"]
@@ -31,9 +35,11 @@ id = &"knight"
 display_name = "Knight"
 color = Color(0.25, 0.55, 0.95, 1)
 shape = 6
-payout_3 = 6
-payout_4 = 20
-payout_5 = 60
+payouts = {
+3: 6,
+4: 20,
+5: 60
+}
 unit_id = &"knight"
 
 [sub_resource type="Resource" id="Resource_j0nq8"]
@@ -42,9 +48,11 @@ id = &"skull"
 display_name = "Skull"
 color = Color(0.65, 0.65, 0.7, 1)
 shape = 9
-payout_3 = 1
-payout_4 = 2
-payout_5 = 3
+payouts = {
+3: 1,
+4: 2,
+5: 3
+}
 unit_id = &"skull"
 
 [resource]

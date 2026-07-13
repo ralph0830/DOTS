@@ -172,6 +172,16 @@ func toggle_mute() -> void:
 		AudioServer.set_bus_mute(idx, master_muted)
 
 
+## 음소거 상태를 직접 설정 (버스 + 플래그 동기화).
+# HUD 토글에서 사용 — toggle_mute() 를 직접 호출하면 플래그가 이중 반전되어
+# 음소거가 풀리는 버그가 있으므로 이 setter 를 사용한다.
+func set_muted(on: bool) -> void:
+	master_muted = on
+	var idx := AudioServer.get_bus_index(SFX_BUS)
+	if idx >= 0:
+		AudioServer.set_bus_mute(idx, on)
+
+
 ## 마스터 볼륨 설정 (0.0~1.0). 0이면 사실상 음소거.
 func set_master_volume(value: float) -> void:
 	var idx := AudioServer.get_bus_index(SFX_BUS)

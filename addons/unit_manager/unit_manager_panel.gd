@@ -98,8 +98,8 @@ func _build_ui() -> void:
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 4)
 	_vbox.add_child(header)
-	var headers := ["", "이름", "역할", "HP", "공격", "공속", "이속", "사거", "EXP", "도형", "크기"]
-	var widths := [50, 100, 70, 55, 55, 55, 55, 55, 45, 80, 55]
+	var headers := ["", "이름", "역할", "행동", "HP", "공격", "공속", "이속", "사거", "EXP", "CREDIT", "도형", "가로", "세로"]
+	var widths := [50, 100, 70, 60, 55, 55, 55, 55, 55, 45, 55, 80, 45, 45]
 	for i in range(headers.size()):
 		var lbl := Label.new()
 		lbl.text = headers[i]
@@ -204,14 +204,17 @@ func _add_row(data: UnitData, res_path: String, is_ally: bool) -> void:
 
 	row.add_child(_make_label(String(data.display_name), 100))
 	row.add_child(_make_label(_role_name(int(data.role)), 70))
+	row.add_child(_make_behavior_option(data, 60))
 	row.add_child(_make_spin(data, "max_hp", 1, 9999, 55))
 	row.add_child(_make_spin(data, "attack", 0, 999, 55))
 	row.add_child(_make_float_spin(data, "attack_interval", 0.1, 5.0, 55))
 	row.add_child(_make_float_spin(data, "move_speed", 0.0, 500.0, 55))
 	row.add_child(_make_float_spin(data, "attack_range", 0.0, 500.0, 55))
 	row.add_child(_make_spin(data, "exp_reward", 0, 999, 45))
+	row.add_child(_make_spin(data, "credit_reward", 0, 99999, 55))
 	row.add_child(_make_shape_option(data, 80))
-	row.add_child(_make_float_spin(data, "size", 20.0, 200.0, 55))
+	row.add_child(_make_float_spin(data, "size_w", 10.0, 300.0, 45))
+	row.add_child(_make_float_spin(data, "size_h", 10.0, 300.0, 45))
 
 
 func _make_spin(data: UnitData, prop: String, min_val: int, max_val: int, w: int) -> SpinBox:
@@ -235,6 +238,16 @@ func _make_float_spin(data: UnitData, prop: String, min_val: float, max_val: flo
 	spin.custom_minimum_size = Vector2(w, 24)
 	spin.value_changed.connect(func(val: float): data.set(prop, val))
 	return spin
+
+
+func _make_behavior_option(data: UnitData, w: int) -> OptionButton:
+	var opt := OptionButton.new()
+	opt.custom_minimum_size = Vector2(w, 24)
+	for b in ["MELEE", "RANGED", "SUPPORT"]:
+		opt.add_item(b)
+	opt.selected = int(data.behavior)
+	opt.item_selected.connect(func(idx: int): data.behavior = idx)
+	return opt
 
 
 func _make_shape_option(data: UnitData, w: int) -> OptionButton:

@@ -9,9 +9,13 @@ func process(result: SpinResult, ctx: Dictionary) -> void:
 	var grid: Array = ctx["grid"]
 	var line_bet: float = ctx["line_bet"]
 	var free_mult: float = ctx["free_multiplier"]
+	# bet_level별 활성 페이라인 수만큼 slice.
+	var count: int = int(ctx.get("payline_count", paylines.size()))
+	var active: Array = paylines.slice(0, mini(count, paylines.size()))
+	var active_reels: Array = ctx.get("active_reels", [0, 1, 2, 3, 4])
 
-	for payline in paylines:
-		var lw := SpinEvaluator.evaluate_line(grid, payline)
+	for payline in active:
+		var lw := SpinEvaluator.evaluate_line(grid, payline, active_reels)
 		if lw == null:
 			continue
 		lw.amount = int(float(lw.amount) * line_bet * free_mult)

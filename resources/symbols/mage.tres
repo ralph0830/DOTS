@@ -8,7 +8,9 @@ id = &"mage"
 display_name = "Mage"
 color = Color(0.7, 0.35, 0.95, 1)
 shape = 8
-payout_3 = 8
-payout_4 = 25
-payout_5 = 80
+payouts = {
+3: 8,
+4: 25,
+5: 80
+}
 unit_id = &"mage"

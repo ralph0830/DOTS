@@ -14,10 +14,28 @@ extends Control
 var _texture_dirty: bool = true
 var _highlight: bool = false
 var _highlight_t: float = 0.0
+var _shape_drawers: Dictionary = {}   # Shape enum → draw Callable (match 분기 제거)
 
 
 func _ready() -> void:
 	resized.connect(queue_redraw)
+	_build_shape_drawers()
+
+
+## Shape enum → draw Callable 매핑 구축. 새 도형 추가 시 이 딕셔너리만 확장(open-structure).
+func _build_shape_drawers() -> void:
+	_shape_drawers = {
+		SymbolData.Shape.CIRCLE: _draw_circle_shape,
+		SymbolData.Shape.DIAMOND: _draw_diamond_shape,
+		SymbolData.Shape.SQUARE: _draw_square_shape,
+		SymbolData.Shape.TRIANGLE: _draw_triangle_shape,
+		SymbolData.Shape.STAR: _draw_star_shape,
+		SymbolData.Shape.HEX: _draw_hex_shape,
+		SymbolData.Shape.KNIGHT: _draw_knight,
+		SymbolData.Shape.ARCHER: _draw_archer,
+		SymbolData.Shape.MAGE: _draw_mage,
+		SymbolData.Shape.SKULL: _draw_skull,
+	}
 
 
 func _process(delta: float) -> void:
@@ -25,6 +43,11 @@ func _process(delta: float) -> void:
 	if _highlight:
 		_highlight_t += delta
 		queue_redraw()
+
+
+## 비활성 셀 회색 처리 (비활성 행/릴). modulate 로 어둡게 — 빈칸이 아니라 회색 셀로 표시.
+func set_dimmed(dimmed: bool) -> void:
+	modulate = Color(0.30, 0.30, 0.30, 0.75) if dimmed else Color.WHITE
 
 
 ## 당첨 하이라이트 on/off.
@@ -50,38 +73,49 @@ func _draw_shape() -> void:
 	var radius: float = minf(size.x, size.y) * 0.42
 	var center: Vector2 = size * 0.5
 	var col: Color = symbol_data.color
-	# 하이라이트 중이면 밝기 펄스
+	# 하이라이트 중이면 밝기 펄스 + 테두리 번쩍
 	if _highlight:
 		var pulse := 0.5 + 0.5 * sin(_highlight_t * 8.0)
 		col = col.lerp(Color.WHITE, pulse * 0.5)
 		radius *= 1.0 + pulse * 0.08
+		# 테두리 번쩍 (노랑→흰색 펄스) — 매칭 시 심볼 카드 강조.
+		var border_col := Color(1.0, 0.9, 0.2).lerp(Color.WHITE, pulse)
+		draw_rect(Rect2(Vector2.ZERO, size), border_col, false, 4.0 + pulse * 4.0)
 
 	# 테두리(깊이감)
 	draw_circle_outline_solid(center, radius, col)
+	# Shape enum → draw Callable (match 분기 없음). 새 도형은 _build_shape_drawers 확장.
+	var drawer: Callable = _shape_drawers.get(symbol_data.shape, Callable())
+	if drawer.is_valid():
+		drawer.call(center, radius, col)
+	else:
+		draw_circle(center, radius, col)   # 알 수 없는 도형 폴백
 
-	match symbol_data.shape:
-		SymbolData.Shape.CIRCLE:
-			draw_circle(center, radius, col)
-		SymbolData.Shape.DIAMOND:
-			draw_colored_polygon(_polygon_points(center, radius, 4, PI / 4.0), col)
-		SymbolData.Shape.SQUARE:
-			var s := radius * 0.9
-			draw_rect(Rect2(center - Vector2(s, s), Vector2(s * 2.0, s * 2.0)), col)
-		SymbolData.Shape.TRIANGLE:
-			draw_colored_polygon(_polygon_points(center, radius, 3, -PI / 2.0), col)
-		SymbolData.Shape.STAR:
-			draw_colored_polygon(_star_points(center, radius, radius * 0.45, 5), col)
-		SymbolData.Shape.HEX:
-			draw_colored_polygon(_polygon_points(center, radius, 6, 0.0), col)
-		# Phase 8: 유닛 4종 식별 도형 (색상 + 직관적 모양으로 구분).
-		SymbolData.Shape.KNIGHT:
-			_draw_knight(center, radius, col)
-		SymbolData.Shape.ARCHER:
-			_draw_archer(center, radius, col)
-		SymbolData.Shape.MAGE:
-			_draw_mage(center, radius, col)
-		SymbolData.Shape.SKULL:
-			_draw_skull(center, radius, col)
+
+# --- 기본 도형 draw 래퍼 (_shape_drawers 매핑용) ---
+func _draw_circle_shape(c: Vector2, r: float, col: Color) -> void:
+	draw_circle(c, r, col)
+
+
+func _draw_diamond_shape(c: Vector2, r: float, col: Color) -> void:
+	draw_colored_polygon(_polygon_points(c, r, 4, PI / 4.0), col)
+
+
+func _draw_square_shape(c: Vector2, r: float, col: Color) -> void:
+	var s := r * 0.9
+	draw_rect(Rect2(c - Vector2(s, s), Vector2(s * 2.0, s * 2.0)), col)
+
+
+func _draw_triangle_shape(c: Vector2, r: float, col: Color) -> void:
+	draw_colored_polygon(_polygon_points(c, r, 3, -PI / 2.0), col)
+
+
+func _draw_star_shape(c: Vector2, r: float, col: Color) -> void:
+	draw_colored_polygon(_star_points(c, r, r * 0.45, 5), col)
+
+
+func _draw_hex_shape(c: Vector2, r: float, col: Color) -> void:
+	draw_colored_polygon(_polygon_points(c, r, 6, 0.0), col)
 
 
 ## 텍스처 모드: 전체 영역에 텍스처를 그린다.

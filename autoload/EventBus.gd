@@ -40,6 +40,11 @@ signal enemy_spawned(enemy_id: StringName)             # WAVE → 적 스폰
 signal enemy_killed(enemy_id: StringName, exp_reward: int)
 signal unit_died(unit_id: StringName)                  # 아군 유닛 사망
 signal base_damaged(amount: int)                       # 아군 기지 피해
+# Phase 9: 유닛 피격 — 데미지 숫자 이펙트 트리거.
+# pos=맞은 유닛 위치, is_target_enemy=적이 맞았는지(색상 구분: 적=노랑/아군=빨강).
+signal damage_dealt(pos: Vector2, amount: int, is_target_enemy: bool)
+# Phase 9: 보스 HP 실시간 — 보스 피격 시 emit (BattleFieldView 보스 게이지).
+signal boss_hp_changed(hp: int, max_hp: int)
 signal base_hp_changed(ally_hp: int, ally_max: int, enemy_hp: int, enemy_max: int)  # 양 기지 HP 동기화
 signal wave_started(wave_num: int)                     # WAVE 시작
 signal wave_cleared(wave_num: int)                     # WAVE 클리어
@@ -54,3 +59,7 @@ signal game_initialized(state: Dictionary)
 signal soul_changed(value: int, maximum: int, level: int)
 signal level_up_available(level: int)
 signal level_up_completed(new_level: int)
+# Phase 9: 슬롯 리롤 — HUD 리롤 버튼 → SlotMachine 이 _pending_grid 재생성(베팅 차감 없음).
+signal reroll_requested()
+# bet_level 변경 — HUD → SlotMachineView 가 활성 매트릭스 갱신.
+signal bet_level_changed(level: int)

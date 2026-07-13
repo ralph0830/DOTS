@@ -6,5 +6,8 @@
 script = ExtResource("1_n5slk")
 id = 7
 row_r0 = 1
+row_r1 = 2
+row_r2 = 1
+row_r3 = 2
 row_r4 = 1
-debug_color = Color(0.25, 1, 0.32499993, 1)
+debug_color = Color(1, 0.88, 0.25, 1)

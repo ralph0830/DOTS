@@ -67,6 +67,18 @@ func consume_one() -> bool:
 	return true
 
 
+## 런 리스타트 시 상태 완전 초기화 (재시작 잔류 버그 방지).
+# 남은 프리스핀/멀티플라이어가 새 런으로 넘어가는 것을 차단.
+func reset() -> void:
+	var was_active := is_free_spin()
+	free_spins_remaining = 0
+	current_multiplier = 1.0
+	if was_active:
+		# 종료 알림 emit — HUD 가 프리스핀 표시를 지우도록 동기화.
+		free_spins_ended.emit()
+		EventBus.free_spins_ended.emit()
+
+
 ## evaluation_completed 핸들러.
 func _on_eval(result: SpinResult) -> void:
 	if result == null:

@@ -411,6 +411,41 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 
 ---
 
+### 🟣 Phase 8.5 — 전투 피드백 + 코드 전수 리뷰 (2026-07-08, 폰 검증 완료)
+
+> 4도메인(전투/슬롯코어/시스템/뷰) 병렬 에이전트 리뷰 + 핵심 항목 코드 직접 검증 + 폰 테스트 피드백 반영.
+> 59개 스크립트 전수 조사. 에이전트 오판 1건(`_pick_target` — 왼쪽우선 매칭은 업계 표준)은 제외.
+
+#### P8.5-A 코드 전수 리뷰 — 8개 버그 수정 (폰 검증 완료)
+
+| 버그 | 원인 | 해결 |
+|---|---|---|
+| **음소거 미동작** | HUD가 `master_muted=on` 직접 설정 후 `toggle_mute()`(내부 `not` 반전) 호출 → 항상 false로 돌아가 음소거 자체 안 됨 | `AudioManager.set_muted(on)` setter 추가, HUD에서 사용 |
+| **유닛 새 적 무시** | 타겟 사망해도 `_target`이 null 리셋 안 됨 → `_on_area_entered`의 `_target==null` 체크가 dangling 참조로 막힘 | `_physics_process`에서 `is_instance_valid` 실패 시 null 리셋 + 사망 시 `monitoring=false` |
+| **재시작 프리스핀 잔류** | `_initialize_all`이 BonusManager reset 누락 → 새 런에 멀티플라이어/잔여 프리스핀 전이 | `BonusManager.reset()` 추가 + `_initialize_all` 연동 |
+| **game_over 후 전투 계속** | WaveManager만 정지, Unit은 계속 움직임 | BattleField가 자식 Unit `set_physics_process(false)`, reset_run에서 복원 |
+| **game_over+AUTO 슬롯 계속** | 슬롯 코어가 game_over 모름 → AUTO가 계속 스핀→소환→유닛 이동 | SlotMachine(request_spin 가드)/UnitSpawner(소환 가드)/SlotMachineView(AUTO 중단) game_over 구독 + reset_game_over 복원 |
+| **reset_run 중복 emit** | `_emit_hp()` 후 또 `base_hp_changed` emit | 중복 라인 제거 |
+| **base_bet_steps 폴백 약함** | 모바일 직렬화 손실 시 `[50]` 고정 → BET± 무의미 | 코드 기본값 6종 전체 폴백 |
+| **소환 오프셋 방향** | 좌측(-x) 오프셋 → 다중 소환 시 기지 뒤(화면 밖)로 밀림 | 진행 방향(+x)으로 수정 |
+
+**교훈**: (1) 재시작 플로우에 상태 보유 autoload 빠짐없이 나열 — 주기적 감사. (2) toggle(반전) API와 set API 섞지 말 것. (3) 캐시한 노드 참조는 사용 전 `is_instance_valid` + 무효면 null 리셋. (4) game_over는 전투뿐 아니라 슬롯(입력→생산 루프)까지 전부 멈춰야 — AUTO는 사용자 개입 없이 도므로 코어 레벨에서 막아야.
+
+#### P8.5-B 전투 이펙트 3종 + 체력바 (폰 검증 완료)
+
+- [x] **히트 점멸** — Unit `_hit_flash`(0~1) + `_draw` tint. texture/도형 양쪽 색상 `lerp(base, RED, flash)`, 체력바는 제외. 0.15초. 연속/동시 타격 시 1.0 리셋. `take_damage`에서 `_flash_hit()`.
+- [x] **데미지 숫자** — 신규 `scripts/effects/DamageNumberLayer.gd`(Node2D, BattleField 자식). Label 풀(POOL_SIZE 12, 가장 오래된 것 재사용). `EventBus.damage_dealt(pos, amount, is_target_enemy)` 구독. 적=노랑/아군=빨강. 1초 상승+페이드. `clear()`로 reset_run 정리.
+- [x] **원거리 투사체** — 신규 `scripts/battle/Projectile.gd`(**Node2D**, Area2D 아님 — 단일 라인이라 충돌 영역 불필요, 모바일 오버헤드 최소). target 직접 추적(`is_instance_valid`), 도달(≤12px) 시 `take_damage`. target 사망 시 증발. 궁수(260px/s, 초록, 10)/마법사(200, 보라, 14). boss는 근접 유지.
+- [x] **체력바 고정** — `bar_w = clampf(data.size * 1.6, 50.0, 100.0)`.
+- [x] **공격 분기** — `Unit._physics_process`에서 `if data.is_ranged: _fire_projectile(target) else: take_damage(attack)`. 원거리는 발사 시점 데미지 없음.
+- [x] **UnitData 필드** — `is_ranged/projectile_speed/projectile_color/projectile_size/projectile_texture` 추가(개별 @export, PackedArray 회피). `_clone_unit`/`_make`/폴백/`generate_default_data` 4곳 동기화. 단 `.tres` 수동 튜닝값 보존 위해 generate_default_data는 **실행하지 않고** .tres에 수동 추가.
+
+**신규 파일**: `scripts/battle/Projectile.gd`, `scripts/effects/DamageNumberLayer.gd`
+**수정 파일**: Unit.gd, UnitData.gd, UnitRegistry.gd, BattleField.gd, EventBus.gd, AudioManager.gd, HUD.gd, SlotMachineView.gd, SlotMachine.gd, UnitSpawner.gd, WalletManager.gd, generate_default_data.gd, archer.tres, mage.tres
+**검증**: 폰에서 투사체/점멸/데미지숫자/체력바/근접/소리/AUTO-game_over 정지 모두 확인.
+
+---
+
 ### 🟢 Phase 9 — 비주얼 폴리싱 (파타폰 아트, PRD §5, GDD §2)
 
 > 목표: 실루엣 아트 + 눈동자 + 네온 포인트 컬러 + 진화 연출 + 토템 슬롯.
@@ -546,6 +581,9 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 | **⚠️ APK 재설치 시 데이터 찌꺼기** (2026-07-07) | `adb install -r` 은 user:// 저장 데이터를 유지. 코드 변경 후 APK 복사만 하고 폰에서 재실행하면 이전 버전 캐시/데이터가 남아 "코드는 고쳤는데 안 고쳐진 것처럼" 보이는 함정. | **권장**: 코드 변경 후 폰 테스트 시 `adb shell pm clear com.ralph.dots` 로 user:// 초기화 후 재실행. 또는 APK 복사 후 반드시 재설치. |
 | **⚠️ DBG print 잔존 주의** (2026-07-07) | 디버그용 print가 production 코드에 남으면 로그 노이즈 + 성능 저하. | 현재 GameConfig/SlotMachine/SpinEvaluator/HUD/SlotMachineView/WaveManager에서 모두 제거 완료. 새 디버그 print는 커밋 전 제거. |
 | **⚠️ EditorPlugin @tool 레이아웃 주의** (2026-07-07 해결) | `add_control_to_bottom_panel` 로 추가한 Control은 루트 dock에서 크기를 받지만, 그 자식 VBoxContainer에 `PRESET_FULL_RECT` 미설정 시 expand 공간이 전달되지 않아 ScrollContainer 높이가 0이 되고 행이 보이지 않는 함정. 로그는 정상 출력되어 디버깅을 혼란스럽게 함. | **해결**: VBoxContainer에 `set_anchors_preset(PRESET_FULL_RECT)` + 자식 컨테이너 `SIZE_EXPAND_FILL` + 최소 높이 안전장치. inner class 대신 별도 @tool 파일로 _draw() 보장. |
+| **✅ 음소거 이중 반전** (2026-07-08 해결) | HUD가 `master_muted=on` 직접 설정 후 `toggle_mute()`(내부 `not` 반전) 호출 → 항상 false → 음소거 자체 안 됨. | **해결**: `AudioManager.set_muted(on)` setter 추가. **교훈**: toggle(반전) API와 set API를 섞지 말 것. |
+| **✅ game_over 후 슬롯/전투 계속** (2026-07-08 해결, 폰 발견) | game_over 시 WaveManager만 정지 → Unit 계속 움직임 + AUTO가 살아 슬롯 계속 스핀→소환. | **해결**: BattleField(자식 Unit 정지) + SlotMachine(request_spin 가드) + UnitSpawner(소환 가드) + SlotMachineView(AUTO 중단) game_over 구독 + reset 복원. |
+| **✅ Unit `_target` dangling** (2026-07-08 해결) | 타겟 사망해도 `_target` null 리셋 안 됨 → 새 적 무시하고 전진만 함. | **해결**: `_physics_process`에서 `is_instance_valid` 실패 시 null 리셋 + 사망 시 `monitoring=false`. 노드 참조 캐싱은 항상 유효성 체크. |
 
 ---
 
@@ -578,24 +616,28 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 ## 6. 핵심 파일 맵
 
 ```
-project.godot                              # 세로 1080×1920, autoload 9개, main_scene
+project.godot                              # 세로 1080×1920, autoload 14개, main_scene
 scripts/
   data/      # SymbolData(payout_3/4/5), ReelStrip, Payline(row_r0~4), Paytable, SlotConfig,
-             # SpinResult, LineWin, UnitData, SymbolMechanic(preload 레지스트리) + mechanics/{4종}
-  core/      # SlotMachine, SpinEvaluator, WinCalculator, EvaluationPass,
+             # SpinResult, LineWin, UnitData(is_ranged/projectile_*), LevelUpChoice/ChoiceEffect/effects,
+             # ArtifactData, SymbolMechanic(preload 레지스트리) + mechanics/{4종}
+  core/      # SlotMachine(game_over 가드), SpinEvaluator, WinCalculator, EvaluationPass,
              # passes/{LineEvaluationPass,ScatterEvaluationPass,JackpotEvaluationPass}
-  view/      # SymbolView(유닛 도형), ReelView, SlotMachineView(전투 통합), HUD, PaylineOverlay, GameOverOverlay
-  effects/   # WinEffects, ParticleBudget, FloatingText, CameraShake, SlowMotion, BackgroundFX, JackpotFX
-  battle/    # Unit(Area2D), BattleField(양 기지 HP), BattleFieldView(HP 바), UnitSpawner, WaveManager
-  systems/   # BonusManager
+  view/      # SymbolView(유닛 도형), ReelView, SlotMachineView(전투 통합+game_over AUTO 중단), HUD, PaylineOverlay,
+             # GameOverOverlay, LevelUpUI
+  effects/   # WinEffects, ParticleBudget, FloatingText, SlowMotion, BackgroundFX, JackpotFX, DamageNumberLayer
+  battle/    # Unit(Area2D, 점멸/투사체 발사), BattleField(양 기지 HP+DamageNumberLayer 자식), BattleFieldView(HP 바),
+             # UnitSpawner(game_over 가드), WaveManager, Projectile(Node2D 투사체)
+  systems/   # BonusManager, SoulGauge, LordState, UnitRegistry, ArtifactManager
   setup/     # generate_default_data, run_rtp_sim, run_capture_test, run_view_test
-autoload/    # EventBus(전투 시그널 9종+초기화), GameConfig, WalletManager, JackpotSystem,
-             # AudioManager, GameManager, ParticleBudget, SlowMotion, BonusManager
+autoload/    # EventBus(전투/디펜스 시그널+damage_dealt+영혼/레벨업+초기화), GameConfig, Layout, WalletManager,
+             # JackpotSystem, AudioManager, GameManager, ParticleBudget, SlowMotion, BonusManager, SoulGauge,
+             # LordState, UnitRegistry, ArtifactManager
 scenes/
   slot/      # SlotMachine, Reel, Symbol, HUD, JackpotOverlay
   setup/     # SimScene, CaptureTest, ViewTest
 resources/   # symbols/(knight/archer/mage/skull), reels/, paylines/(row_r0~4), paytables/, config/,
-             # units/{ally,enemy}/*.tres (UnitData — EditorPlugin으로 튜닝)
+             # units/{ally,enemy}/*.tres (UnitData — EditorPlugin으로 튜닝, archer/mage는 is_ranged+projectile_*)
 addons/
   unit_manager/  # EditorPlugin: plugin.cfg, unit_manager_plugin.gd, unit_manager_panel.gd, unit_preview_rect.gd
 assets/shaders/  # 배경 셰이더
@@ -603,4 +645,4 @@ assets/shaders/  # 배경 셰이더
 
 ---
 
-_최종 갱신: 2026-07-07 — Phase 8-A/B/C/D/E 완료 (영혼게이지/3지선다/ChoiceEffect/UnitRegistry/유물). 유닛 관리 EditorPlugin 정상 동작 (P8-C6). 다음: Phase 8-D(릴 개조) 또는 8-F(시너지 진화)._
+_최종 갱신: 2026-07-08 — 코드 전수 리뷰(8 버그 수정) + 전투 이펙트(히트 점멸/데미지 숫자/원거리 투사체/체력바 고정). 폰 검증 완료. 다음: 투사체 이미지 교체, 프리스핀 활성화, 또는 Phase 8-D(릴 개조)._

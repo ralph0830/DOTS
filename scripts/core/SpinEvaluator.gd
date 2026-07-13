@@ -7,11 +7,14 @@ const MIN_MATCH := 3
 
 
 ## 한 페이라인의 당첨을 평가해 LineWin 반환. 무당첨이면 null.
-static func evaluate_line(grid: Array, payline: Payline) -> LineWin:
+## active_reels: 활성 릴 인덱스 (bet_level별). 비활성 릴은 매칭에서 제외.
+static func evaluate_line(grid: Array, payline: Payline, active_reels: Array = [0, 1, 2, 3, 4]) -> LineWin:
 	var line: Array[SymbolData] = []
-	for r in range(5):
+	for r in active_reels:
 		line.append(_cell(grid, r, payline.get_row(r)))
 
+	if line.is_empty():
+		return null
 	var first: SymbolData = line[0]
 	if first == null or not first.participates_in_line():
 		return null
@@ -20,18 +23,18 @@ static func evaluate_line(grid: Array, payline: Payline) -> LineWin:
 	if target == null:
 		return null
 
-	# 왼쪽부터 연속 매치. 참여하지 않는 심볼(Scatter/Bonus)을 만나면 중단.
+	# 왼쪽부터 연속 매치 (활성 릴만). 참여하지 않는 심볼 만나면 중단.
 	var match_count := 0
 	var positions: Array[Vector2i] = []
-	for r in range(5):
-		var sym: SymbolData = line[r]
+	for i in range(active_reels.size()):
+		var sym: SymbolData = line[i]
 		if sym == null:
 			break
 		if not sym.participates_in_line():
 			break
 		if sym.matches(target):
 			match_count += 1
-			positions.append(Vector2i(r, payline.get_row(r)))
+			positions.append(Vector2i(active_reels[i], payline.get_row(active_reels[i])))
 		else:
 			break
 

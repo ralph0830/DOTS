@@ -11,7 +11,7 @@ static func default_passes() -> Array:
 
 
 ## 그리드를 평가해 SpinResult 반환.
-## passes 를 생략하면 default_passes() 를 사용한다.
+## active_reels: bet_level별 활성 릴 인덱스. passes 생략 시 default_passes() 사용.
 static func evaluate(
 		grid: Array,
 		paylines: Array,
@@ -19,26 +19,28 @@ static func evaluate(
 		bet: int,
 		free_multiplier: float,
 		payline_count: int,
+		active_reels: Array = [0, 1, 2, 3, 4],
 		passes: Array = []
-) -> SpinResult:
-	if passes.is_empty():
-		passes = default_passes()
+	) -> SpinResult:
+		if passes.is_empty():
+			passes = default_passes()
 
-	var result := SpinResult.new()
-	result.grid = grid
+		var result := SpinResult.new()
+		result.grid = grid
 
-	# 평가 컨텍스트: 각 패스가 공유로 사용하는 입력 묶음.
-	var ctx: Dictionary = {
-		"grid": grid,
-		"paylines": paylines,
-		"paytable": paytable,
-		"bet": bet,
-		"line_bet": (float(bet) / float(payline_count)) if payline_count > 0 else 0.0,
-		"free_multiplier": free_multiplier,
-		"payline_count": payline_count,
-	}
+		# 평가 컨텍스트: 각 패스가 공유로 사용하는 입력 묶음.
+		var ctx: Dictionary = {
+			"grid": grid,
+			"paylines": paylines,
+			"paytable": paytable,
+			"bet": bet,
+			"line_bet": (float(bet) / float(payline_count)) if payline_count > 0 else 0.0,
+			"free_multiplier": free_multiplier,
+			"payline_count": payline_count,
+			"active_reels": active_reels,
+		}
 
-	for p in passes:
-		p.process(result, ctx)
+		for p in passes:
+			p.process(result, ctx)
 
-	return result
+		return result

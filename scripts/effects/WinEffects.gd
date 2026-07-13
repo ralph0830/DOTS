@@ -135,11 +135,13 @@ func _spawn_burst(pos: Vector2i, is_big: bool) -> void:
 	_schedule_release(particles, amount, lifetime_s)
 
 
-## 셀 좌표 (reel, row) → 로컬 픽셀 중심.
+## 셀 좌표 (reel, row) → 로컬 픽셀 중심. 셀 크기는 Layout.reel_w()/reel_h() (비정사형 동기화).
 func _cell_center(pos: Vector2i) -> Vector2:
 	var reel: int = pos.x
 	var row: int = pos.y
-	return Vector2(reel * CELL_SIZE + CELL_SIZE / 2, row * CELL_SIZE + CELL_SIZE / 2)
+	var csw := Layout.reel_w()
+	var csh := Layout.reel_h()
+	return Vector2(reel * csw + csw / 2, row * csh + csh / 2)
 
 
 ## 일정 시간 후 예산 release + emitting 정지 예약.

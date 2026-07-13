@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameConfig="*res://autoload/GameConfig.gd"
+Layout="*res://autoload/Layout.gd"
 EventBus="*res://autoload/EventBus.gd"
 WalletManager="*res://autoload/WalletManager.gd"
 JackpotSystem="*res://autoload/JackpotSystem.gd"

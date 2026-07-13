@@ -1,16 +1,21 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://by534n15kvh1l"]
+[gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" uid="uid://cl8m5dbedgwii" path="res://scripts/data/UnitData.gd" id="1_h32eh"]
+[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_h32eh"]
 
 [resource]
 script = ExtResource("1_h32eh")
 unit_id = &"archer"
 display_name = "Archer"
-max_hp = 10
-attack = 3
+attack = 12
 attack_interval = 0.9
 move_speed = 70.0
 attack_range = 120.0
 shape = 2
 color = Color(0.3, 0.85, 0.45, 1)
-size = 50.0
+size_w = 56.0
+size_h = 56.0
+behavior = 1
+is_ranged = true
+projectile_speed = 260.0
+projectile_size = 10.0
+projectile_color = Color(0.3, 0.85, 0.45, 1)

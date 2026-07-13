@@ -5,7 +5,7 @@ extends Resource
 ## 인스턴스는 resources/config/default_slot.tres.
 
 @export var reel_count: int = 5
-@export var row_count: int = 3
+@export var row_count: int = 5
 @export var payline_count: int = 20
 
 # --- 베팅 ---

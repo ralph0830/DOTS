@@ -1,93 +1,183 @@
 class_name BattleFieldView
 extends Control
-## 상단 전투 영역 뷰 — Phase 7 임시 배경/라벨.
-## 실제 유닛/적 렌더링은 BattleField(Node2D)가 담당. 여기선 영역 확보 + 시각적 분할선만.
-## 레이아웃: 상단 1080×1056px (전체 1920의 55%).
+## 상단 전투 영역 뷰 — 전투 배경 + 전투 라인/기지 + 상단 정보바.
+## 상단 정보바 (3분할): 체력(좌) / 웨이브(중앙) / 보스 게이지(우, 보스 등장 시).
+## 하단 경험치(영혼) 게이지. 실제 유닛/적 렌더링은 BattleField(Node2D).
 
-const BATTLE_H := 1056.0   # 전투 영역 높이 (1920 × 0.55)
-const LINE_Y := 528.0      # 전투 라인 중심 y (BATTLE_H / 2) — 유닛/적이 이 선 위에 배치됨
+const BG_PATH := "res://assets/backgrounds/bg_battle_solid_512.png"
 
-# 기지 HP 표시용 (draw 라벨). EventBus.base_hp_changed 로 갱신.
+var _bg_tex: Texture2D
 var _ally_hp: int = 100
 var _ally_max: int = 100
 var _enemy_hp: int = 100
 var _enemy_max: int = 100
-# DEBUG: 초기화 상태 화면 표시용. game_initialized 시그널로 갱신.
-var _dbg_init_text: String = "WAITING INIT..."
-var _dbg_init_color: Color = Color(1.0, 0.5, 0.2)
-var _dbg_init_t: float = 0.0
+var _soul: int = 0
+var _soul_max: int = 15
+var _level: int = 1
+var _wave_num: int = 0
+var _boss_active: bool = false
+var _boss_hp: int = 0
+var _boss_max: int = 0
+var _cur_speed: int = 1   # 게임 속도 배수 (1/2/3) — Engine.time_scale
+var _speed_btn: Button = null
 
 
 func _ready() -> void:
-	# 상단 전투 영역 전체 채우기
-	set_anchors_preset(Control.PRESET_TOP_WIDE)
-	offset_bottom = -864.0   # 하단 864px(슬롯 영역)만큼 위로 당김 → 상단 1056px만 차지
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	anchor_left = 0.0
+	anchor_top = Layout.TOP_MARGIN
+	anchor_right = 1.0
+	anchor_bottom = Layout.TOP_MARGIN + Layout.BATTLE_RATIO
+	offset_left = 0.0
+	offset_top = 0.0
+	offset_right = 0.0
+	offset_bottom = 0.0
+	mouse_filter = Control.MOUSE_FILTER_STOP   # 터치 드래그 (전투 필드 스와이프)
+	clip_contents = true   # 전투 영역 안만 표시
+	_bg_tex = load(BG_PATH)
 	EventBus.base_hp_changed.connect(_on_base_hp_changed)
+	EventBus.soul_changed.connect(_on_soul_changed)
 	EventBus.game_initialized.connect(_on_game_initialized)
+	EventBus.wave_started.connect(_on_wave_started)
+	EventBus.enemy_spawned.connect(_on_enemy_spawned)
+	EventBus.enemy_killed.connect(_on_enemy_killed)
+	EventBus.boss_hp_changed.connect(_on_boss_hp_changed)
+	_build_speed_button()
 
 
-func _process(delta: float) -> void:
-	# DEBUG: 초기화 전에는 펄스하며 대기 표시. 초기화 후엔 정지.
-	if not _dbg_init_text.begins_with("INIT OK"):
-		_dbg_init_t += delta
+func _on_game_initialized(state: Dictionary) -> void:
+	_soul = int(state.get("soul", 0))
+	_soul_max = int(state.get("soul_max", _soul_max))
+	_level = int(state.get("lord_level", 1))
+	_wave_num = int(state.get("wave", 0))
+	queue_redraw()
+
+
+## 터치 드래그 — 전투 필드 스와이프 (본진~적진). camera_x 갱신.
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventScreenDrag:
+		Layout.set_camera_x(Layout.camera_x() - event.relative.x)
 		queue_redraw()
 
 
-## DEBUG: 초기화 완료 수신 — 상태를 화면에 녹색으로 표시.
-func _on_game_initialized(state: Dictionary) -> void:
-	var credit: int = int(state.get("credit", -1))
-	var bet: int = int(state.get("bet", -1))
-	var ally: int = int(state.get("ally_hp", -1))
-	var enemy: int = int(state.get("enemy_hp", -1))
-	var wave: int = int(state.get("wave", -1))
-	var running: bool = bool(state.get("running", false))
-	_dbg_init_text = "INIT OK | credit=%d bet=%d ally=%d enemy=%d wave=%d run=%s" \
-		% [credit, bet, ally, enemy, wave, running]
-	_dbg_init_color = Color(0.3, 1.0, 0.4)
+## 게임 속도 토글 버튼 (×1/×2/×3) — 보스 게이지 아래 우측. Engine.time_scale 로 전투+슬롯 전체 제어.
+func _build_speed_button() -> void:
+	var btn := Button.new()
+	btn.text = "SPD ×1"
+	btn.anchor_left = 1.0
+	btn.anchor_right = 1.0
+	btn.anchor_top = 0.0
+	btn.anchor_bottom = 0.0
+	btn.offset_left = -220.0
+	btn.offset_right = -16.0
+	btn.offset_top = 72.0
+	btn.offset_bottom = 124.0
+	btn.add_theme_font_size_override("font_size", 26)
+	btn.pressed.connect(_on_speed_pressed)
+	add_child(btn)
+	_speed_btn = btn
+
+
+## 속도 버튼 누름 — ×1 → ×2 → ×3 → ×1 순환. Engine.time_scale 설정 (전투/슬롯/이펙트 전체).
+func _on_speed_pressed() -> void:
+	_cur_speed += 1
+	if _cur_speed > 3:
+		_cur_speed = 1
+	Engine.time_scale = float(_cur_speed)
+	if _speed_btn != null:
+		_speed_btn.text = "SPD ×%d" % _cur_speed
+
+
+## 게임 속도를 기본 ×1로 리셋 (런 재시작 시 — GAME OVER 전 속도가 유지되는 버그 방지).
+func reset_speed() -> void:
+	_cur_speed = 1
+	Engine.time_scale = 1.0
+	if _speed_btn != null:
+		_speed_btn.text = "SPD ×1"
+
+
+func _on_wave_started(wave_num: int) -> void:
+	_wave_num = wave_num
+	# 보스 WAVE(5배수)가 아니면 보스 게이지 숨김.
+	if wave_num % 5 != 0:
+		_boss_active = false
+	queue_redraw()
+
+
+func _on_enemy_spawned(enemy_id: StringName) -> void:
+	if enemy_id == &"boss":
+		_boss_active = true
+		var data := UnitRegistry.get_enemy_unit(&"boss")
+		if data != null:
+			_boss_hp = data.max_hp
+			_boss_max = data.max_hp
+		queue_redraw()
+
+
+func _on_enemy_killed(enemy_id: StringName, _exp: int) -> void:
+	if enemy_id == &"boss":
+		_boss_active = false
+		queue_redraw()
+
+
+func _on_boss_hp_changed(hp: int, max_hp: int) -> void:
+	_boss_hp = hp
+	_boss_max = max_hp
 	queue_redraw()
 
 
 func _draw() -> void:
-	# 전투 영역 배경 (밝게 조정 — 파타폰 톤이지만 가독성 우선)
-	draw_rect(Rect2(0.0, 0.0, 1080.0, BATTLE_H), Color(0.18, 0.15, 0.25, 1.0), true)
-	# 전투 라인 (중앙 가로선 — 유닛/적이 지나다니는 줄, 더 밝게)
-	draw_line(Vector2(40.0, LINE_Y), Vector2(1040.0, LINE_Y), Color(0.5, 0.45, 0.7, 0.8), 3.0)
-	# 아군 기지 영역 표시 (좌단 — 초록 채우기 사각형 80×120)
-	draw_rect(Rect2(20.0, LINE_Y - 60.0, 80.0, 120.0), Color(0.15, 0.5, 0.2, 0.9), false, 4.0)
-	draw_rect(Rect2(24.0, LINE_Y - 56.0, 72.0, 112.0), Color(0.2, 0.6, 0.3, 0.3), true)
-	# 적 포탈 영역 표시 (우단 — 빨간 채우기 사각형 80×120)
-	draw_rect(Rect2(980.0, LINE_Y - 60.0, 80.0, 120.0), Color(0.6, 0.15, 0.15, 0.9), false, 4.0)
-	draw_rect(Rect2(984.0, LINE_Y - 56.0, 72.0, 112.0), Color(0.7, 0.2, 0.2, 0.3), true)
-	# 하단 분할선 (전투/슬롯 경계 — 밝은 네온 선으로 명확히 표시)
-	draw_line(Vector2(0.0, BATTLE_H), Vector2(1080.0, BATTLE_H), Color(0.7, 0.6, 1.0, 1.0), 5.0)
-	# 임시 라벨 (좌상단 — 밝게)
-	_draw_label("⚔ BATTLE FIELD", Vector2(20.0, 30.0), 36, Color(0.85, 0.8, 1.0, 0.9))
-	# 아군/적 라벨
-	_draw_label("ALLY BASE", Vector2(15.0, LINE_Y + 80.0), 22, Color(0.3, 0.8, 0.4, 0.8))
-	_draw_label("ENEMY PORTAL", Vector2(920.0, LINE_Y + 80.0), 22, Color(0.9, 0.3, 0.3, 0.8))
-	# 기지 HP 바 — 아군(좌단 상단), 적(우단 상단). HP 비율에 따라 폭 변동.
-	_draw_hp_bar(120.0, LINE_Y - 70.0, 200.0, _ally_hp, _ally_max, Color(0.2, 0.8, 0.3))
-	_draw_hp_bar(760.0, LINE_Y - 70.0, 200.0, _enemy_hp, _enemy_max, Color(0.9, 0.3, 0.3))
-	# HP 숫자 라벨 (기지 위)
-	_draw_label("HP %d/%d" % [_ally_hp, _ally_max], Vector2(120.0, LINE_Y - 110.0), 26, Color(0.3, 0.9, 0.4, 1.0))
-	_draw_label("HP %d/%d" % [_enemy_hp, _enemy_max], Vector2(760.0, LINE_Y - 110.0), 26, Color(0.9, 0.4, 0.4, 1.0))
-	# DEBUG: 초기화 상태 크게 표시 (전투 영역 하단, 분할선 바로 위).
-	# 초기화 전: 주황 펄스 "WAITING INIT...", 초기화 후: 녹색 "INIT OK | ..."
-	var col := _dbg_init_color
-	if not _dbg_init_text.begins_with("INIT OK"):
-		col = _dbg_init_color.lerp(Color.WHITE, 0.5 + 0.5 * sin(_dbg_init_t * 6.0))
-	_draw_label(_dbg_init_text, Vector2(60.0, BATTLE_H - 70.0), 30, col)
+	var w := size.x
+	var bh := size.y
+	var ly := bh * 0.5
+	# 전투 필드 스크롤 — camera_x offset (배경/라인/기지/포탈). 정보바/경험치는 고정.
+	var cam := Layout.camera_x()
+	var fw := Layout.field_w()
+	# 전투 배경 (3배 폭, offset). 테스트 50% 투명.
+	if _bg_tex != null:
+		draw_texture_rect(_bg_tex, Rect2(-cam, 0.0, fw, bh), false, Color(1.0, 1.0, 1.0, 0.5))
+	# 전투 라인 (field 전체)
+	draw_line(Vector2(40.0 - cam, ly), Vector2(fw - 40.0 - cam, ly), Color(1.0, 1.0, 1.0, 0.85), 3.0)
+	# 아군 기지 / 적 포탈 영역 (field 좌표 + offset)
+	draw_rect(Rect2(Layout.ally_base_x() - cam - 40.0, ly - 60.0, 80.0, 120.0), Color(0.2, 0.9, 0.3, 1.0), false, 5.0)
+	draw_rect(Rect2(Layout.ally_base_x() - cam - 36.0, ly - 56.0, 72.0, 112.0), Color(0.3, 0.8, 0.4, 0.35), true)
+	draw_rect(Rect2(Layout.enemy_portal_x() - cam - 40.0, ly - 60.0, 80.0, 120.0), Color(1.0, 0.3, 0.3, 1.0), false, 5.0)
+	draw_rect(Rect2(Layout.enemy_portal_x() - cam - 36.0, ly - 56.0, 72.0, 112.0), Color(0.9, 0.3, 0.3, 0.35), true)
+	# 하단 분할선 (전투/슬롯 경계)
+	draw_line(Vector2(0.0, bh), Vector2(w, bh), Color(0.8, 0.7, 1.0, 1.0), 6.0)
+	# 라벨
+	_draw_label("⚔ BATTLE", Vector2(20.0, 70.0), 30, Color(1.0, 0.95, 0.8, 1.0))
+	_draw_label("ALLY", Vector2(15.0, ly + 80.0), 20, Color(0.5, 1.0, 0.6, 1.0))
+	_draw_label("ENEMY", Vector2(w - 130.0, ly + 80.0), 20, Color(1.0, 0.5, 0.5, 1.0))
+	# ★ 상단 정보바 — 3분할 (체력 좌 / 웨이브 중앙 / 보스 우). 높이 64(2배).
+	var seg := w / 3.0
+	var bar_h := 64.0
+	# 체력 (좌)
+	var hr := clampf(float(_ally_hp) / float(_ally_max), 0.0, 1.0) if _ally_max > 0 else 0.0
+	draw_rect(Rect2(0.0, 0.0, seg, bar_h), Color(0.05, 0.08, 0.05, 0.95), true)
+	draw_rect(Rect2(0.0, 0.0, seg * hr, bar_h), Color(0.3, 0.9, 0.4), true)
+	draw_rect(Rect2(0.0, 0.0, seg, bar_h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
+	_draw_label("HP %d/%d" % [_ally_hp, _ally_max], Vector2(12.0, 44.0), 30, Color(0.9, 1.0, 0.9, 1.0))
+	# 웨이브 (중앙)
+	_draw_label_center("WAVE %d" % _wave_num, seg, seg * 0.5, 44.0, 34, Color(1.0, 1.0, 1.0, 1.0))
+	# 보스 게이지 (우) — 보스 등장 시만.
+	if _boss_active:
+		var br := clampf(float(_boss_hp) / float(_boss_max), 0.0, 1.0) if _boss_max > 0 else 0.0
+		draw_rect(Rect2(seg * 2.0, 0.0, seg, bar_h), Color(0.1, 0.05, 0.05, 0.95), true)
+		draw_rect(Rect2(seg * 2.0, 0.0, seg * br, bar_h), Color(1.0, 0.3, 0.3), true)
+		draw_rect(Rect2(seg * 2.0, 0.0, seg, bar_h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
+		_draw_label("BOSS %d/%d" % [_boss_hp, _boss_max], Vector2(seg * 2.0 + 12.0, 44.0), 30, Color(1.0, 0.6, 0.6, 1.0))
+	# 하단 경험치 게이지.
+	_draw_exp_bar(20.0, bh - 48.0, w - 40.0)
 
 
-## HP 바 그리기 (배경 + 비율 채우기).
-func _draw_hp_bar(x: float, y: float, w: float, hp: int, mx: int, col: Color) -> void:
-	var r := clampf(float(hp) / float(mx), 0.0, 1.0) if mx > 0 else 0.0
-	# 배경 (어두운 회색)
-	draw_rect(Rect2(x, y, w, 16.0), Color(0.1, 0.1, 0.15, 0.95), true)
-	# 채우기 (색상 + 테두리)
-	draw_rect(Rect2(x, y, w * r, 16.0), col, true)
-	draw_rect(Rect2(x, y, w, 16.0), Color(1.0, 1.0, 1.0, 0.4), false, 2.0)
+func _draw_exp_bar(x: float, y: float, bar_w: float) -> void:
+	var r := clampf(float(_soul) / float(_soul_max), 0.0, 1.0) if _soul_max > 0 else 0.0
+	var h := 28.0
+	draw_rect(Rect2(x, y, bar_w, h), Color(0.05, 0.05, 0.12, 0.95), true)
+	draw_rect(Rect2(x, y, bar_w * r, h), Color(0.6, 0.4, 1.0), true)
+	draw_rect(Rect2(x, y, bar_w, h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
+	_draw_label("LV %d" % _level, Vector2(x + 12.0, y + 21.0), 22, Color(1.0, 0.95, 1.0, 1.0))
+	_draw_label("EXP %d/%d" % [_soul, _soul_max], Vector2(x + bar_w - 200.0, y + 21.0), 22, Color(1.0, 1.0, 1.0, 1.0))
 
 
 func _on_base_hp_changed(ally_hp: int, ally_max: int, enemy_hp: int, enemy_max: int) -> void:
@@ -95,11 +185,31 @@ func _on_base_hp_changed(ally_hp: int, ally_max: int, enemy_hp: int, enemy_max: 
 	_ally_max = ally_max
 	_enemy_hp = enemy_hp
 	_enemy_max = enemy_max
-	queue_redraw()   # HP 바 갱신
+	queue_redraw()
 
 
-## 임시 텍스트 그리기 (Godot 4 draw_string 헬퍼).
+func _on_soul_changed(value: int, maximum: int, lvl: int) -> void:
+	_soul = value
+	_soul_max = maximum
+	_level = lvl
+	queue_redraw()
+
+
+## 텍스트 그리기 — 검은 외곽선 + 밝은 본문 (좌측 정렬).
 func _draw_label(text: String, pos: Vector2, font_size: int, col: Color) -> void:
 	var font := get_theme_default_font()
-	if font != null:
-		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)
+	if font == null:
+		return
+	draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 6, Color(0.0, 0.0, 0.0, 0.85))
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)
+
+
+## 텍스트 중앙 정렬 — seg 폭 내 center_x 기준.
+func _draw_label_center(text: String, seg_start: float, center_offset: float, y: float, font_size: int, col: Color) -> void:
+	var font := get_theme_default_font()
+	if font == null:
+		return
+	var text_w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size).x
+	var pos := Vector2(seg_start + center_offset - text_w * 0.5, y)
+	draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 6, Color(0.0, 0.0, 0.0, 0.85))
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)

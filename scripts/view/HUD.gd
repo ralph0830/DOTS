@@ -15,12 +15,16 @@ var _bet_label: Label
 var _win_label: Label
 var _status_label: Label
 var _auto_btn: Button
+var _reroll_btn: Button
+var _mult_btn: Button   # 배수 토글 (×1/×2/×3)
 var _safe_root: Control
 var _settings_panel: ColorRect   # 설정 오버레이 패널 (사운드 볼륨/리셋)
-# 자동스핀 순환 모드 인덱스: 0=끔(AUTO), 1=10회, 2=25회, 3=50회, 4=무한(∞).
-var _auto_cycle := 0
-const AUTO_LABELS: Array[String] = ["AUTO", "×10", "×25", "×50", "∞"]
-const AUTO_COUNTS: Array[int] = [0, 10, 25, 50, -1]   # -1=무한
+# 자동스핀 ON/OFF 토글.
+var _auto_on := false
+var _is_spinning := false   # 코어 스핀 중 (BET 조작 차단)
+var _flash_tween: Tween     # BET 버튼 붉게 점멸 트윈
+var _gold_box: VBoxContainer   # GOLD 표시 칸 (부족 시 RED 점멸)
+var _gold_flash_tween: Tween
 
 
 func _ready() -> void:
@@ -32,6 +36,7 @@ func _ready() -> void:
 	EventBus.free_spins_ended.connect(_on_free_spins_ended)
 	EventBus.jackpot_won.connect(_on_jackpot)
 	EventBus.auto_spin_changed.connect(_on_auto_changed)
+	EventBus.state_changed.connect(_on_state_changed)
 	# 초기 표시
 	_on_credit(WalletManager.credit)
 	_on_bet(WalletManager.current_bet)
@@ -45,6 +50,12 @@ func _build_ui() -> void:
 	add_child(_safe_root)
 	call_deferred("_apply_safe_area")   # viewport/윈도우 크기 확정 후 적용
 
+	# 하단 조작계 배경 — 슬롯 배경 이미지(bg_mystic) 가림. 버튼 대비 향상 (불투명 어둡게).
+	var ctrl_bg := ColorRect.new()
+	ctrl_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ctrl_bg.color = Color(0.05, 0.05, 0.10, 0.92)
+	ctrl_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_safe_root.add_child(ctrl_bg)
 	# 외곽 여백 컨테이너
 	var margin_c := MarginContainer.new()
 	margin_c.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -65,20 +76,77 @@ func _build_ui() -> void:
 
 	# 상단 spacer — 릴 영역(540px)만큼 공간 확보. HUD는 릴 아래부터 시작.
 	var top_spacer := Control.new()
-	top_spacer.custom_minimum_size = Vector2(0, 556.0)   # 릴 540px + 여백 16px
+	top_spacer.custom_minimum_size = Vector2(0, 0.0)   # 조작계 10% — 릴 공간 spacer 불필요
 	top_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(top_spacer)
 
-	# 정보 바: CREDIT / BET / WIN 한 줄 표시 (릴과 버튼 사이).
-	vbox.add_child(_build_info_bar())
-	# 상태 라벨 (BIG WIN / FREE SPINS 등 일시적 메시지)
-	_status_label = _make_label("", 30, Color(0.6, 0.85, 1.0))
-	vbox.add_child(_status_label)
+	# 정보바 더미 라벨(조작계에 공간 집중, 표시 안 함).
+	_credit_label = Label.new()
+	_bet_label = Label.new()
+	_win_label = Label.new()
+	# 조작계 1행 — GOLD / SPIN / 배수 / AUTO / REROLL.
+	vbox.add_child(_build_controls())
+	# 경고 토스트는 별도 레이어(_safe_root 밖) — vbox 레이아웃 영향 없이 전체 화면 오버레이.
+	_build_toast_layer()
 
-	# 하단 행1: 베팅 ± (좌) / AUTO (우)
-	vbox.add_child(_build_bet_bar())
-	# 하단 행2: SPIN (우측 큼)
-	vbox.add_child(_build_spin_bar())
+
+## 경고 토스트 별도 레이어 — HUD(CanvasLayer) 직접 자식, full rect. 조작계 레이아웃에 영향 X.
+func _build_toast_layer() -> void:
+	_status_label = Label.new()
+	_status_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_status_label.add_theme_font_size_override("font_size", 42)
+	_status_label.add_theme_color_override("font_color", Color(1.0, 0.55, 0.2))
+	_status_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_status_label.add_theme_constant_override("outline_size", 12)
+	_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_status_label.visible = false
+	add_child(_status_label)   # _safe_root 가 아닌 HUD 직접 자식 = 전체 화면
+
+
+## 조작계 1행 4버튼 (동일 크기 EXPAND_FILL) — SPIN / ×1 / AUTO / REROLL.
+func _build_controls() -> HBoxContainer:
+	var bar := HBoxContainer.new()
+	bar.add_theme_constant_override("separation", 8)
+	bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	# GOLD 표시 (SPIN 왼쪽) — 현재 보유 골드. DEBUG: 탭 시 +1000.
+	_gold_box = VBoxContainer.new()
+	_gold_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_gold_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_gold_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_gold_box.gui_input.connect(_on_credit_clicked)
+	_gold_box.add_child(_make_label("GOLD", 22, Color(0.85, 0.7, 0.3, 0.95)))
+	_credit_label = _make_label("0", 38, Color(1.0, 0.85, 0.25))
+	_credit_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gold_box.add_child(_credit_label)
+	bar.add_child(_gold_box)
+	# SPIN
+	var spin := _make_button("SPIN", BTN_MIN)
+	spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spin.add_theme_font_size_override("font_size", 40)
+	spin.pressed.connect(_on_spin_pressed)
+	bar.add_child(spin)
+	# 배수 (×1/×2/×3)
+	_mult_btn = _make_button("×1", BTN_MIN)
+	_mult_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_mult_btn.add_theme_font_size_override("font_size", 40)
+	_mult_btn.pressed.connect(_on_mult_pressed)
+	bar.add_child(_mult_btn)
+	# AUTO
+	_auto_btn = _make_button("AUTO", BTN_MIN)
+	_auto_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_auto_btn.add_theme_font_size_override("font_size", 32)
+	_auto_btn.pressed.connect(_on_auto_pressed)
+	bar.add_child(_auto_btn)
+	# REROLL
+	_reroll_btn = _make_button("REROLL", BTN_MIN)
+	_reroll_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_reroll_btn.add_theme_font_size_override("font_size", 24)
+	_reroll_btn.disabled = true
+	_reroll_btn.pressed.connect(_on_reroll_pressed)
+	bar.add_child(_reroll_btn)
+	return bar
 
 
 ## 정보 바: CREDIT (좌) / BET (중앙) / WIN (우) — 릴 아래 한 줄 균등 배치.
@@ -167,8 +235,7 @@ func _build_settings_panel() -> void:
 	mute_btn.toggle_mode = true
 	mute_btn.button_pressed = AudioManager.master_muted
 	mute_btn.toggled.connect(func(on: bool) -> void:
-		AudioManager.master_muted = on
-		AudioManager.toggle_mute() if on else null)
+		AudioManager.set_muted(on))
 	vbox.add_child(mute_btn)
 	# 크레딧 리셋
 	var reset_btn := _make_button("RESET CREDIT", BTN_MIN)
@@ -189,21 +256,24 @@ func _build_bet_bar() -> HBoxContainer:
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 18)
 
-	var bet_down := _make_button("-", BTN_MIN)
-	bet_down.add_theme_font_size_override("font_size", 56)
-	bet_down.pressed.connect(func() -> void: WalletManager.change_bet(-1))
-	bar.add_child(bet_down)
-
-	var bet_up := _make_button("+", BTN_MIN)
-	bet_up.add_theme_font_size_override("font_size", 56)
-	bet_up.pressed.connect(func() -> void: WalletManager.change_bet(1))
-	bar.add_child(bet_up)
+	# 배수 토글 (×1/×2/×3) — 베팅+소환 양쪽 배수.
+	_mult_btn = _make_button("×1", BTN_MIN)
+	_mult_btn.add_theme_font_size_override("font_size", 40)
+	_mult_btn.pressed.connect(_on_mult_pressed)
+	bar.add_child(_mult_btn)
 
 	# 우측으로 밀어 AUTO를 끝으로 정렬
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(spacer)
+
+	# 리롤 버튼 (스핀 리롤러 카드 — reroll_charges > 0 시 활성).
+	_reroll_btn = _make_button("리롤", BTN_MIN)
+	_reroll_btn.add_theme_font_size_override("font_size", 24)
+	_reroll_btn.pressed.connect(_on_reroll_pressed)
+	_reroll_btn.disabled = true
+	bar.add_child(_reroll_btn)
 
 	# 자동스핀 순환 버튼: AUTO → ×10 → ×25 → ×50 → ∞ → AUTO 반복.
 	_auto_btn = _make_button("AUTO", BTN_MIN)
@@ -215,15 +285,9 @@ func _build_bet_bar() -> HBoxContainer:
 
 ## AUTO 버튼 클릭 시 순환. AUTO(끔) → ×10 → ×25 → ×50 → ∞ → AUTO(끔).
 func _on_auto_pressed() -> void:
-	_auto_cycle = (_auto_cycle + 1) % AUTO_LABELS.size()
-	var label: String = AUTO_LABELS[_auto_cycle]
-	var count: int = AUTO_COUNTS[_auto_cycle]
-	_auto_btn.text = label
-	if count == 0:
-		# 끔
-		EventBus.auto_spin_changed.emit(false, 0)
-	else:
-		EventBus.auto_spin_changed.emit(true, count)
+	_auto_on = not _auto_on
+	_auto_btn.text = "AUTO ON" if _auto_on else "AUTO"
+	EventBus.auto_spin_changed.emit(_auto_on, -1 if _auto_on else 0)
 
 
 ## DEBUG: CREDIT 영역 탭/클릭 시 디버그 머니 증가 (+1000). 출시 전 제거.
@@ -256,19 +320,19 @@ func _build_spin_bar() -> HBoxContainer:
 ## 데스크톱(노치 없음)에서는 offset 0 — 모바일에서만 창 내부 기준으로 안전하게 계산.
 ## (이전 구현이 모니터 전체 safe area 를 창 크기로 환산해 작은 창에서 offset 이 폭주하여
 ##  HUD 전체가 화면 밖으로 밀려 보이지 않던 버그 수정 — 2026-07-03.)
-# Phase 7: 상하 분할 — 상단 전투(1056px) / 하단 슬롯(864px). HUD는 하단 슬롯 영역만 차지.
-const BATTLE_H := 1056.0
+# Phase 7: 상하 분할 — 전투(Layout.battle_h) / 슬롯(Layout.slot_h). HUD는 하단 슬롯 영역만 차지.
 
 
 func _apply_safe_area() -> void:
-	# Phase 7: HUD를 하단 슬롯 영역(y=1056~1920)으로 제한.
+	# Phase 7: HUD를 하단 슬롯 영역(전투 영역 아래 ~ 화면 끝)으로 제한.
 	# _safe_root anchors 를 명시적으로 하단 영역으로 설정 (FULL_RECT 대신 커스텀).
-	# anchor_top=1056/1920=0.55, anchor_bottom=1.0 (하단 끝).
+	# anchor_top=전투 비율(Layout.BATTLE_RATIO=0.55), anchor_bottom=1.0 (하단 끝).
 	var design := get_window().content_scale_size
 	if design.y > 0.0:
-		var ratio := BATTLE_H / design.y
+		# 조작계 영역 — 상단 margin + 전투+슬롯 아래 ~ 하단 margin 위.
+		var ratio := Layout.control_top_ratio()
 		_safe_root.anchor_top = ratio
-		_safe_root.anchor_bottom = 1.0
+		_safe_root.anchor_bottom = 1.0 - Layout.BOTTOM_MARGIN
 		_safe_root.anchor_left = 0.0
 		_safe_root.anchor_right = 1.0
 		_safe_root.offset_left = 0.0
@@ -315,7 +379,7 @@ func _make_button(text: String, min_size: Vector2) -> Button:
 # --- 시그널 핸들러 ---
 
 func _on_credit(c: int) -> void:
-	_credit_label.text = "CREDIT  %d" % c
+	_credit_label.text = "%d" % c
 
 
 func _on_bet(b: int) -> void:
@@ -324,6 +388,7 @@ func _on_bet(b: int) -> void:
 
 func _on_eval(r: SpinResult) -> void:
 	_win_label.text = ("WIN  %d" % r.total_win) if r.total_win > 0 else ""
+	_update_reroll_btn()
 
 
 func _on_free_spins(remaining: int, multiplier: float) -> void:
@@ -341,5 +406,98 @@ func _on_jackpot(_tier: int, _amount: int) -> void:
 ## 자동스핀 상태 동기화(자금 부족/손실한도/횟수 소진으로 코어가 강제 해제 → 버튼 반영).
 func _on_auto_changed(enabled: bool, _remaining: int) -> void:
 	if not enabled:
-		_auto_cycle = 0
-		_auto_btn.text = AUTO_LABELS[0]   # "AUTO" 로 복귀
+		_auto_on = false
+		_auto_btn.text = "AUTO"   # OFF 로 복귀
+
+
+## bet_level 토글 — ×1 → ×5 순환. SPIN 중/AUTO ON 중은 조작 불가 (경고 토스트 + BET 붉게 점멸).
+func _on_mult_pressed() -> void:
+	if _is_spinning:
+		_show_toast("스핀 중 — BET 조작 불가")
+		_flash_bet_button()
+		return
+	if _auto_on:
+		_show_toast("AUTO ON 중 — BET 조작 불가")
+		_flash_bet_button()
+		return
+	WalletManager.bet_level += 1
+	if WalletManager.bet_level > 5:
+		WalletManager.bet_level = 1
+	if _mult_btn != null:
+		_mult_btn.text = "×%d" % WalletManager.bet_level
+	EventBus.bet_level_changed.emit(WalletManager.bet_level)
+
+
+## BET 버튼 붉게 점멸 (SPIN/AUTO 중 조작 시도 시 강제 피드백).
+func _flash_bet_button() -> void:
+	if _mult_btn == null:
+		return
+	if _flash_tween != null and _flash_tween.is_valid():
+		_flash_tween.kill()
+	_mult_btn.modulate = Color(1.0, 0.25, 0.25)
+	_flash_tween = create_tween()
+	_flash_tween.tween_property(_mult_btn, "modulate", Color.WHITE, 0.7) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## SPIN 버튼 — GOLD 부족 시 경고 토스트 + GOLD 칸 RED 점멸. 아니면 스핀 요청.
+func _on_spin_pressed() -> void:
+	if not WalletManager.can_bet():
+		_show_toast("GOLD가 부족합니다")
+		_flash_gold()
+		return
+	EventBus.spin_requested.emit()
+
+
+## GOLD 표시 칸 붉게 점멸 (GOLD 부족 시 강제 피드백).
+func _flash_gold() -> void:
+	if _gold_box == null:
+		return
+	if _gold_flash_tween != null and _gold_flash_tween.is_valid():
+		_gold_flash_tween.kill()
+	_gold_box.modulate = Color(1.0, 0.2, 0.2)
+	_gold_flash_tween = create_tween()
+	_gold_flash_tween.tween_property(_gold_box, "modulate", Color.WHITE, 0.8) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## 코어 상태 전이 수신 — SPIN 중 여부 추적 (BET 조작 차단용).
+func _on_state_changed(_from: int, to: int) -> void:
+	_is_spinning = (to != SlotMachine.State.IDLE)
+
+
+var _toast_timer: float = 0.0
+
+## 경고 토스트 — 2초간 중앙에 표시 후 자동 숨김.
+func _show_toast(msg: String) -> void:
+	if _status_label == null:
+		return
+	_status_label.text = msg
+	_status_label.visible = true
+	_toast_timer = 2.0
+	set_process(true)
+
+
+func _process(_delta: float) -> void:
+	if _toast_timer > 0.0:
+		_toast_timer -= _delta
+		if _toast_timer <= 0.0 and _status_label != null:
+			_status_label.visible = false
+			set_process(false)
+
+
+## 리롤 버튼 — reroll_requested emit (SlotMachine 이 무료 재스핀).
+func _on_reroll_pressed() -> void:
+	EventBus.reroll_requested.emit()
+
+
+## 리롤 버튼 상태 갱신 — reroll_charges 표시/활성화.
+func _update_reroll_btn() -> void:
+	if _reroll_btn == null:
+		return
+	var lord := get_node_or_null("/root/LordState")
+	var charges := 0
+	if lord != null:
+		charges = int(lord.get("reroll_charges"))
+	_reroll_btn.text = ("리롤 %d" % charges) if charges > 0 else "리롤"
+	_reroll_btn.disabled = charges <= 0

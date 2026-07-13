@@ -5,5 +5,4 @@
 [resource]
 script = ExtResource("1_wv4u2")
 id = 15
-row_r2 = 1
-debug_color = Color(0.625, 0.25, 1, 1)
+debug_color = Color(0.39999998, 1, 0.25, 1)

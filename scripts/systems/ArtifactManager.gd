@@ -14,13 +14,12 @@ extends Node
 # 활성화된 유물 id 목록.
 var _active: Array[StringName] = []
 
+# 유물 밸런스 설정 — Dictionary로 그룹화 (한 곳에서 튜닝, 새 유물 추가 시 항목 추가).
+const SPIKE := {"range_x": 150.0, "damage": 5, "interval": 0.5}
+const SHIELD := {"max_hp": 50.0}
 # 유물별 런타임 상태.
 var _spike_tick: float = 0.0          # 가시 바리케이드 도트 데미지 타이머
 var _shield_hp: float = 0.0           # 마력 보호막 잔여 흡수량
-const _SHIELD_MAX: float = 50.0       # 보호막 최대 흡수량 (선택 시 충전)
-const _SPIKE_RANGE_X: float = 150.0   # 가시 바리케이드 효과 범위 (기지로부터 x 거리)
-const _SPIKE_DAMAGE: int = 5          # 가시 바리케이드 도트 데미지
-const _SPIKE_INTERVAL: float = 0.5    # 가시 바리케이드 데미지 주기 (초)
 
 
 func _ready() -> void:
@@ -42,7 +41,7 @@ func register(id: StringName) -> void:
 	_active.append(id)
 	# 유물별 초기화.
 	if id == &"magic_shield":
-		_shield_hp = _SHIELD_MAX
+		_shield_hp = float(SHIELD["max_hp"])
 	print("[ArtifactManager] 유물 활성화: %s (활성 %d개)" % [id, _active.size()])
 
 
@@ -60,7 +59,7 @@ func _physics_process(delta: float) -> void:
 	# 가시 바리케이드: 기지 근처 적에게 도트 데미지.
 	if _active.has(&"spike_barricade"):
 		_spike_tick += delta
-		if _spike_tick >= _SPIKE_INTERVAL:
+		if _spike_tick >= float(SPIKE["interval"]):
 			_spike_tick = 0.0
 			_apply_spike_damage()
 
@@ -74,11 +73,11 @@ func _apply_spike_damage() -> void:
 	for child in battle.get_children():
 		if not (child is Unit) or not child._alive or not child.is_enemy:
 			continue
-		if child.global_position.x < _SPIKE_RANGE_X:
-			child.take_damage(_SPIKE_DAMAGE)
+		if child.global_position.x < float(SPIKE["range_x"]):
+			child.take_damage(int(SPIKE["damage"]))
 			hit_count += 1
 	if hit_count > 0:
-		print("[ArtifactManager] 가시 바리케이드: 적 %d체에 %d 데미지" % [hit_count, _SPIKE_DAMAGE])
+		print("[ArtifactManager] 가시 바리케이드: 적 %d체에 %d 데미지" % [hit_count, int(SPIKE["damage"])])
 
 
 ## 기지 피해 수신 — 마력 보호막이 활성 시 피해 흡수.

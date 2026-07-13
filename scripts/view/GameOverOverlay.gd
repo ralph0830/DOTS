@@ -17,14 +17,14 @@ var _victory: bool = false
 
 func _ready() -> void:
 	# 오버레이 자체는 항상 full rect 로 화면을 채운다 (visible 은 끄지 않음 — 끄면 layout 이 0 이 됨).
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE   # 표시 전에는 입력 통과
 	z_index = 100
 	EventBus.game_over.connect(_on_game_over)
 
 	# 배경 (반투명 어둠)
 	_bg = ColorRect.new()
-	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_bg.color = Color(0.0, 0.0, 0.0, 0.75)
 	_bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	_bg.visible = false                          # 표시 전 숨김
@@ -33,7 +33,7 @@ func _ready() -> void:
 	# 중앙 콘텐츠
 	# size_flags EXPAND_FILL 필수 — 부모(오버레이 full rect)를 채워야 중앙 정렬됨.
 	_center = CenterContainer.new()
-	_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_center.visible = false                      # 표시 전 숨김
@@ -84,15 +84,19 @@ func _on_game_over(victory: bool) -> void:
 ## anchor preset 만으로는 deferred _ready 시점의 layout 미확정 상태에서 size 가 0 으로 남을 수 있어,
 ## 표시 직전에 부모 size 로 명시 적용한다. 자식(bg/center) 도 동일 full rect 재적용.
 func _ensure_full_rect() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var p := get_parent()
 	if p is Control and p.size.x > 0.0 and p.size.y > 0.0:
 		position = Vector2.ZERO
 		size = p.size
 	if _bg != null:
-		_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if _center != null:
-		_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+		# CenterContainer 에도 부모 size 를 명시 적용 — anchors preset 만으로는 lazy layout
+		# 타이밍에 size 가 갱신되지 않아 minimum size 만큼만 좌상단에 표시되는 버그 방지.
+		_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_center.position = Vector2.ZERO
+		_center.size = size
 
 
 ## 탭/클릭 시 리스타트.

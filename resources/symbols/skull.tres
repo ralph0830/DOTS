@@ -8,7 +8,9 @@ id = &"skull"
 display_name = "Skull"
 color = Color(0.65, 0.65, 0.7, 1)
 shape = 9
-payout_3 = 1
-payout_4 = 2
-payout_5 = 3
+payouts = {
+3: 1,
+4: 2,
+5: 3
+}
 unit_id = &"skull"

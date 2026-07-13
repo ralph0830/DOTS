@@ -345,10 +345,147 @@ centered, solid pure white background, 16-bit pixel art, fantasy RPG creature ic
 | `tools/comfyui/comfy_gem.py` | 단일 생성 스크립트 (소스) |
 | `tools/comfyui/comfy_dots_symbols.py` | 7종 일괄 스크립트 (소스) |
 | `tools/comfyui/comfy_pixel.py` | 팔레트 변환 버전 (소스) |
+| `tools/comfyui/sprite_sheet_maker.py` | 스프라이트시트 애니메이션 생성 (소스) |
 | `/opt/ComfyUI/comfy_gem.py` | 서버 배포본 (실행용) |
+| `/opt/ComfyUI/sprite_sheet_maker.py` | 스프라이트시트 서버 배포본 (실행용) |
 | `/opt/ComfyUI/user/default/workflows/workflow.json` | 사용자 원본 워크플로우 (수정 금지) |
 | `assets/sprites/{id}_transparent_180.png` | 생성된 게임 에셋 |
 | `docs/COMFYUI_GUIDE.md` | 이 문서 |
+
+---
+
+## 11. 스프라이트시트 애니메이션 생성 (Sprite Sheet Maker)
+
+> **Civitai "Sprite Sheet Maker" (model #448101, v H42) 재구현.**
+> 단일 캐릭터 이미지 → idle/walk 애니메이션 스프라이트시트 변환.
+> **최종 갱신: 2026-07-10** (검증 완료)
+
+### 워크플로우 구조
+
+```
+LoadImage (캐릭터 1장)
+   │
+   ├─→ PrepImageForClipVision → IPAdapterAdvanced (캐릭터 일관성, weight 0.8)
+   │
+   ├─→ CheckpointLoader (DreamShaper_8, SD1.5)
+   │      └─→ LoraLoader (AnimateLCM LoRA, 가속)
+   │             └─→ AnimateDiffLoader (AnimateLCM_sd15_t2v, 모션)
+   │
+   ├─→ EmptyLatentImage (512×512, batch=8)
+   │      ↓
+   │   KSampler (LCM, 12스텝, sgm_uniform)
+   │      ↓
+   │   VAEDecode → Image Rembg (isnet-anime, 배경제거)
+   │      ↓
+   │   ImageScale (128×128, nearest-exact)
+   │      ↓
+   ├─→ SaveImage (개별 프레임 8장)
+   ├─→ Create Grid Image from Batch (스프라이트시트)
+   └─→ VHS_VideoCombine (GIF 미리보기, 10fps 루핑)
+
+후처리: PIL flood-fill (흰 배경 → 투명 알파)
+```
+
+### 설치된 추가 리소스
+
+| 리소스 | 위치 | 용도 | 크기 |
+|---|---|---|---|
+| `AnimateLCM_sd15_t2v.ckpt` | `models/animatediff_models/` | AnimateDiff 모션 모듈 | 1.7GB |
+| `AnimateLCM_sd15_t2v_lora.safetensors` | `models/loras/` | LCM 가속 LoRA (일반 LoraLoader 사용) | 129MB |
+| `ip-adapter-plus_sd15.safetensors` | `models/ipadapter/` | SD1.5용 IPAdapter (PLUS) | 94MB |
+| `isnet-anime.onnx` | `models/rembg/` | Rembg 배경제거 (애니메이션 특화) | 176MB |
+
+> **주의**: `AnimateLCM_sd15_t2v_lora`는 temporal key가 없는 일반 LCM LoRA이므로
+> `ADE_AnimateDiffLoRALoader`(motion_lora)가 아닌 **일반 `LoraLoader`**로 UNet에 적용해야 함.
+
+### 단일 스프라이트시트 생성
+
+```bash
+# 서버에서 실행 (입력 이미지는 /opt/ComfyUI/input/ 에 업로드 필요)
+ssh -p 2202 ralph@ralphpark.com 'cd /opt/ComfyUI && python3 sprite_sheet_maker.py \
+  --input knight_base.png \
+  --name knight_idle \
+  --frames 8 \
+  --size 128 \
+  --seed 42'
+```
+
+### 파라미터 전체 목록
+
+| 파라미터 | 기본값 | 설명 |
+|---|---|---|
+| `--input` | (필수) | 입력 캐릭터 이미지 (ComfyUI input 폴더 내 파일명) |
+| `--name` | (필수) | 출력 파일명 접두사 |
+| `--frames` | `8` | 프레임 수 (batch_size) |
+| `--size` | `128` | 최종 출력 해상도 (정사각형) |
+| `--gen-size` | `512` | SD 생성 해상도 (SD1.5 최적) |
+| `--seed` | `42` | 재현성 시드 |
+| `--steps` | `12` | LCM 스텝 수 (LCM 체크포인트면 8, 일반 SD1.5면 12~15) |
+| `--ip-weight` | `0.8` | IPAdapter 가중치 — 캐릭터 일관성 강도 (0.6~1.0) |
+| `--controlnet` | OFF | ControlNet OpenPose 사용 (포즈 변화 큰 액션용) |
+| `--cn-strength` | `1.2` | ControlNet 강도 |
+| `--positive` | idle 기본 | 긍정 프롬프트 |
+| `--negative` | idle 기본 | 부정 프롬프트 |
+
+### 출력 파일 (프레임당 3종 + 시트 + GIF)
+
+```
+/opt/ComfyUI/output/{name}_frame_00001_.png              # 흰 배경 (RGB, Rembg 출력)
+/opt/ComfyUI/output/{name}_frame_00001__transparent.png  # 투명 배경 (RGBA, PIL 후처리) ← 게임용
+... (프레임 수만큼 반복)
+/opt/ComfyUI/output/{name}_sheet_00001_.png              # 스프라이트시트 (흰 배경)
+/opt/ComfyUI/output/{name}_sheet_00001__transparent.png  # 스프라이트시트 (투명) ← 게임용
+/opt/ComfyUI/output/{name}_preview_00001.gif             # GIF 미리보기 (10fps 루핑)
+```
+
+### 로컬로 가져오기
+
+```bash
+# 투명 스프라이트시트
+scp -P 2202 ralph@ralphpark.com:/opt/ComfyUI/output/knight_idle_sheet_00001__transparent.png captures/
+
+# 투명 개별 프레임
+scp -P 2202 ralph@ralphpark.com:/opt/ComfyUI/output/knight_idle_frame_00001__transparent.png captures/
+
+# GIF 미리보기
+scp -P 2202 ralph@ralphpark.com:/opt/ComfyUI/output/knight_idle_preview_00001.gif captures/
+```
+
+### 성능 (실측, 2026-07-10, GTX 1060 6GB)
+
+| 항목 | 소요 시간 | 비고 |
+|---|---|---|
+| 최초 실행 (모델 로드 포함) | **183초** | 체크포인트+AnimateDiff+IPAdapter+Rembg 로드 |
+| 캐시된 실행 (모델 메모리 상주) | **15초** | 동일 프롬프트 재실행 시 |
+| 8프레임 × 128px | 안정 | VRAM 4.2GB / 6GB 사용 |
+
+> **주의**: 1024×1024 이상이나 30프레임 이상은 VRAM 부족 위험. idle 8프레임 512생성→128출력이 안정 기준.
+
+### 해결한 기술 제약
+
+| 제약 | 해결책 |
+|---|---|
+| AnimateLCM LoRA가 motion_lora로 인식 안 됨 | 일반 `LoraLoader`로 UNet에 적용 (temporal key 없음) |
+| onnxruntime GPU 버전 CUDA 불일치 | `onnxruntime==1.20.1` (CPU)로 다운그레이드 |
+| ComfyUI SaveImage는 RGB만 저장 | Rembg 배경을 흰색으로 렌더링 → PIL flood-fill로 투명화 |
+| Rembg 모델 자동 다운로드 실패 | ComfyUI 실행 시 `/opt/ComfyUI/models/rembg/`에 자동 다운로드 |
+
+### GeekyGhost LCM 체크포인트 (선택)
+
+원본 워크플로우는 `GeekyGhost_LCM_v2.safetensors` (Civitai #476202)를 사용.
+이 모델은 Civitai 인증(token)이 필요해 자동 다운로드 불가. 수동 다운로드 후:
+
+```bash
+# 1. 브라우저에서 Civitai 로그인 후 다운로드
+# 2. 서버로 업로드
+scp -P 2202 geekyghostLCM_v10.safetensors ralph@ralphpark.com:/opt/ComfyUI/models/checkpoints/
+
+# 3. 스크립트의 CHECKPOINT 상수 변경 (sprite_sheet_maker.py 상단)
+#    CHECKPOINT = "geekyghostLCM_v10.safetensors"
+# 4. steps를 8로 낮춤 (LCM 체크포인트는 8스텝足够)
+```
+
+> DreamShaper_8 + AnimateLCM LoRA 조합으로도 충분한 품질. GeekyGhost LCM은 속도 우선시만.
 
 ---
 
@@ -363,6 +500,7 @@ centered, solid pure white background, 16-bit pixel art, fantasy RPG creature ic
 | 2026-07-03 | 게임 적용 + 캡처 검증 | ✅ texture 자동 연결 확인 |
 | 2026-07-03 | **투명도 번짐 해결** — flood-fill 알고리즘 교체 | ✅ 심볼 내부 번짐 13%→1.8% (7배 감소). 모든 심볼 정량 개선 |
 | 2026-07-03 | **unicorn/rune 시드 최적화** — seed_explore.py | ✅ unicorn 0.8%→43.3% (54배), rune 0.5%→73.6% (147배). 최종 7종 재생성 + 게임 적용 완료 |
+| 2026-07-10 | **스프라이트시트 워크플로우 구축** — Civitai Sprite Sheet Maker v H42 재구현 | ✅ IPAdapter+AnimateDiff+Rembg+Grid. idle 8프레임 128px 투명 PNG 생성. 183초(최초)/15초(캐시). AnimateLCM LoRA motion_lora 이슈 해결, onnxruntime CUDA 불일치 해결 |
 
 ---
 

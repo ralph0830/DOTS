@@ -8,174 +8,470 @@
 
 [sub_resource type="Resource" id="Resource_vvnye"]
 script = ExtResource("1_qlbk2")
-row_r0 = 1
-row_r1 = 1
-row_r2 = 1
-row_r3 = 1
-row_r4 = 1
+row_r0 = 2
+row_r1 = 2
+row_r2 = 2
+row_r3 = 2
+row_r4 = 2
 debug_color = Color(1, 0.25, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_vplpe"]
 script = ExtResource("1_qlbk2")
 id = 1
-debug_color = Color(1, 0.47500002, 0.25, 1)
+row_r0 = 1
+row_r1 = 1
+row_r2 = 1
+row_r3 = 1
+row_r4 = 1
+debug_color = Color(1, 0.34000003, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_63mc7"]
 script = ExtResource("1_qlbk2")
 id = 2
-row_r0 = 2
-row_r1 = 2
-row_r2 = 2
-row_r3 = 2
-row_r4 = 2
-debug_color = Color(1, 0.70000005, 0.25, 1)
+row_r0 = 3
+row_r1 = 3
+row_r2 = 3
+row_r3 = 3
+row_r4 = 3
+debug_color = Color(1, 0.43, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_or823"]
 script = ExtResource("1_qlbk2")
 id = 3
-row_r1 = 1
-row_r2 = 2
-row_r3 = 1
-debug_color = Color(1, 0.925, 0.25, 1)
+row_r0 = 1
+row_r1 = 2
+row_r2 = 3
+row_r3 = 2
+row_r4 = 1
+debug_color = Color(1, 0.52, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_m1r14"]
 script = ExtResource("1_qlbk2")
 id = 4
-row_r0 = 2
-row_r1 = 1
-row_r3 = 1
-row_r4 = 2
-debug_color = Color(0.84999996, 1, 0.25, 1)
+row_r0 = 3
+row_r1 = 2
+row_r2 = 1
+row_r3 = 2
+row_r4 = 3
+debug_color = Color(1, 0.61, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_8secf"]
 script = ExtResource("1_qlbk2")
 id = 5
-row_r2 = 1
-row_r3 = 2
+row_r0 = 2
+row_r1 = 1
+row_r2 = 2
+row_r3 = 1
 row_r4 = 2
-debug_color = Color(0.625, 1, 0.25, 1)
+debug_color = Color(1, 0.70000005, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_ewiff"]
 script = ExtResource("1_qlbk2")
 id = 6
 row_r0 = 2
-row_r1 = 2
-row_r2 = 1
-debug_color = Color(0.39999998, 1, 0.25, 1)
+row_r1 = 3
+row_r2 = 2
+row_r3 = 3
+row_r4 = 2
+debug_color = Color(1, 0.78999996, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_qd1wa"]
 script = ExtResource("1_qlbk2")
 id = 7
 row_r0 = 1
+row_r1 = 2
+row_r2 = 1
+row_r3 = 2
 row_r4 = 1
-debug_color = Color(0.25, 1, 0.32499993, 1)
+debug_color = Color(1, 0.88, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_iod01"]
 script = ExtResource("1_qlbk2")
 id = 8
 row_r0 = 1
-row_r1 = 2
+row_r1 = 1
 row_r2 = 2
-row_r3 = 2
-row_r4 = 1
-debug_color = Color(0.25, 1, 0.5500001, 1)
+row_r3 = 3
+row_r4 = 3
+debug_color = Color(1, 0.96999997, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_qktj7"]
 script = ExtResource("1_qlbk2")
 id = 9
-row_r1 = 1
-row_r2 = 1
+row_r0 = 3
+row_r1 = 3
+row_r2 = 2
 row_r3 = 1
-debug_color = Color(0.25, 1, 0.77499986, 1)
+row_r4 = 1
+debug_color = Color(0.93999994, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_12suu"]
 script = ExtResource("1_qlbk2")
 id = 10
 row_r0 = 2
 row_r1 = 1
-row_r2 = 1
-row_r3 = 1
+row_r2 = 2
+row_r3 = 3
 row_r4 = 2
-debug_color = Color(0.25, 1, 1, 1)
+debug_color = Color(0.84999996, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_w28li"]
 script = ExtResource("1_qlbk2")
 id = 11
-row_r0 = 1
-row_r2 = 1
-row_r3 = 2
-row_r4 = 1
-debug_color = Color(0.25, 0.77499986, 1, 1)
+row_r0 = 2
+row_r1 = 3
+row_r2 = 2
+row_r3 = 1
+row_r4 = 2
+debug_color = Color(0.76000005, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_jfwdd"]
 script = ExtResource("1_qlbk2")
 id = 12
 row_r0 = 1
 row_r1 = 2
-row_r2 = 1
-row_r4 = 1
-debug_color = Color(0.25, 0.5499999, 1, 1)
+row_r2 = 2
+row_r3 = 2
+row_r4 = 3
+debug_color = Color(0.6700001, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_u774b"]
 script = ExtResource("1_qlbk2")
 id = 13
-row_r1 = 1
-row_r3 = 1
-debug_color = Color(0.25, 0.3250001, 1, 1)
+row_r0 = 3
+row_r1 = 2
+row_r2 = 2
+row_r3 = 2
+row_r4 = 1
+debug_color = Color(0.58000004, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_s6uy7"]
 script = ExtResource("1_qlbk2")
 id = 14
 row_r0 = 2
-row_r1 = 1
-row_r2 = 2
-row_r3 = 1
+row_r1 = 2
+row_r2 = 1
+row_r3 = 2
 row_r4 = 2
-debug_color = Color(0.39999986, 0.25, 1, 1)
+debug_color = Color(0.48999995, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_5bvnk"]
 script = ExtResource("1_qlbk2")
 id = 15
-row_r2 = 1
-debug_color = Color(0.625, 0.25, 1, 1)
+debug_color = Color(0.39999998, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_pjk1h"]
 script = ExtResource("1_qlbk2")
 id = 16
-row_r0 = 2
-row_r1 = 2
-row_r2 = 1
-row_r3 = 2
+row_r1 = 1
+row_r2 = 2
+row_r3 = 3
 row_r4 = 2
-debug_color = Color(0.85000014, 0.25, 1, 1)
+debug_color = Color(0.31000006, 1, 0.25, 1)
 
 [sub_resource type="Resource" id="Resource_y7a5v"]
 script = ExtResource("1_qlbk2")
 id = 17
-row_r0 = 1
-row_r1 = 1
-row_r3 = 1
-row_r4 = 1
-debug_color = Color(1, 0.25, 0.9249997, 1)
+row_r1 = 2
+row_r2 = 1
+row_r3 = 2
+row_r4 = 3
+debug_color = Color(0.25, 1, 0.27999997, 1)
 
 [sub_resource type="Resource" id="Resource_qih66"]
 script = ExtResource("1_qlbk2")
 id = 18
-row_r0 = 1
-row_r1 = 1
+row_r0 = 2
+row_r1 = 3
 row_r2 = 2
 row_r3 = 1
-row_r4 = 1
-debug_color = Color(1, 0.25, 0.7000003, 1)
+debug_color = Color(0.25, 1, 0.37000006, 1)
 
 [sub_resource type="Resource" id="Resource_l2f7h"]
 script = ExtResource("1_qlbk2")
 id = 19
-row_r1 = 2
+row_r0 = 1
+row_r2 = 1
 row_r3 = 2
-debug_color = Color(1, 0.25, 0.47500014, 1)
+row_r4 = 3
+debug_color = Color(0.25, 1, 0.45999998, 1)
 
 [sub_resource type="Resource" id="Resource_ctg16"]
+script = ExtResource("1_qlbk2")
+id = 20
+row_r0 = 3
+row_r2 = 1
+row_r3 = 2
+row_r4 = 3
+debug_color = Color(0.25, 1, 0.5500001, 1)
+
+[sub_resource type="Resource" id="Resource_vm7t8"]
+script = ExtResource("1_qlbk2")
+id = 21
+row_r1 = 3
+row_r2 = 2
+row_r3 = 1
+row_r4 = 2
+debug_color = Color(0.25, 1, 0.64, 1)
+
+[sub_resource type="Resource" id="Resource_dmpss"]
+script = ExtResource("1_qlbk2")
+id = 22
+row_r1 = 1
+row_r2 = 1
+row_r3 = 1
+row_r4 = 2
+debug_color = Color(0.25, 1, 0.7299999, 1)
+
+[sub_resource type="Resource" id="Resource_ugmm7"]
+script = ExtResource("1_qlbk2")
+id = 23
+row_r1 = 3
+row_r2 = 3
+row_r3 = 3
+row_r4 = 2
+debug_color = Color(0.25, 1, 0.82, 1)
+
+[sub_resource type="Resource" id="Resource_a3ce8"]
+script = ExtResource("1_qlbk2")
+id = 24
+row_r0 = 2
+row_r1 = 1
+row_r3 = 1
+row_r4 = 2
+debug_color = Color(0.25, 1, 0.9099999, 1)
+
+[sub_resource type="Resource" id="Resource_ahlhg"]
+script = ExtResource("1_qlbk2")
+id = 25
+row_r0 = 4
+row_r1 = 4
+row_r2 = 4
+row_r3 = 4
+row_r4 = 4
+debug_color = Color(0.25, 1, 1, 1)
+
+[sub_resource type="Resource" id="Resource_uwk0c"]
+script = ExtResource("1_qlbk2")
+id = 26
+row_r0 = 4
+row_r1 = 3
+row_r2 = 2
+row_r3 = 3
+row_r4 = 4
+debug_color = Color(0.25, 0.9100001, 1, 1)
+
+[sub_resource type="Resource" id="Resource_ypx4p"]
+script = ExtResource("1_qlbk2")
+id = 27
+row_r0 = 4
+row_r1 = 2
+row_r2 = 3
+row_r3 = 2
+row_r4 = 4
+debug_color = Color(0.25, 0.8199998, 1, 1)
+
+[sub_resource type="Resource" id="Resource_8iknb"]
+script = ExtResource("1_qlbk2")
+id = 28
+row_r0 = 2
+row_r1 = 3
+row_r2 = 4
+row_r3 = 3
+row_r4 = 2
+debug_color = Color(0.25, 0.7299999, 1, 1)
+
+[sub_resource type="Resource" id="Resource_sah2x"]
+script = ExtResource("1_qlbk2")
+id = 29
+row_r1 = 1
+row_r2 = 2
+row_r3 = 3
+row_r4 = 4
+debug_color = Color(0.25, 0.64, 1, 1)
+
+[sub_resource type="Resource" id="Resource_iqxan"]
+script = ExtResource("1_qlbk2")
+id = 30
+row_r0 = 4
+row_r1 = 3
+row_r2 = 2
+row_r3 = 1
+debug_color = Color(0.25, 0.5499999, 1, 1)
+
+[sub_resource type="Resource" id="Resource_hypm0"]
+script = ExtResource("1_qlbk2")
+id = 31
+row_r0 = 4
+row_r1 = 2
+row_r3 = 2
+row_r4 = 4
+debug_color = Color(0.25, 0.45999998, 1, 1)
+
+[sub_resource type="Resource" id="Resource_uduvd"]
+script = ExtResource("1_qlbk2")
+id = 32
+row_r1 = 2
+row_r2 = 4
+row_r3 = 2
+debug_color = Color(0.25, 0.37000006, 1, 1)
+
+[sub_resource type="Resource" id="Resource_vgxpd"]
+script = ExtResource("1_qlbk2")
+id = 33
+row_r0 = 4
+row_r1 = 1
+row_r2 = 4
+row_r3 = 1
+row_r4 = 4
+debug_color = Color(0.25, 0.27999997, 1, 1)
+
+[sub_resource type="Resource" id="Resource_2vd5f"]
+script = ExtResource("1_qlbk2")
+id = 34
+row_r1 = 1
+row_r3 = 1
+debug_color = Color(0.30999994, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_nskp7"]
+script = ExtResource("1_qlbk2")
+id = 35
+row_r0 = 2
+row_r1 = 4
+row_r2 = 2
+row_r3 = 4
+row_r4 = 2
+debug_color = Color(0.39999986, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_c0tou"]
+script = ExtResource("1_qlbk2")
+id = 36
+row_r0 = 2
+row_r2 = 2
+row_r4 = 2
+debug_color = Color(0.49000013, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_ssxxl"]
+script = ExtResource("1_qlbk2")
+id = 37
+row_r0 = 1
+row_r1 = 3
+row_r2 = 1
+row_r3 = 3
+row_r4 = 1
+debug_color = Color(0.58000004, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_v4t32"]
+script = ExtResource("1_qlbk2")
+id = 38
+row_r0 = 3
+row_r1 = 1
+row_r2 = 3
+row_r3 = 1
+row_r4 = 3
+debug_color = Color(0.66999996, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_a1a7m"]
+script = ExtResource("1_qlbk2")
+id = 39
+row_r0 = 4
+row_r1 = 3
+row_r2 = 1
+row_r3 = 3
+row_r4 = 4
+debug_color = Color(0.7599999, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_8h1jw"]
+script = ExtResource("1_qlbk2")
+id = 40
+row_r1 = 1
+row_r2 = 3
+row_r3 = 1
+debug_color = Color(0.85000014, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_hvjxi"]
+script = ExtResource("1_qlbk2")
+id = 41
+row_r0 = 1
+row_r1 = 4
+row_r2 = 2
+row_r3 = 4
+row_r4 = 1
+debug_color = Color(0.94000006, 0.25, 1, 1)
+
+[sub_resource type="Resource" id="Resource_kwsne"]
+script = ExtResource("1_qlbk2")
+id = 42
+row_r0 = 3
+row_r2 = 2
+row_r4 = 3
+debug_color = Color(1, 0.25, 0.97, 1)
+
+[sub_resource type="Resource" id="Resource_w1e0j"]
+script = ExtResource("1_qlbk2")
+id = 43
+row_r0 = 4
+row_r1 = 2
+row_r2 = 2
+row_r3 = 2
+debug_color = Color(1, 0.25, 0.8800001, 1)
+
+[sub_resource type="Resource" id="Resource_rovwn"]
+script = ExtResource("1_qlbk2")
+id = 44
+row_r1 = 2
+row_r2 = 2
+row_r3 = 2
+row_r4 = 4
+debug_color = Color(1, 0.25, 0.7900002, 1)
+
+[sub_resource type="Resource" id="Resource_31ydw"]
+script = ExtResource("1_qlbk2")
+id = 45
+row_r0 = 2
+row_r1 = 4
+row_r2 = 4
+row_r3 = 4
+row_r4 = 2
+debug_color = Color(1, 0.25, 0.7000003, 1)
+
+[sub_resource type="Resource" id="Resource_wgcll"]
+script = ExtResource("1_qlbk2")
+id = 46
+row_r0 = 2
+row_r4 = 2
+debug_color = Color(1, 0.25, 0.61, 1)
+
+[sub_resource type="Resource" id="Resource_hvgxe"]
+script = ExtResource("1_qlbk2")
+id = 47
+row_r0 = 1
+row_r1 = 2
+row_r2 = 3
+row_r3 = 4
+row_r4 = 3
+debug_color = Color(1, 0.25, 0.5200001, 1)
+
+[sub_resource type="Resource" id="Resource_tfgww"]
+script = ExtResource("1_qlbk2")
+id = 48
+row_r0 = 3
+row_r1 = 2
+row_r2 = 1
+row_r4 = 1
+debug_color = Color(1, 0.25, 0.4300002, 1)
+
+[sub_resource type="Resource" id="Resource_8mbe0"]
+script = ExtResource("1_qlbk2")
+id = 49
+row_r0 = 4
+row_r1 = 1
+row_r2 = 2
+row_r3 = 1
+row_r4 = 4
+debug_color = Color(1, 0.25, 0.3399999, 1)
+
+[sub_resource type="Resource" id="Resource_yvp1t"]
 script = ExtResource("2_htj0m")
 scatter_free_spins_base = 0
 scatter_free_spins_per_extra = 0
@@ -189,9 +485,11 @@ id = &"knight"
 display_name = "Knight"
 color = Color(0.25, 0.55, 0.95, 1)
 shape = 6
-payout_3 = 6
-payout_4 = 20
-payout_5 = 60
+payouts = {
+3: 6,
+4: 20,
+5: 60
+}
 unit_id = &"knight"
 
 [sub_resource type="Resource" id="Resource_vcues"]
@@ -200,9 +498,11 @@ id = &"archer"
 display_name = "Archer"
 color = Color(0.3, 0.85, 0.45, 1)
 shape = 7
-payout_3 = 5
-payout_4 = 15
-payout_5 = 45
+payouts = {
+3: 5,
+4: 15,
+5: 45
+}
 unit_id = &"archer"
 
 [sub_resource type="Resource" id="Resource_ml1g4"]
@@ -211,9 +511,11 @@ id = &"mage"
 display_name = "Mage"
 color = Color(0.7, 0.35, 0.95, 1)
 shape = 8
-payout_3 = 8
-payout_4 = 25
-payout_5 = 80
+payouts = {
+3: 8,
+4: 25,
+5: 80
+}
 unit_id = &"mage"
 
 [sub_resource type="Resource" id="Resource_j0nq8"]
@@ -222,35 +524,38 @@ id = &"skull"
 display_name = "Skull"
 color = Color(0.65, 0.65, 0.7, 1)
 shape = 9
-payout_3 = 1
-payout_4 = 2
-payout_5 = 3
+payouts = {
+3: 1,
+4: 2,
+5: 3
+}
 unit_id = &"skull"
 
-[sub_resource type="Resource" id="Resource_vm7t8"]
+[sub_resource type="Resource" id="Resource_ww6hv"]
 script = ExtResource("3_p6sp4")
 symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 
-[sub_resource type="Resource" id="Resource_dmpss"]
+[sub_resource type="Resource" id="Resource_58b16"]
 script = ExtResource("3_p6sp4")
 symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 
-[sub_resource type="Resource" id="Resource_ugmm7"]
+[sub_resource type="Resource" id="Resource_ha7qp"]
 script = ExtResource("3_p6sp4")
 symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8")])
 
-[sub_resource type="Resource" id="Resource_a3ce8"]
+[sub_resource type="Resource" id="Resource_nxydw"]
 script = ExtResource("3_p6sp4")
 symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_ml1g4")])
 
-[sub_resource type="Resource" id="Resource_ahlhg"]
+[sub_resource type="Resource" id="Resource_24rxi"]
 script = ExtResource("3_p6sp4")
 symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j383b"), SubResource("Resource_j0nq8"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
 
 [resource]
 script = ExtResource("5_58c5j")
 base_bet_steps = PackedFloat32Array(10, 25, 50, 100, 250, 500)
-reels = Array[ExtResource("3_p6sp4")]([SubResource("Resource_vm7t8"), SubResource("Resource_dmpss"), SubResource("Resource_ugmm7"), SubResource("Resource_a3ce8"), SubResource("Resource_ahlhg")])
+reels = Array[ExtResource("3_p6sp4")]([SubResource("Resource_ww6hv"), SubResource("Resource_58b16"), SubResource("Resource_ha7qp"), SubResource("Resource_nxydw"), SubResource("Resource_24rxi")])
 symbols = Array[ExtResource("4_ue4t6")]([SubResource("Resource_j383b"), SubResource("Resource_vcues"), SubResource("Resource_ml1g4"), SubResource("Resource_j0nq8")])
-paytable = SubResource("Resource_ctg16")
-paylines = Array[ExtResource("1_qlbk2")]([SubResource("Resource_vvnye"), SubResource("Resource_vplpe"), SubResource("Resource_63mc7"), SubResource("Resource_or823"), SubResource("Resource_m1r14"), SubResource("Resource_8secf"), SubResource("Resource_ewiff"), SubResource("Resource_qd1wa"), SubResource("Resource_iod01"), SubResource("Resource_qktj7"), SubResource("Resource_12suu"), SubResource("Resource_w28li"), SubResource("Resource_jfwdd"), SubResource("Resource_u774b"), SubResource("Resource_s6uy7"), SubResource("Resource_5bvnk"), SubResource("Resource_pjk1h"), SubResource("Resource_y7a5v"), SubResource("Resource_qih66"), SubResource("Resource_l2f7h")])
+paytable = SubResource("Resource_yvp1t")
+paylines = Array[ExtResource("1_qlbk2")]([SubResource("Resource_vvnye"), SubResource("Resource_vplpe"), SubResource("Resource_63mc7"), SubResource("Resource_or823"), SubResource("Resource_m1r14"), SubResource("Resource_8secf"), SubResource("Resource_ewiff"), SubResource("Resource_qd1wa"), SubResource("Resource_iod01"), SubResource("Resource_qktj7"), SubResource("Resource_12suu"), SubResource("Resource_w28li"), SubResource("Resource_jfwdd"), SubResource("Resource_u774b"), SubResource("Resource_s6uy7"), SubResource("Resource_5bvnk"), SubResource("Resource_pjk1h"), SubResource("Resource_y7a5v"), SubResource("Resource_qih66"), SubResource("Resource_l2f7h"), SubResource("Resource_ctg16"), SubResource("Resource_vm7t8"), SubResource("Resource_dmpss"), SubResource("Resource_ugmm7"), SubResource("Resource_a3ce8"), SubResource("Resource_ahlhg"), SubResource("Resource_uwk0c"), SubResource("Resource_ypx4p"), SubResource("Resource_8iknb"), SubResource("Resource_sah2x"), SubResource("Resource_iqxan"), SubResource("Resource_hypm0"), SubResource("Resource_uduvd"), SubResource("Resource_vgxpd"), SubResource("Resource_2vd5f"), SubResource("Resource_nskp7"), SubResource("Resource_c0tou"), SubResource("Resource_ssxxl"), SubResource("Resource_v4t32"), SubResource("Resource_a1a7m"), SubResource("Resource_8h1jw"), SubResource("Resource_hvjxi"), SubResource("Resource_kwsne"), SubResource("Resource_w1e0j"), SubResource("Resource_rovwn"), SubResource("Resource_31ydw"), SubResource("Resource_wgcll"), SubResource("Resource_hvgxe"), SubResource("Resource_tfgww"), SubResource("Resource_8mbe0")])
+starting_credit = 100

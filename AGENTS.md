@@ -114,6 +114,14 @@ Both load on `_ready()`, save on every mutation **only after** `initialize()` ha
   debugging (matches evaluated to `has_win=false` on phone only). **Use individual `@export int` fields
   instead** — see `SymbolData.payout_3/4/5` and `Payline.row_r0..row_r4`. Same hazard applies to
   `PackedFloat32Array` and `PackedStringArray` on exported Resource fields.
+- **⚠️ MOBILE LAYOUT BUG (2026-07-10)**: With `window/stretch/aspect="expand"` + `mode="canvas_items"`,
+  **`Control.size` = physical window size** (phone 1080×2520), NOT `Window.content_scale_size`
+  (design 1080×1920). If `Layout._vp` reads `content_scale_size`, ratio anchors (slot_top_ratio etc.)
+  are computed against 1920 but applied to a 2520 parent → `ReelArea = 2520×0.5625 = 1417.5` instead
+  of 1080 → **337px gap below reels** (desktop unaffected). **Fix**: `Layout._vp = win.size` (matches
+  Control.size), AND force absolute `position`/`size` (anchor `PRESET_TOP_LEFT`) on layout regions
+  instead of ratio anchors — see `SlotMachineView._apply_area_rects()`. Ratio anchors set in `_ready`
+  are NOT re-applied when `Layout._process` later updates `_vp`. Full writeup: **`docs/GODOT_MOBILE_LAYOUT.md`**.
 - Symbols (Phase 8 redesign): `knight` (tank, blue shield), `archer` (ranged dealer, green bow),
   `mage` (heavy dealer, purple magic circle), `skull` (miss/grunt, gray skull). Wild/Scatter/Bonus
   symbols were **removed** when gems were cut to 4 unit types — the `Kind` enum and mechanic classes

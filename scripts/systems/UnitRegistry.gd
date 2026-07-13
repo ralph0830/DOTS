@@ -14,6 +14,24 @@ extends Node
 const UNIT_ALLY_DIR := "res://resources/units/ally/"
 const UNIT_ENEMY_DIR := "res://resources/units/enemy/"
 
+# ★ 컴파일 타임 의존성 강제 참조 (export 포함 보장).
+# Godot export 는 의존성 그래프상 도달 가능한 리소스만 PCK/APK 에 포함한다.
+# 런타임 DirAccess + load() 만으로는 참조로 인식되지 않아 .tres 가 제외되고, .remap
+# 파일만 남아 실제 .res 가 APK 에 누락되는 버그가 발생한다 (문제 2).
+# preload 상수는 컴파일 타임에 평가되어 의존성 엣지를 생성 → export 에 확정 포함.
+# 새 유닛 .tres 추가 시 이 목록에 한 줄을 추가할 것 (에디터 인스펙터 튜닝과 병행).
+const _REQUIRED_ALLIES: Array = [
+	preload("res://resources/units/ally/knight.tres"),
+	preload("res://resources/units/ally/archer.tres"),
+	preload("res://resources/units/ally/mage.tres"),
+	preload("res://resources/units/ally/minion.tres"),
+]
+const _REQUIRED_ENEMIES: Array = [
+	preload("res://resources/units/enemy/goblin.tres"),
+	preload("res://resources/units/enemy/orc.tres"),
+	preload("res://resources/units/enemy/boss.tres"),
+]
+
 var _allies: Dictionary = {}   # StringName → UnitData
 var _enemies: Dictionary = {}  # StringName → UnitData
 var _initialized: bool = false
@@ -23,18 +41,27 @@ func _ready() -> void:
 	initialize()
 
 
-## 유닛 데이터 로드. .tres 파일 우선, 없으면 코드 생성 폴백.
+## 유닛 데이터 로드. preload 확정 멤버 → DirAccess 보완 → 코드 생성 폴백 순.
 func initialize() -> void:
 	_allies.clear()
 	_enemies.clear()
-	# .tres 디렉토리 로드 시도.
-	var ally_loaded := _load_from_dir(UNIT_ALLY_DIR, true)
-	var enemy_loaded := _load_from_dir(UNIT_ENEMY_DIR, false)
-	# 폴백: .tres 파일이 없으면 코드 생성 (안전망).
-	if not ally_loaded:
+	# 1. preload 확정 멤버 우선 등록 — 의존성 보장 + 결정론적 로드 (DirAccess 순서 비결정성 제거).
+	for entry in _REQUIRED_ALLIES:
+		var data_a := entry as UnitData
+		if data_a != null and data_a.unit_id != &"":
+			_allies[data_a.unit_id] = data_a
+	for entry in _REQUIRED_ENEMIES:
+		var data_e := entry as UnitData
+		if data_e != null and data_e.unit_id != &"":
+			_enemies[data_e.unit_id] = data_e
+	# 2. DirAccess 보완 — 추가 .tres 발견 (open-structure 확장 포인트, preload 목록 외 신규 유닛).
+	_load_from_dir(UNIT_ALLY_DIR, true)
+	_load_from_dir(UNIT_ENEMY_DIR, false)
+	# 3. 폴백: preload + DirAccess 모두 비었으면 코드 생성 (안전망 — .tres 자체가 없을 때).
+	if _allies.is_empty():
 		print("[UnitRegistry] 아군 .tres 없음 — 코드 생성 폴백")
 		_build_ally_fallback()
-	if not enemy_loaded:
+	if _enemies.is_empty():
 		print("[UnitRegistry] 적 .tres 없음 — 코드 생성 폴백")
 		_build_enemy_fallback()
 	# skull 심볼 매칭 → 미니언 alias (별도 .tres 없이).
@@ -74,20 +101,22 @@ func _build_ally_fallback() -> void:
 	_register_ally(&"knight", _make(&"knight", "Knight", UnitData.Role.TANK,
 		80, 8, 1.0, 45.0, 55.0, UnitData.Shape.SQUARE, Color(0.25, 0.55, 0.95), 64.0, 0))
 	_register_ally(&"archer", _make(&"archer", "Archer", UnitData.Role.DEALER,
-		30, 12, 0.9, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0, 0))
+		30, 12, 0.9, 70.0, 120.0, UnitData.Shape.TRIANGLE, Color(0.30, 0.85, 0.45), 56.0, 0, 0,
+		true, 260.0, 10.0, Color(0.30, 0.85, 0.45)))
 	_register_ally(&"mage", _make(&"mage", "Mage", UnitData.Role.DEALER,
-		40, 18, 1.1, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0, 0))
+		40, 18, 1.1, 60.0, 90.0, UnitData.Shape.DIAMOND, Color(0.70, 0.35, 0.95), 60.0, 0, 0,
+		true, 200.0, 14.0, Color(0.70, 0.35, 0.95)))
 	_register_ally(&"minion", _make(&"minion", "Minion", UnitData.Role.MINION,
 		20, 5, 1.0, 55.0, 50.0, UnitData.Shape.CIRCLE, Color(0.6, 0.6, 0.6), 50.0, 0))
 
 
 func _build_enemy_fallback() -> void:
 	_register_enemy(&"goblin", _make(&"goblin", "Goblin", UnitData.Role.ENEMY,
-		20, 6, 1.0, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1))
+		20, 6, 1.0, 50.0, 50.0, UnitData.Shape.CIRCLE, Color(0.8, 0.2, 0.2), 60.0, 1, 5))
 	_register_enemy(&"orc", _make(&"orc", "Orc", UnitData.Role.ENEMY,
-		40, 10, 1.0, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3))
+		40, 10, 1.0, 40.0, 60.0, UnitData.Shape.SQUARE, Color(0.7, 0.3, 0.1), 60.0, 3, 15))
 	_register_enemy(&"boss", _make(&"boss", "Boss", UnitData.Role.ENEMY,
-		150, 20, 1.2, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10))
+		150, 20, 1.2, 35.0, 80.0, UnitData.Shape.DIAMOND, Color(0.9, 0.1, 0.3), 80.0, 10, 100))
 
 
 ## 아군 UnitData 조회. LordState.unit_tier를 반영한 강화 사본 반환 (원본 훼손 방지).
@@ -139,7 +168,9 @@ func _register_enemy(id: StringName, data: UnitData) -> void:
 ## UnitData 인스턴스 생성 헬퍼.
 func _make(id: StringName, name: String, role: UnitData.Role, hp: int, atk: int,
 		interval: float, spd: float, rng: float, shape: UnitData.Shape,
-		col: Color, sz: float, exp: int) -> UnitData:
+		col: Color, sz: float, exp: int, credit: int = 0,
+		is_ranged: bool = false, proj_speed: float = 220.0,
+		proj_size: float = 12.0, proj_color: Color = Color.WHITE) -> UnitData:
 	var u := UnitData.new()
 	u.unit_id = id
 	u.display_name = name
@@ -151,8 +182,15 @@ func _make(id: StringName, name: String, role: UnitData.Role, hp: int, atk: int,
 	u.attack_range = rng
 	u.shape = shape
 	u.color = col
-	u.size = sz
+	u.size_w = sz
+	u.size_h = sz
 	u.exp_reward = exp
+	u.credit_reward = credit
+	u.is_ranged = is_ranged
+	u.behavior = UnitData.Behavior.RANGED if is_ranged else UnitData.Behavior.MELEE
+	u.projectile_speed = proj_speed
+	u.projectile_size = proj_size
+	u.projectile_color = proj_color
 	return u
 
 
@@ -169,6 +207,16 @@ func _clone_unit(base: UnitData) -> UnitData:
 	c.attack_range = base.attack_range
 	c.shape = base.shape
 	c.color = base.color
-	c.size = base.size
+	c.size_w = base.size_w
+	c.size_h = base.size_h
 	c.exp_reward = base.exp_reward
+	c.credit_reward = base.credit_reward
+	c.texture = base.texture   # ★ 스프라이트 복사 — 누락 시 도형 폴백 (이전 "도형으로 나옴" 버그 원인)
+	# 투사체 속성 복사 — 누락 시 폴백 경로 유닛이 근접으로 변신 (texture 복사 누락과 동일 패턴).
+	c.is_ranged = base.is_ranged
+	c.behavior = base.behavior
+	c.projectile_speed = base.projectile_speed
+	c.projectile_size = base.projectile_size
+	c.projectile_color = base.projectile_color
+	c.projectile_texture = base.projectile_texture
 	return c

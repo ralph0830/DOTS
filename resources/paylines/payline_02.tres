@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1_700j8")
 id = 2
-row_r0 = 2
-row_r1 = 2
-row_r2 = 2
-row_r3 = 2
-row_r4 = 2
-debug_color = Color(1, 0.70000005, 0.25, 1)
+row_r0 = 3
+row_r1 = 3
+row_r2 = 3
+row_r3 = 3
+row_r4 = 3
+debug_color = Color(1, 0.43, 0.25, 1)
