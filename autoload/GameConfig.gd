@@ -5,6 +5,13 @@ extends Node
 const CONFIG_PATH := "res://resources/config/default_slot.tres"
 # 빌드 식별 스탬프 — 모바일 lazy-load 방지용 preload (class_name 직접 참조 위험).
 const _BuildStamp_ := preload("res://scripts/build_stamp.gd")
+# 슬롯 아이콘 매핑 — 모바일 .res texture 손실 회피용 코드 로드(archor 파일명 오타 포함).
+const _SLOT_ICON := {
+	&"knight": "res://assets/slot_icon/slot_knight_normal.png",
+	&"archer": "res://assets/slot_icon/slot_archor_normal.png",   # 파일명 archor 오타 유지
+	&"mage": "res://assets/slot_icon/slot_mage_normal.png",
+	&"skull": "res://assets/slot_icon/slot_skull_normal.png",
+}
 
 var config: SlotConfig
 
@@ -18,9 +25,11 @@ func _ready() -> void:
 		return
 	config = loaded
 	# 모바일 .res 변환 시 @export Texture2D texture 가 null 로 손실되는 버그 회피 —
-	# 코드에서 PNG(.ctex, APK 포함)를 로드해 texture 재설정. skull 은 파일 없으면 프로시저럴 유지.
+	# 코드에서 PNG(.ctex, APK 포함)를 로드해 texture 재설정.
 	for sym in config.symbols:
-		var tex_path := "res://assets/slot_icon/slot_%s_normal.png" % sym.id
+		var tex_path: String = _SLOT_ICON.get(sym.id, "")
+		if tex_path == "":
+			continue
 		var t := load(tex_path)
 		if t != null:
 			sym.texture = t
