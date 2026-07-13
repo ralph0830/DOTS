@@ -17,3 +17,10 @@ func _ready() -> void:
 		push_error("[GameConfig] default_slot.tres 로드 실패. 리소스가 존재하는지 확인.")
 		return
 	config = loaded
+	# 모바일 .res 변환 시 @export Texture2D texture 가 null 로 손실되는 버그 회피 —
+	# 코드에서 PNG(.ctex, APK 포함)를 로드해 texture 재설정. skull 은 파일 없으면 프로시저럴 유지.
+	for sym in config.symbols:
+		var tex_path := "res://assets/slot_icon/slot_%s_normal.png" % sym.id
+		var t := load(tex_path)
+		if t != null:
+			sym.texture = t
