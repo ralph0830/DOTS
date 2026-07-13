@@ -113,39 +113,39 @@ func start_spin() -> void:
 	set_physics_process(true)
 
 
-## 결과(활성 행 수 개)로 정지 — 즉시 배치 대신 DECEL_TIME 감속 후 결과 배치(자연스러운 멈춤).
+## 결과(활성 행 수 개)로 정지 — 결과를 미리 풀에 배치(감속 중 내용물 고정, 치팅 방지) 후
+## offset -SYMBOL_SIZE 에서 위로 감속 도착(cycle 없이 같은 방향 스크롤).
 func stop_at(result: Array) -> void:
 	_result = result
 	_state = _State.STOP
 	_decel_elapsed = 0.0
-	if _tween != null and _tween.is_valid():
-		_tween.kill()
-	set_physics_process(true)   # 감속 위해 physics 계속
-
-
-## 감속 완료 — 결과 pool 배치 + 정지.
-func _place_result_and_land() -> void:
-	var n: int = min(_active_rows.size(), _result.size())
+	# ★ 결과 pool 배치 — 감속 중 풀이 고정(내용물 안 바뀜).
+	var n: int = min(_active_rows.size(), result.size())
 	for i in range(n):
-		_pool[i].symbol_data = _result[i]
+		_pool[i].symbol_data = result[i]
 	for i in range(n, _pool.size()):
 		if not _strip.is_empty():
 			_pool[i].symbol_data = _strip[_rng.randi() % _strip.size()]
-	_offset = 0.0
-	_layout(0.0)
-	_land()
+	_offset = -SYMBOL_SIZE   # 결과 한 칸 아래 → 감속으로 위로 도착.
+	_layout(_offset)
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	set_physics_process(true)
 
 
 func _physics_process(delta: float) -> void:
 	if _state == _State.SPIN:
 		_set_offset(_offset + spin_speed * delta)
 	elif _state == _State.STOP:
-		# 선형 감속 — 속도 spin_speed → 0, DECEL_TIME 후 결과 배치 + 정지.
+		# 선형 감속 — offset -SIZE → 0 (위로 도착). cycle 없이 결과 풀 고정.
 		_decel_elapsed += delta
 		var t := clampf(_decel_elapsed / DECEL_TIME, 0.0, 1.0)
-		_set_offset(_offset + spin_speed * (1.0 - t) * delta)
+		_offset = minf(0.0, _offset + spin_speed * (1.0 - t) * delta)
+		_layout(_offset)
 		if t >= 1.0:
-			_place_result_and_land()
+			_offset = 0.0
+			_layout(0.0)
+			_land()
 
 
 ## offset 설정. SYMBOL_SIZE 도달 시 풀을 한 칸 순환(무한 스크롤).
