@@ -142,8 +142,7 @@ func _build_wave_banner() -> void:
 	_wave_banner.modulate.a = 0.0
 	_wave_banner.visible = false
 	_wave_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_wave_banner.z_index = 100            # 유닛(Node2D) 위로 — 전투 필드에 가려지지 않도록 전역 z.
-	_wave_banner.z_index_as_relative = false
+	_wave_banner.z_index = 100            # 유닛(Node2D) 위로.
 	add_child(_wave_banner)
 
 
