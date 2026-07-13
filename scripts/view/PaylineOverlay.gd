@@ -5,9 +5,9 @@ extends Node2D
 ## 당첨 라인은 5초 후 자동 소멸(WIN_HOLD). BET 변경 시 예시 라인 얇게 3초(PREVIEW_HOLD).
 
 const WIN_HOLD: float = 5.0       # 당첨 라인 표시 지속(초) — 이후 자동 소멸
-const PREVIEW_HOLD: float = 3.0   # BET 예시 라인 표시 지속(초)
-const PREVIEW_WIDTH: float = 4.0  # 예시 라인 두께(얇게)
-const PREVIEW_ALPHA: float = 0.5  # 예시 라인 투명도
+const PREVIEW_HOLD: float = 4.0   # BET 예시 라인 표시 지속(초)
+const PREVIEW_WIDTH: float = 6.0  # 예시 라인 두께
+const PREVIEW_ALPHA: float = 0.8  # 예시 라인 투명도(점멸 후 유지)
 
 var reel_w: float = 180.0   # 심볼 크기(SYMBOL_SIZE)와 동일 — SlotMachineView 가 다시 설정하지만 기본값도 일치
 var row_h: float = 180.0
@@ -99,6 +99,11 @@ func _show_preview(level: int) -> void:
 			line.add_point(_cell_center(Vector2i(ri, pl.get_row(ri))))
 		add_child(line)
 		_preview_lines.append(line)
+		# 2회 점멸(눈에 띄도록) — 이후 alpha 0.8 유지.
+		var tw := create_tween()
+		tw.set_loops(2)
+		tw.tween_property(line, "modulate:a", 0.1, 0.18)
+		tw.tween_property(line, "modulate:a", PREVIEW_ALPHA, 0.18)
 	if n > 0:
 		get_tree().create_timer(PREVIEW_HOLD).timeout.connect(_clear_preview)
 
