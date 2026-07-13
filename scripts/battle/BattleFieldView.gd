@@ -162,7 +162,7 @@ func _show_spawn_slide(text: String) -> void:
 		add_child(_spawn_label)
 	_spawn_label.text = text
 	_spawn_label.visible = true
-	var cy: float = size.y * 0.5 - 200.0   # 전투 중앙 - 200px 위
+	var cy: float = size.y * 0.5 - 150.0   # 전투 중앙 - 150px 위
 	_spawn_label.position = Vector2(0.0, cy)
 	_spawn_label.modulate.a = 0.0
 	if _spawn_tween != null and _spawn_tween.is_valid():
@@ -242,7 +242,7 @@ func _on_boss_hp_changed(hp: int, max_hp: int) -> void:
 func _draw() -> void:
 	var w := size.x
 	var bh := size.y
-	var ly := bh * 0.5 + 200.0   # 전투 라인/기지 200px 하강(Layout.line_y 와 정렬)
+	var ly := bh   # 바닥선(전투 영역 하단) — Layout.line_y(minimap_top)와 정렬
 	# 전투 필드 스크롤 — camera_x offset (배경/라인/기지/포탈). 정보바/경험치는 고정.
 	var cam := Layout.camera_x()
 	var fw := Layout.field_w()

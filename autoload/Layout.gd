@@ -116,9 +116,9 @@ static func reel_h() -> float:
 	return cell_size()
 
 
-## 전투 라인 y (상단 margin + 전투 영역 중앙 + 200px 아래 — 길/기지/UI 하강).
+## 전투 바닥선 y — 전투 영역 하단(미니맵 경계). 유닛 하단 정렬 기준(발이 선).
 static func line_y() -> float:
-	return _vp.y * TOP_MARGIN + battle_h() * 0.5 + 200.0
+	return minimap_top()
 
 
 ## 아군 소환 위치 x — 본진 좌단.

@@ -65,7 +65,7 @@ func _physics_process(delta: float) -> void:
 		var dist := absf(position.x - _target.position.x)
 		if dist <= data.attack_range:
 			_try_attack()
-			position.y = Layout.line_y()
+			position.y = Layout.line_y() - data.size_h * 0.5   # 하단 정렬(발이 바닥선)
 			return
 	# 이동 — behavior 별 전진 결정.
 	_advance_by_behavior(delta)
