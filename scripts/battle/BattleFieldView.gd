@@ -4,13 +4,14 @@ extends Control
 ## 상단 정보바 (3분할): 체력(좌) / 웨이브(중앙) / 보스 게이지(우, 보스 등장 시).
 ## 하단 경험치(영혼) 게이지. 실제 유닛/적 렌더링은 BattleField(Node2D).
 
-const BG_PATH := "res://assets/backgrounds/bg_battle_solid_512.png"
+const BG_PATH := "res://assets/backgrounds/background_battle_ground_midnight.jpg"
 # 소환 알림 유닛 한글명 매핑.
 const _UNIT_NAME_KO := {
 	&"knight": "기사", &"archer": "궁수", &"mage": "마법사", &"minion": "미니언",
 }
 
 var _bg_tex: Texture2D
+var _bg_phase: float = 0.0   # 배경 미세 fade 위상(10초 주기)
 var _ally_hp: int = 100
 var _ally_max: int = 100
 var _enemy_hp: int = 100
@@ -76,6 +77,9 @@ func _process(_delta: float) -> void:
 	if not is_equal_approx(c, _last_cam_x):
 		_last_cam_x = c
 		queue_redraw()
+	# 배경 미세 fade(10초 주기) — 매 프레임 위상 갱신 + redraw.
+	_bg_phase += _delta / 10.0
+	queue_redraw()
 
 
 ## 게임 속도 토글 버튼 (×1/×2/×3) — 보스 게이지 아래 우측. Engine.time_scale 로 전투+슬롯 전체 제어.
@@ -212,7 +216,9 @@ func _draw() -> void:
 	var fw := Layout.field_w()
 	# 전투 배경 (3배 폭, offset). 테스트 50% 투명.
 	if _bg_tex != null:
-		draw_texture_rect(_bg_tex, Rect2(-cam, 0.0, fw, bh), false, Color(1.0, 1.0, 1.0, 0.5))
+		# 미세 fade: 10초 주기로 5% 어두워짐(0.95~1.0). _bg_phase 는 _process 에서 갱신.
+		var fade := 0.975 + 0.025 * sin(_bg_phase * TAU)
+		draw_texture_rect(_bg_tex, Rect2(-cam, 0.0, fw, bh), false, Color(1.0, 1.0, 1.0, fade))
 	# 전투 라인 (field 전체)
 	draw_line(Vector2(40.0 - cam, ly), Vector2(fw - 40.0 - cam, ly), Color(1.0, 1.0, 1.0, 0.85), 3.0)
 	# 아군 기지 / 적 포탈 영역 (field 좌표 + offset)
