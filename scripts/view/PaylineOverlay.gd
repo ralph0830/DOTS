@@ -91,8 +91,12 @@ func _show_preview(level: int) -> void:
 		line.default_color = pl.debug_color
 		line.modulate.a = PREVIEW_ALPHA
 		line.z_index = 5
-		for r in range(5):
-			line.add_point(_cell_center(Vector2i(r, pl.get_row(r))))
+		# ★ bet_level별 활성 릴만 — 3×3=릴1,2,3 / 4×3=1,2,3,4 / 5×3=0,1,2,3,4.
+		#   range(5) 로 그리면 저단계(3×3)에서도 5릴 라인이 빠져나가는 버그.
+		var active_reels: Array = WalletManager.active_reels_for(level)
+		for r in active_reels:
+			var ri: int = int(r)
+			line.add_point(_cell_center(Vector2i(ri, pl.get_row(ri))))
 		add_child(line)
 		_preview_lines.append(line)
 	if n > 0:
