@@ -59,6 +59,16 @@ func _gui_input(event: InputEvent) -> void:
 		queue_redraw()
 
 
+## 카메라 변화 감지(미니맵 터치 등 외부 갱신) → 배경 redraw.
+## _gui_input(직접 스와이프) 외에 MinimapView 터치로 camera_x 가 바뀔 때 배경이 안 따라가는 버그 방지.
+var _last_cam_x := 0.0
+func _process(_delta: float) -> void:
+	var c := Layout.camera_x()
+	if not is_equal_approx(c, _last_cam_x):
+		_last_cam_x = c
+		queue_redraw()
+
+
 ## 게임 속도 토글 버튼 (×1/×2/×3) — 보스 게이지 아래 우측. Engine.time_scale 로 전투+슬롯 전체 제어.
 func _build_speed_button() -> void:
 	var btn := Button.new()
