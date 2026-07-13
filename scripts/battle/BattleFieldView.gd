@@ -16,6 +16,9 @@ var _soul_max: int = 15
 var _level: int = 1
 var _wave_num: int = 0
 var _boss_active: bool = false
+var _wave_banner: Label = null
+var _banner_tween: Tween = null
+var _banner_queue: Array = []   # 순차 배너(WAVE → BOSS) 재생 큐
 var _boss_hp: int = 0
 var _boss_max: int = 0
 var _cur_speed: int = 1   # 게임 속도 배수 (1/2/3) — Engine.time_scale
@@ -42,6 +45,7 @@ func _ready() -> void:
 	EventBus.enemy_killed.connect(_on_enemy_killed)
 	EventBus.boss_hp_changed.connect(_on_boss_hp_changed)
 	_build_speed_button()
+	_build_wave_banner()
 
 
 func _on_game_initialized(state: Dictionary) -> void:
@@ -110,6 +114,7 @@ func _on_wave_started(wave_num: int) -> void:
 	# 보스 WAVE(5배수)가 아니면 보스 게이지 숨김.
 	if wave_num % 5 != 0:
 		_boss_active = false
+	_show_banner("WAVE %d" % wave_num, 1.5)
 	queue_redraw()
 
 
@@ -120,7 +125,57 @@ func _on_enemy_spawned(enemy_id: StringName) -> void:
 		if data != null:
 			_boss_hp = data.max_hp
 			_boss_max = data.max_hp
+		_show_banner("BOSS 등장!!", 2.0)
 		queue_redraw()
+
+
+## 웨이브/보스 경고 배너 빌드 — 전투 영역 중앙 큰 텍스트 + 페이드 인/아웃.
+func _build_wave_banner() -> void:
+	_wave_banner = Label.new()
+	_wave_banner.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_wave_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_wave_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_wave_banner.add_theme_font_size_override("font_size", 120)
+	_wave_banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	_wave_banner.add_theme_color_override("font_outline_color", Color.BLACK)
+	_wave_banner.add_theme_constant_override("outline_size", 16)
+	_wave_banner.modulate.a = 0.0
+	_wave_banner.visible = false
+	_wave_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_wave_banner)
+
+
+## 배너 표시 요청 — 큐에 적재, 재생 중이면 완료 후 순차 재생(WAVE → BOSS 중복 대응).
+func _show_banner(text: String, hold: float = 1.5) -> void:
+	_banner_queue.append({"text": text, "hold": hold})
+	if _banner_queue.size() == 1:
+		_play_banner()
+
+
+func _play_banner() -> void:
+	if _wave_banner == null or _banner_queue.is_empty():
+		return
+	var b: Dictionary = _banner_queue[0]
+	var t: String = b["text"]
+	_wave_banner.text = t
+	_wave_banner.visible = true
+	_wave_banner.modulate.a = 0.0
+	if _banner_tween != null and _banner_tween.is_valid():
+		_banner_tween.kill()
+	_banner_tween = create_tween()
+	_banner_tween.tween_property(_wave_banner, "modulate:a", 1.0, 0.25)
+	_banner_tween.tween_interval(float(b["hold"]))
+	_banner_tween.tween_property(_wave_banner, "modulate:a", 0.0, 0.4)
+	_banner_tween.tween_callback(_on_banner_done)
+
+
+func _on_banner_done() -> void:
+	if _wave_banner != null:
+		_wave_banner.visible = false
+	if not _banner_queue.is_empty():
+		_banner_queue.pop_front()
+	if not _banner_queue.is_empty():
+		_play_banner()
 
 
 func _on_enemy_killed(enemy_id: StringName, _exp: int) -> void:
