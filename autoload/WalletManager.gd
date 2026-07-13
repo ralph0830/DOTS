@@ -13,31 +13,27 @@ var credit: int = 10000
 var current_bet: int = 50
 var bet_steps: PackedInt32Array = []
 var bet_index: int = 0
-var bet_level: int = 1   # 베팅 확장 단계 (1~5) — 그리드 확장 + 베팅 비용 배수 + 소환 배수
+var bet_level: int = 1   # 베팅 확장 단계 (1/3/5) — 그리드 확장 + 베팅 비용 배수 + 소환 배수
 var _initialized: bool = false
 
 # --- bet_level별 활성 매트릭스 (static) ---
-## bet_level별 활성 릴 인덱스 (x1=가운데 3릴, x2=+우, x3=전체).
+## bet_level별 활성 릴 인덱스 — x1=가운데 3릴, x3/x5=전체 5릴.
 static func active_reels_for(level: int) -> Array:
 	match level:
 		1: return [1, 2, 3]
-		2: return [1, 2, 3, 4]
 		_: return [0, 1, 2, 3, 4]
 
-## bet_level별 활성 행 인덱스 (x1~3=중앙 3행, x4=+상단, x5=전체).
+## bet_level별 활성 행 인덱스 — x1/x3=중앙 3행, x5=전체 5행.
 static func active_rows_for(level: int) -> Array:
 	match level:
-		4: return [0, 1, 2, 3]
-		1, 2, 3: return [1, 2, 3]
-		_: return [0, 1, 2, 3, 4]
+		5: return [0, 1, 2, 3, 4]
+		_: return [1, 2, 3]
 
-## bet_level별 활성 페이라인 수.
+## bet_level별 활성 페이라인 수 — x1=5, x3=15, x5=50.
 static func payline_count_for(level: int) -> int:
 	match level:
 		1: return 5
-		2: return 8
 		3: return 15
-		4: return 25
 		_: return 50
 
 

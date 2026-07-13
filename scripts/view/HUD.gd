@@ -410,7 +410,7 @@ func _on_auto_changed(enabled: bool, _remaining: int) -> void:
 		_auto_btn.text = "AUTO"   # OFF 로 복귀
 
 
-## bet_level 토글 — ×1 → ×5 순환. SPIN 중/AUTO ON 중은 조작 불가 (경고 토스트 + BET 붉게 점멸).
+## bet_level 토글 — ×1 → ×3 → ×5 → ×1 3단계 순환(x2/x4 제거). SPIN 중/AUTO ON 중은 조작 불가.
 func _on_mult_pressed() -> void:
 	if _is_spinning:
 		_show_toast("스핀 중 — BET 조작 불가")
@@ -420,9 +420,11 @@ func _on_mult_pressed() -> void:
 		_show_toast("AUTO ON 중 — BET 조작 불가")
 		_flash_bet_button()
 		return
-	WalletManager.bet_level += 1
-	if WalletManager.bet_level > 5:
-		WalletManager.bet_level = 1
+	# ×1 → ×3 → ×5 → ×1 (불연속 단계).
+	match WalletManager.bet_level:
+		1: WalletManager.bet_level = 3
+		3: WalletManager.bet_level = 5
+		_: WalletManager.bet_level = 1
 	if _mult_btn != null:
 		_mult_btn.text = "×%d" % WalletManager.bet_level
 	EventBus.bet_level_changed.emit(WalletManager.bet_level)
