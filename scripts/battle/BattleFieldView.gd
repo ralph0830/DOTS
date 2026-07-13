@@ -242,7 +242,7 @@ func _on_boss_hp_changed(hp: int, max_hp: int) -> void:
 func _draw() -> void:
 	var w := size.x
 	var bh := size.y
-	var ly := bh   # 바닥선(전투 영역 하단) — Layout.line_y(minimap_top)와 정렬
+	var ly := bh - 200.0   # 바닥선(전투 하단에서 200px 위) — Layout.line_y 와 정렬
 	# 전투 필드 스크롤 — camera_x offset (배경/라인/기지/포탈). 정보바/경험치는 고정.
 	var cam := Layout.camera_x()
 	var fw := Layout.field_w()
@@ -267,7 +267,7 @@ func _draw() -> void:
 	# ★ 상단 정보바 — 3분할 (체력 좌 / 웨이브 중앙 / 보스 우). 높이 64(2배). 200px 하강.
 	var seg := w / 3.0
 	var bar_h := 64.0
-	var bar_y := 200.0   # 정보바 y 하강(Layout.line_y 정렬)
+	var bar_y := 0.0   # 정보바는 맨 위(전투 라인과 독립)
 	# 체력 (좌)
 	var hr := clampf(float(_ally_hp) / float(_ally_max), 0.0, 1.0) if _ally_max > 0 else 0.0
 	draw_rect(Rect2(0.0, bar_y, seg, bar_h), Color(0.05, 0.08, 0.05, 0.95), true)
