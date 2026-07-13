@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="UnitData" format=3]
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://fo5j2eoniok3"]
 
-[ext_resource type="Script" path="res://scripts/data/UnitData.gd" id="1_h32eh"]
+[ext_resource type="Script" uid="uid://cl8m5dbedgwii" path="res://scripts/data/UnitData.gd" id="1_h32eh"]
 
 [resource]
 script = ExtResource("1_h32eh")
 unit_id = &"archer"
 display_name = "Archer"
-attack = 12
+attack = 10
 attack_interval = 0.9
 move_speed = 70.0
 attack_range = 120.0

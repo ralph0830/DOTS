@@ -2,11 +2,18 @@ class_name PaylineOverlay
 extends Node2D
 ## 당첨 페이라인 시각화. EventBus.highlight_wins 로 결과를 받아 Line2D 로 그린다.
 ## 릴 영역(ReelArea) 자식으로 두어 로컬 좌표를 사용. reel_w/row_h 로 셀 중심 계산.
+## 당첨 라인은 5초 후 자동 소멸(WIN_HOLD). BET 변경 시 예시 라인 얇게 3초(PREVIEW_HOLD).
+
+const WIN_HOLD: float = 5.0       # 당첨 라인 표시 지속(초) — 이후 자동 소멸
+const PREVIEW_HOLD: float = 3.0   # BET 예시 라인 표시 지속(초)
+const PREVIEW_WIDTH: float = 4.0  # 예시 라인 두께(얇게)
+const PREVIEW_ALPHA: float = 0.5  # 예시 라인 투명도
 
 var reel_w: float = 180.0   # 심볼 크기(SYMBOL_SIZE)와 동일 — SlotMachineView 가 다시 설정하지만 기본값도 일치
 var row_h: float = 180.0
 
-var _lines: Array[Line2D] = []
+var _lines: Array[Line2D] = []            # 당첨 라인
+var _preview_lines: Array[Line2D] = []    # BET 예시 라인
 var _jackpot_flash: float = 0.0   # 잭팟 시 슬롯 테두리 번쩍
 
 
@@ -14,6 +21,7 @@ func _ready() -> void:
 	EventBus.highlight_wins.connect(_on_highlight)
 	EventBus.spin_started.connect(_on_spin_started)
 	EventBus.jackpot_won.connect(_on_jackpot)
+	EventBus.bet_level_changed.connect(_on_bet_level_changed)
 	set_process(true)
 
 
@@ -38,6 +46,7 @@ func _draw() -> void:
 
 func _on_spin_started(_bet: int) -> void:
 	clear()
+	_clear_preview()
 
 
 func _on_highlight(result: SpinResult) -> void:
@@ -61,12 +70,45 @@ func _on_highlight(result: SpinResult) -> void:
 			line.add_point(_cell_center(pos))
 		add_child(line)
 		_lines.append(line)
+	# 당첨 라인/심볼 5초 후 자동 소멸(다음 스핀 전까지).
+	get_tree().create_timer(WIN_HOLD).timeout.connect(clear)
+
+
+## BET 변경 시 활성 페이라인 예시 얇게 표시.
+func _on_bet_level_changed(level: int) -> void:
+	_show_preview(level)
+
+
+func _show_preview(level: int) -> void:
+	_clear_preview()
+	var count: int = WalletManager.payline_count_for(level)
+	var paylines: Array = GameConfig.config.paylines
+	var n: int = mini(count, paylines.size())
+	for i in range(n):
+		var pl: Payline = paylines[i]
+		var line := Line2D.new()
+		line.width = PREVIEW_WIDTH
+		line.default_color = pl.debug_color
+		line.modulate.a = PREVIEW_ALPHA
+		line.z_index = 5
+		for r in range(5):
+			line.add_point(_cell_center(Vector2i(r, pl.get_row(r))))
+		add_child(line)
+		_preview_lines.append(line)
+	if n > 0:
+		get_tree().create_timer(PREVIEW_HOLD).timeout.connect(_clear_preview)
 
 
 func clear() -> void:
 	for l in _lines:
 		l.queue_free()
 	_lines.clear()
+
+
+func _clear_preview() -> void:
+	for l in _preview_lines:
+		l.queue_free()
+	_preview_lines.clear()
 
 
 func _cell_center(pos: Vector2i) -> Vector2:

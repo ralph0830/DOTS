@@ -114,7 +114,7 @@ func _on_wave_started(wave_num: int) -> void:
 	# 보스 WAVE(5배수)가 아니면 보스 게이지 숨김.
 	if wave_num % 5 != 0:
 		_boss_active = false
-	_show_banner("WAVE %d" % wave_num, 1.5)
+	_show_banner("WAVE %d" % wave_num, 2.0)
 	queue_redraw()
 
 
@@ -142,6 +142,8 @@ func _build_wave_banner() -> void:
 	_wave_banner.modulate.a = 0.0
 	_wave_banner.visible = false
 	_wave_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_wave_banner.z_index = 100            # 유닛(Node2D) 위로 — 전투 필드에 가려지지 않도록 전역 z.
+	_wave_banner.z_index_as_relative = false
 	add_child(_wave_banner)
 
 

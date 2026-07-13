@@ -346,6 +346,13 @@ func _on_highlight(result: SpinResult) -> void:
 	for pos in result.winning_positions:
 		if pos.x >= 0 and pos.x < _reels.size():
 			_reels[pos.x].set_symbol_highlight(pos.y, true)
+	# 당첨 심볼 하이라이트 5초 후 자동 해제(라인 소멸과 동기).
+	get_tree().create_timer(5.0).timeout.connect(_clear_symbol_highlights)
+
+
+func _clear_symbol_highlights() -> void:
+	for reel in _reels:
+		reel.clear_highlights()
 
 
 ## 빅윈 시 릴 영역 진동(EventBus.big_win).
