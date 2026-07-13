@@ -161,3 +161,23 @@ func _on_stage_clear():
 	print("🎉 스테이지 최종 클리어!")
 	SignalBus.stage_cleared.emit()
 4. 엑셀/스프레드시트 연동용 CSV 파서 데이터 규격기획자가 관리할 엑셀 파일은 아래와 같은 규격으로 작성되어 프로젝트 내 res://data/wave_table.csv로 저장됩니다.wave_numberspawn_idstart_timeend_timespawn_delaycount_per_tickmonster_stats_pathmonster_prefab_pathis_bossboss_prefab_path1wave1_batch10.020.04.01res://data/stats/soldier.tresres://scenes/enemy_soldier.tscnfalse1wave1_batch210.025.03.02res://data/stats/archer.tresres://scenes/enemy_archer.tscnfalse2wave2_boss0.00.00.00trueres://scenes/boss_dragon.tscn해석: 1웨이브가 시작되면 0초부터 20초까지 4초마다 보병이 1마리씩 나오고, 10초가 되는 순간부터 25초까지는 3초마다 궁수가 2마리씩 겹쳐서 튀어나옵니다. 이 타임라인 동안 나온 적들을 플레이어가 슬롯머신으로 소환한 군대로 모두 처치하는 순간 2웨이브(보스전)로 자동 전환됩니다.개발자는 에디터 플러그인 툴을 이용해 이 CSV 파일 한 줄당 SpawnInfo 리소스를 동적으로 생성하고, 동일한 wave_number끼리 묶어 WaveData 배열에 채워 넣기만 하면 데이터 관리가 완전히 종료됩니다.
+
+---
+
+## CSV 도입 계획 (추후 — 테스트 완료 후 도입)
+
+**현재 상태**: MVP는 `WaveManager._build_default_waves()`에서 코드로 5개 웨이브를 빌드. CSV는 명세만 있고 도입하지 않음(테스트 기간 보류).
+
+### 도입 단계
+1. **`data/wave_table.csv` 작성** (위 규격). DOTS 적응:
+   - `monster_stats_path`/`monster_prefab_path` → `monster_id` (UnitRegistry 조회)
+   - `is_boss`/`boss_prefab_path` → `boss_id` (StringName)
+   - PackedArray 회격: CSV 파싱 결과는 런타임 배열 (직렬화 대상 아님) → 안전
+2. **CSV → `.tres` 변환 스크립트**: `scripts/setup/import_waves_csv.gd` (SceneTree 스크립트). 한 줄당 `SpawnInfo` 생성, `wave_number` 묶어 `WaveData` → `resources/waves/wave_NN.tres` 저장. `generate_default_data.gd` 패턴 참조.
+3. **WaveManager 로드 변경**: `_build_default_waves()` → preload 상수 목록으로 `.tres` 로드(`UnitRegistry._REQUIRED_ENEMIES` 패턴 — 모바일 export 안전, DirAccess 회피).
+4. **검증**: 헤드리스(웨이브 타임라인 로그) + 폰 APK(스폰 패턴).
+
+### 보류 사유
+- 테스트 기간 데이터 안정화 우선 (코드 빌드가 5웨이브 충분).
+- CSV 파서/에디터 플러크인은 기획자 튜닝 본격화 시점에 도입.
+- 도입 시 기존 `_build_default_waves`는 폴백(데이터 누락 시)으로 유지 권장.
