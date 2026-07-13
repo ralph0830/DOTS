@@ -116,9 +116,9 @@ static func reel_h() -> float:
 	return cell_size()
 
 
-## 전투 라인 y (상단 margin + 전투 영역 중앙 + 50px 아래 — 길을 내려 전투 영역 조정).
+## 전투 라인 y (상단 margin + 전투 영역 중앙 + 200px 아래 — 길/기지/UI 하강).
 static func line_y() -> float:
-	return _vp.y * TOP_MARGIN + battle_h() * 0.5 + 50.0
+	return _vp.y * TOP_MARGIN + battle_h() * 0.5 + 200.0
 
 
 ## 아군 소환 위치 x — 본진 좌단.

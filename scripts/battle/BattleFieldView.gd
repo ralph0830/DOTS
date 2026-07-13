@@ -162,7 +162,7 @@ func _show_spawn_slide(text: String) -> void:
 		add_child(_spawn_label)
 	_spawn_label.text = text
 	_spawn_label.visible = true
-	var cy: float = size.y * 0.5 - 50.0   # 전투 중앙 - 50px 위
+	var cy: float = size.y * 0.5 + 200.0   # 전투 중앙 + 200px 아래(Layout.line_y 정렬)
 	_spawn_label.position = Vector2(0.0, cy)
 	_spawn_label.modulate.a = 0.0
 	if _spawn_tween != null and _spawn_tween.is_valid():
@@ -242,7 +242,7 @@ func _on_boss_hp_changed(hp: int, max_hp: int) -> void:
 func _draw() -> void:
 	var w := size.x
 	var bh := size.y
-	var ly := bh * 0.5
+	var ly := bh * 0.5 + 200.0   # 전투 라인/기지 200px 하강(Layout.line_y 와 정렬)
 	# 전투 필드 스크롤 — camera_x offset (배경/라인/기지/포탈). 정보바/경험치는 고정.
 	var cam := Layout.camera_x()
 	var fw := Layout.field_w()
@@ -264,24 +264,25 @@ func _draw() -> void:
 	_draw_label("⚔ BATTLE", Vector2(20.0, 70.0), 30, Color(1.0, 0.95, 0.8, 1.0))
 	_draw_label("ALLY", Vector2(15.0, ly + 80.0), 20, Color(0.5, 1.0, 0.6, 1.0))
 	_draw_label("ENEMY", Vector2(w - 130.0, ly + 80.0), 20, Color(1.0, 0.5, 0.5, 1.0))
-	# ★ 상단 정보바 — 3분할 (체력 좌 / 웨이브 중앙 / 보스 우). 높이 64(2배).
+	# ★ 상단 정보바 — 3분할 (체력 좌 / 웨이브 중앙 / 보스 우). 높이 64(2배). 200px 하강.
 	var seg := w / 3.0
 	var bar_h := 64.0
+	var bar_y := 200.0   # 정보바 y 하강(Layout.line_y 정렬)
 	# 체력 (좌)
 	var hr := clampf(float(_ally_hp) / float(_ally_max), 0.0, 1.0) if _ally_max > 0 else 0.0
-	draw_rect(Rect2(0.0, 0.0, seg, bar_h), Color(0.05, 0.08, 0.05, 0.95), true)
-	draw_rect(Rect2(0.0, 0.0, seg * hr, bar_h), Color(0.3, 0.9, 0.4), true)
-	draw_rect(Rect2(0.0, 0.0, seg, bar_h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
-	_draw_label("HP %d/%d" % [_ally_hp, _ally_max], Vector2(12.0, 44.0), 30, Color(0.9, 1.0, 0.9, 1.0))
+	draw_rect(Rect2(0.0, bar_y, seg, bar_h), Color(0.05, 0.08, 0.05, 0.95), true)
+	draw_rect(Rect2(0.0, bar_y, seg * hr, bar_h), Color(0.3, 0.9, 0.4), true)
+	draw_rect(Rect2(0.0, bar_y, seg, bar_h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
+	_draw_label("HP %d/%d" % [_ally_hp, _ally_max], Vector2(12.0, bar_y + 44.0), 30, Color(0.9, 1.0, 0.9, 1.0))
 	# 웨이브 (중앙)
-	_draw_label_center("WAVE %d" % _wave_num, seg, seg * 0.5, 44.0, 34, Color(1.0, 1.0, 1.0, 1.0))
+	_draw_label_center("WAVE %d" % _wave_num, seg, seg * 0.5, bar_y + 44.0, 34, Color(1.0, 1.0, 1.0, 1.0))
 	# 보스 게이지 (우) — 보스 등장 시만.
 	if _boss_active:
 		var br := clampf(float(_boss_hp) / float(_boss_max), 0.0, 1.0) if _boss_max > 0 else 0.0
-		draw_rect(Rect2(seg * 2.0, 0.0, seg, bar_h), Color(0.1, 0.05, 0.05, 0.95), true)
-		draw_rect(Rect2(seg * 2.0, 0.0, seg * br, bar_h), Color(1.0, 0.3, 0.3), true)
-		draw_rect(Rect2(seg * 2.0, 0.0, seg, bar_h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
-		_draw_label("BOSS %d/%d" % [_boss_hp, _boss_max], Vector2(seg * 2.0 + 12.0, 44.0), 30, Color(1.0, 0.6, 0.6, 1.0))
+		draw_rect(Rect2(seg * 2.0, bar_y, seg, bar_h), Color(0.1, 0.05, 0.05, 0.95), true)
+		draw_rect(Rect2(seg * 2.0, bar_y, seg * br, bar_h), Color(1.0, 0.3, 0.3), true)
+		draw_rect(Rect2(seg * 2.0, bar_y, seg, bar_h), Color(1.0, 1.0, 1.0, 0.6), false, 2.0)
+		_draw_label("BOSS %d/%d" % [_boss_hp, _boss_max], Vector2(seg * 2.0 + 12.0, bar_y + 44.0), 30, Color(1.0, 0.6, 0.6, 1.0))
 	# 하단 경험치 게이지.
 	_draw_exp_bar(20.0, bh - 48.0, w - 40.0)
 
