@@ -32,10 +32,28 @@ func _ready() -> void:
 	# ★ anchor 는 부모(SlotMachineView._build_layout)가 PRESET_TOP_LEFT 로 설정 +
 	#   _apply_area_rects 가 절대 position/size 를 강제(EXPAND 대응).
 	#   여기서 FULL_RECT(0,0,1,1) 설정하면 절대 size 와 충돌(anchors non-equal → size overridden 경고).
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mouse_filter = Control.MOUSE_FILTER_STOP   # 터치 받음(탭/드래그 → 카메라 이동)
 	EventBus.wave_started.connect(_on_wave_started)
 	EventBus.base_hp_changed.connect(_on_base_hp_changed)
 	call_deferred("_cache_battle")
+
+
+## 터치/드래그 → 카메라 이동. 미니맵 x 를 field_x 로 매핑해 터치 위치를 화면 중앙으로.
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventScreenDrag:
+		_move_camera_to(event.position.x)
+	elif event is InputEventMouseButton and event.pressed:
+		_move_camera_to(event.position.x)
+
+
+func _move_camera_to(local_x: float) -> void:
+	var fw := Layout.field_w()
+	var vpx := Layout.viewport().x
+	if fw <= 0.0 or vpx <= 0.0 or size.x <= 0.0:
+		return
+	# 미니맵 x → field_x. 터치 위치가 화면 중앙이 되도록 camera_x = field_x - vp.x/2.
+	var field_x := (local_x / size.x) * fw
+	Layout.set_camera_x(field_x - vpx * 0.5)
 
 
 ## BattleField 참조 캐싱 (부모 트리 확정 후). UnitSpawner._get_battle_field 패턴.

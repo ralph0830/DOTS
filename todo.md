@@ -198,7 +198,7 @@ e1ec34c feat: DOTS 슬롯머신 Phase 1-3 (코어/뷰/이펙트)
 | 계층 | 재사용 | 신규 |
 |---|---|---|
 | 슬롯 코어 (`scripts/core/`) | ✅ EvaluationPass 체인, SymbolMechanic, WinCalculator | 유닛 소환 Pass, 꽝 보정 Pass |
-| 데이터 (`scripts/data/`) | ✅ ReelStrip, SymbolData(texture/mechanic) | UnitData, WaveData, LevelUpChoice |
+| 데이터 (`scripts/data/`) | ✅ ReelStrip, SymbolData(texture/mechanic) | UnitData, LevelUpChoice |
 | 뷰 (`scripts/view/`) | ✅ ReelView(무한스크롤), SymbolView(실루엣 texture) | BattleFieldView, LevelUpUI, HUD 재설계 |
 | 이펙트 (`scripts/effects/`) | ✅ WinEffects, SlowMotion, FloatingText, JackpotFX, ParticleBudget | 눈동자 애니메이션, 토템 연출 |
 | autoload | ✅ EventBus(확장), AudioManager(SFX 추가), WalletManager(영혼/골드) | GameManager(WAVE/런), ArtifactManager, MetaProgression |

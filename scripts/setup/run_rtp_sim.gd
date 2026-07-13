@@ -8,6 +8,7 @@ extends Node
 
 const SPIN_COUNT := 5000
 const FIXED_SEED := 0   # 0=무작위(기본), 양수=재현 가능(예: 12345) — 밸런싱 검증 시 고정
+const BET_LEVEL := 5    # 베팅 단계(1~5). 5=5×5 전체(50 라인), 1=3×3(5 라인). 5×5 밸런스는 5.
 
 var _last_result: SpinResult = null
 
@@ -20,6 +21,9 @@ func _ready() -> void:
 		config.rng_seed = FIXED_SEED
 		print("[sim] RNG 시드 고정: %d (재현 가능 모드)" % FIXED_SEED)
 	WalletManager.initialize(config)
+	# 5×5(50 라인) 전체 시뮬레이션 — bet_level 설정 후 코어/평가에 반영.
+	WalletManager.bet_level = BET_LEVEL
+	EventBus.bet_level_changed.emit(BET_LEVEL)
 	JackpotSystem.initialize(config)
 	# 영속 잭팟 풀(이전 실행 누적분)을 시드로 강제 리셋 → 매 측정 동일 초기상태 보장.
 	# 게임 플레이용 영속 동작은 그대로 두고, 시뮬레이션만 결정론적으로 만듦(2026-07-03 RTP 왜곡 버그 수정).
