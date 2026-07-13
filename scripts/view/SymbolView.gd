@@ -78,8 +78,8 @@ func _draw_shape() -> void:
 		var pulse := 0.5 + 0.5 * sin(_highlight_t * 8.0)
 		col = col.lerp(Color.WHITE, pulse * 0.5)
 		radius *= 1.0 + pulse * 0.08
-		# 테두리 번쩍 (노랑→흰색 펄스) — 매칭 시 심볼 카드 강조.
-		var border_col := Color(1.0, 0.9, 0.2).lerp(Color.WHITE, pulse)
+		# 테두리 번쩍 (neon_color → 흰색 펄스) — 매칭 시 심볼 카드 강조. 색상은 심볼별 neon_color.
+		var border_col := symbol_data.neon_color.lerp(Color.WHITE, pulse)
 		draw_rect(Rect2(Vector2.ZERO, size), border_col, false, 4.0 + pulse * 4.0)
 
 	# 테두리(깊이감)
@@ -118,9 +118,15 @@ func _draw_hex_shape(c: Vector2, r: float, col: Color) -> void:
 	draw_colored_polygon(_polygon_points(c, r, 6, 0.0), col)
 
 
-## 텍스처 모드: 전체 영역에 텍스처를 그린다.
+## 텍스처 모드: 전체 영역에 텍스처 + 당첨 시 점멸 tint + 테두리 네온(symbol_data.neon_color).
 func _draw_texture() -> void:
-	draw_texture_rect(symbol_data.texture, Rect2(Vector2.ZERO, size), false)
+	var tint := Color.WHITE
+	if _highlight:
+		var pulse := 0.5 + 0.5 * sin(_highlight_t * 8.0)
+		tint = Color.WHITE.lerp(symbol_data.color, pulse * 0.5)
+		var neon := symbol_data.neon_color.lerp(Color.WHITE, pulse)
+		draw_rect(Rect2(Vector2.ZERO, size), neon, false, 4.0 + pulse * 4.0)
+	draw_texture_rect(symbol_data.texture, Rect2(Vector2.ZERO, size), false, tint)
 
 
 # --- Phase 8: 유닛 4종 프로시저럴 도형 ---

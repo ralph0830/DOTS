@@ -24,6 +24,8 @@ const TAG_BONUS := &"bonus"
 @export var payouts: Dictionary = {3: 0, 4: 0, 5: 0}
 ## ★에셋 교체 포인트: null이면 프로시저럴 도형, 텍스처 할당 시 자동 적용.
 @export var texture: Texture2D
+## 당첨 시 테두리 네온 색 (확장 포인트 — 심볼별/기획 튜닝). 기본 골드.
+@export var neon_color: Color = Color(1.0, 0.9, 0.2)
 ## Phase 7: 매칭 시 소환할 유닛 ID (빈 값 = 유닛 미매핑/순수 크레딧 심볼).
 @export var unit_id: StringName = &""
 
