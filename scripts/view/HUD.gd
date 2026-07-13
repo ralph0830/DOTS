@@ -420,10 +420,10 @@ func _on_mult_pressed() -> void:
 		_show_toast("AUTO ON 중 — BET 조작 불가")
 		_flash_bet_button()
 		return
-	# ×1 → ×3 → ×5 → ×1 (불연속 단계).
+	# ×1 → ×2 → ×3 → ×1.
 	match WalletManager.bet_level:
-		1: WalletManager.bet_level = 3
-		3: WalletManager.bet_level = 5
+		1: WalletManager.bet_level = 2
+		2: WalletManager.bet_level = 3
 		_: WalletManager.bet_level = 1
 	if _mult_btn != null:
 		_mult_btn.text = "×%d" % WalletManager.bet_level

@@ -12,6 +12,10 @@ var SYMBOL_SIZE := 180.0   # 셀 크기 — Layout.cell_size()로 런타임 갱�
 const ROWS := 5
 # 비활성 셀 회색 오버레이 색 — 불투명 진회형(배경 대비, 활성 셀과 명확 구분).
 const INACTIVE_COLOR := Color(0.10, 0.10, 0.13, 0.95)
+# 릴 비활성(x1 릴0/4) → blue grey + "x2" 표시(x2 단계에서 열릴 예정).
+const BLUE_GREY := Color(0.30, 0.40, 0.50, 0.92)
+# 행 비활성(x1/x2 행0/4) → red grey + "x3" 표시(x3 단계에서 열릴 예정).
+const RED_GREY := Color(0.50, 0.30, 0.32, 0.92)
 
 enum _State { IDLE, SPIN, STOP }
 
@@ -21,6 +25,7 @@ enum _State { IDLE, SPIN, STOP }
 
 var _pool: Array[SymbolView] = []        # 활성 행 스핀 풀 (활성 행 수 + 1 버퍼)
 var _overlays: Array[ColorRect] = []     # 5행 회색 오버레이 (비활성 행 고정 덮개)
+var _overlay_labels: Array[Label] = []   # 오버레이별 라벨(x2/x3 예고)
 var _strip: Array[SymbolData] = []
 var _offset: float = 0.0
 var _state: int = _State.IDLE
@@ -40,7 +45,7 @@ func _ready() -> void:
 	set_physics_process(false)
 
 
-## 비활성 행 회색 오버레이 5행 생성 — 행 위치(i*SIZE) 고정, 항상 최상단.
+## 비활성 행 회색 오버레이 5행 생성 — 행 위치(i*SIZE) 고정, 항상 최상단. 라벨(x2/x3) 자식.
 func _build_overlays() -> void:
 	for i in range(ROWS):
 		var rect := ColorRect.new()
@@ -50,6 +55,17 @@ func _build_overlays() -> void:
 		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(rect)
 		_overlays.append(rect)
+		var lbl := Label.new()
+		lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 72)
+		lbl.add_theme_color_override("font_color", Color.WHITE)
+		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+		lbl.add_theme_constant_override("outline_size", 12)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rect.add_child(lbl)
+		_overlay_labels.append(lbl)
 
 
 ## 활성 행 수에 맞춰 스핀 풀 재구성 (활성 행 수 + 1 감속 버퍼).
@@ -152,8 +168,26 @@ func _layout(offset: float) -> void:
 		# 활성 블록 내 행만 표시 (버퍼 행은 숨김).
 		_pool[j].visible = (row_pos >= start_row and row_pos < start_row + n)
 	# 비활성 행 회색 오버레이 — _dimmed(릴 전체) 또는 해당 행 비활성.
+	# 행0/4 → red grey "x3"(x1/x2 비활성 행). x1 릴0/4 행1-3 → blue grey "x2"(릴 비활성).
+	var bl := WalletManager.bet_level
 	for i in range(_overlays.size()):
-		_overlays[i].visible = _dimmed or not _active_rows.has(i)
+		var inactive := _dimmed or not _active_rows.has(i)
+		_overlays[i].visible = inactive
+		if i >= _overlay_labels.size():
+			continue
+		if not inactive:
+			_overlay_labels[i].text = ""
+			continue
+		var col: Color = INACTIVE_COLOR
+		var txt := ""
+		if i == 0 or i == 4:
+			col = RED_GREY
+			txt = "x3"
+		elif _dimmed and bl <= 1 and (i == 1 or i == 2 or i == 3):
+			col = BLUE_GREY
+			txt = "x2"
+		_overlays[i].color = col
+		_overlay_labels[i].text = txt
 
 
 ## 특정 행(전역 행 인덱스) 하이라이트 토글(당첨 강조). 활성 행 풀 인덱스로 변환.
