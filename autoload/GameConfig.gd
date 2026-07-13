@@ -8,7 +8,7 @@ const _BuildStamp_ := preload("res://scripts/build_stamp.gd")
 # 슬롯 아이콘 매핑 — 모바일 .res texture 손실 회피용 코드 로드(archor 파일명 오타 포함).
 const _SLOT_ICON := {
 	&"knight": "res://assets/slot_icon/slot_knight_normal.png",
-	&"archer": "res://assets/slot_icon/slot_archor_normal.png",   # 파일명 archor 오타 유지
+	&"archer": "res://assets/slot_icon/slot_archer_normal.png",
 	&"mage": "res://assets/slot_icon/slot_mage_normal.png",
 	&"skull": "res://assets/slot_icon/slot_skull_normal.png",
 }
