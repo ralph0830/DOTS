@@ -242,7 +242,7 @@ func _on_boss_hp_changed(hp: int, max_hp: int) -> void:
 func _draw() -> void:
 	var w := size.x
 	var bh := size.y
-	var ly := bh - 200.0   # 바닥선(전투 하단에서 200px 위) — Layout.line_y 와 정렬
+	var ly := bh - 180.0   # 바닥선(전투 하단에서 180px 위) — Layout.line_y 와 정렬
 	# 전투 필드 스크롤 — camera_x offset (배경/라인/기지/포탈). 정보바/경험치는 고정.
 	var cam := Layout.camera_x()
 	var fw := Layout.field_w()
@@ -252,7 +252,7 @@ func _draw() -> void:
 		var fade := 0.975 + 0.025 * sin(_bg_phase * TAU)
 		draw_texture_rect(_bg_tex, Rect2(-cam, 0.0, fw, bh), false, Color(1.0, 1.0, 1.0, fade))
 	# 전투 라인 (field 전체)
-	draw_line(Vector2(40.0 - cam, ly), Vector2(fw - 40.0 - cam, ly), Color(1.0, 1.0, 1.0, 0.85), 3.0)
+	draw_line(Vector2(40.0 - cam, ly), Vector2(fw - 40.0 - cam, ly), Color(1.0, 1.0, 1.0, 0.5), 3.0)
 	# 아군 기지 / 적 포탈 영역 (field 좌표 + offset)
 	draw_rect(Rect2(Layout.ally_base_x() - cam - 40.0, ly - 60.0, 80.0, 120.0), Color(0.2, 0.9, 0.3, 1.0), false, 5.0)
 	draw_rect(Rect2(Layout.ally_base_x() - cam - 36.0, ly - 56.0, 72.0, 112.0), Color(0.3, 0.8, 0.4, 0.35), true)
