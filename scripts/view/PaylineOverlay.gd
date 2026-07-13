@@ -22,6 +22,7 @@ func _ready() -> void:
 	EventBus.spin_started.connect(_on_spin_started)
 	EventBus.jackpot_won.connect(_on_jackpot)
 	EventBus.bet_level_changed.connect(_on_bet_level_changed)
+	EventBus.auto_spin_changed.connect(_on_auto_spin_changed)
 	set_process(true)
 
 
@@ -79,6 +80,11 @@ func _on_bet_level_changed(level: int) -> void:
 	_show_preview(level)
 
 
+## AUTO 시작/종료 시 예시 라인 제거.
+func _on_auto_spin_changed(_enabled: bool, _remaining: int) -> void:
+	_clear_preview()
+
+
 func _show_preview(level: int) -> void:
 	_clear_preview()
 	var count: int = WalletManager.payline_count_for(level)
@@ -99,13 +105,11 @@ func _show_preview(level: int) -> void:
 			line.add_point(_cell_center(Vector2i(ri, pl.get_row(ri))))
 		add_child(line)
 		_preview_lines.append(line)
-		# 2회 점멸(눈에 띄도록) — 이후 alpha 0.8 유지.
+		# 2회 점멸(눈에 띄도록) — 이후 alpha 0.8 유지(SPIN/AUTO 전까지 사라지지 않음).
 		var tw := create_tween()
 		tw.set_loops(2)
 		tw.tween_property(line, "modulate:a", 0.1, 0.18)
 		tw.tween_property(line, "modulate:a", PREVIEW_ALPHA, 0.18)
-	if n > 0:
-		get_tree().create_timer(PREVIEW_HOLD).timeout.connect(_clear_preview)
 
 
 func clear() -> void:
