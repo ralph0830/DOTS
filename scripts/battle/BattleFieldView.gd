@@ -24,6 +24,8 @@ var _boss_active: bool = false
 var _wave_banner: Label = null
 var _banner_tween: Tween = null
 var _banner_queue: Array = []   # 순차 배너(WAVE → BOSS) 재생 큐
+var _spawn_label: Label = null   # 소환 알림 슬라이드 라벨
+var _spawn_tween: Tween = null
 var _boss_hp: int = 0
 var _boss_max: int = 0
 var _cur_speed: int = 1   # 게임 속도 배수 (1/2/3) — Engine.time_scale
@@ -138,11 +140,41 @@ func _on_enemy_spawned(enemy_id: StringName) -> void:
 		queue_redraw()
 
 
-## 유닛 소환 알림 — "기사[LV2] x 3 소환!!" 배틀창 배너.
+## 유닛 소환 알림 — "기사[LV2] x 3 소환!!" 좌→우 슬라이드 + fade.
 func _on_unit_spawned(unit_id: StringName, count: int) -> void:
 	var name_ko: String = _UNIT_NAME_KO.get(unit_id, String(unit_id))
 	var text := "%s[LV%d] x %d 소환!!" % [name_ko, _level, count]
-	_show_banner(text, 1.2)
+	_show_spawn_slide(text)
+
+
+## 소환 알림 슬라이드 — 왼쪽 끝에서 시작, 중앙까지 fade in, 우끝으로 fade out.
+## y 위치 = 전투 영역 중앙 - 50px (라인 위).
+func _show_spawn_slide(text: String) -> void:
+	if _spawn_label == null:
+		_spawn_label = Label.new()
+		_spawn_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		_spawn_label.add_theme_font_size_override("font_size", 64)
+		_spawn_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+		_spawn_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		_spawn_label.add_theme_constant_override("outline_size", 10)
+		_spawn_label.z_index = 100
+		_spawn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_spawn_label)
+	_spawn_label.text = text
+	_spawn_label.visible = true
+	var cy: float = size.y * 0.5 - 50.0   # 전투 중앙 - 50px 위
+	_spawn_label.position = Vector2(0.0, cy)
+	_spawn_label.modulate.a = 0.0
+	if _spawn_tween != null and _spawn_tween.is_valid():
+		_spawn_tween.kill()
+	_spawn_tween = create_tween()
+	# fade in(0.3초) + 좌→중앙 이동(1.0초 병렬).
+	_spawn_tween.tween_property(_spawn_label, "modulate:a", 1.0, 0.3)
+	_spawn_tween.parallel().tween_property(_spawn_label, "position:x", size.x * 0.5, 1.0)
+	# fade out(0.5초) + 중앙→우끝 이동(0.5초 병렬).
+	_spawn_tween.tween_property(_spawn_label, "modulate:a", 0.0, 0.5)
+	_spawn_tween.parallel().tween_property(_spawn_label, "position:x", size.x, 0.5)
+	_spawn_tween.tween_callback(func() -> void: _spawn_label.visible = false)
 
 
 ## 웨이브/보스 경고 배너 빌드 — 전투 영역 중앙 큰 텍스트 + 페이드 인/아웃.
