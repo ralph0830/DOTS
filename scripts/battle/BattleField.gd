@@ -54,7 +54,7 @@ func reset_run() -> void:
 func spawn_ally(unit_data: UnitData) -> Unit:
 	var u := Unit.new()
 	u.setup(unit_data, false)
-	u.position = Vector2(Layout.ally_base_x(), Layout.line_y() - data.size_h * 0.5)
+	u.position = Vector2(Layout.ally_base_x(), Layout.line_y() - unit_data.size_h * 0.5)
 	add_child(u)
 	u.died.connect(_on_unit_died)
 	return u
@@ -64,7 +64,7 @@ func spawn_ally(unit_data: UnitData) -> Unit:
 func spawn_enemy(unit_data: UnitData) -> Unit:
 	var u := Unit.new()
 	u.setup(unit_data, true)
-	u.position = Vector2(Layout.enemy_portal_x(), Layout.line_y() - data.size_h * 0.5)
+	u.position = Vector2(Layout.enemy_portal_x(), Layout.line_y() - unit_data.size_h * 0.5)
 	add_child(u)
 	u.died.connect(_on_unit_died)
 	return u
