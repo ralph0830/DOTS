@@ -115,8 +115,8 @@ func _show_preview(level: int) -> void:
 		var tw := create_tween()
 		tw.set_loops(0)   # 0 = 무한
 		tw.set_trans(Tween.TRANS_SINE)
-		tw.tween_property(line, "modulate:a", 0.15, 0.6)
-		tw.tween_property(line, "modulate:a", PREVIEW_ALPHA, 0.6)
+		tw.tween_property(line, "modulate:a", 0.15, 0.9)
+		tw.tween_property(line, "modulate:a", PREVIEW_ALPHA, 0.9)
 
 
 func clear() -> void:
