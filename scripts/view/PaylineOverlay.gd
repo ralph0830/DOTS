@@ -24,6 +24,12 @@ func _ready() -> void:
 	EventBus.bet_level_changed.connect(_on_bet_level_changed)
 	EventBus.auto_spin_changed.connect(_on_auto_spin_changed)
 	set_process(true)
+	# 시작 시 초기 bet_level 예시 라인 표시(bet_level_changed 는 시작 시 emit 안 됨).
+	call_deferred("_show_initial_preview")
+
+
+func _show_initial_preview() -> void:
+	_show_preview(WalletManager.bet_level)
 
 
 func _on_jackpot(_tier: int, _amount: int) -> void:
