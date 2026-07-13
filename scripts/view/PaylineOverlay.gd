@@ -105,11 +105,12 @@ func _show_preview(level: int) -> void:
 			line.add_point(_cell_center(Vector2i(ri, pl.get_row(ri))))
 		add_child(line)
 		_preview_lines.append(line)
-		# 2회 점멸(눈에 띄도록) — 이후 alpha 0.8 유지(SPIN/AUTO 전까지 사라지지 않음).
+		# 천천히 계속 점멸(SPIN/AUTO 전까지) — 부드러운 사인 파형, 무한 루프.
 		var tw := create_tween()
-		tw.set_loops(2)
-		tw.tween_property(line, "modulate:a", 0.1, 0.18)
-		tw.tween_property(line, "modulate:a", PREVIEW_ALPHA, 0.18)
+		tw.set_loops(0)   # 0 = 무한
+		tw.set_trans(Tween.TRANS_SINE)
+		tw.tween_property(line, "modulate:a", 0.15, 0.6)
+		tw.tween_property(line, "modulate:a", PREVIEW_ALPHA, 0.6)
 
 
 func clear() -> void:
